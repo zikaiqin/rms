@@ -1,9 +1,5 @@
-Use master;
-
---DROP DATABASE IF EXISTS ProjetSession;
-
---CREATE DATABASE ProjetSession;
-
+DROP DATABASE IF EXISTS ProjetSession;
+CREATE DATABASE ProjetSession;
 USE ProjetSession;
 
 DROP TABLE IF EXISTS Surveillance;
@@ -17,77 +13,72 @@ DROP TABLE IF EXISTS Salaire;
 DROP TABLE IF EXISTS Employe;
 
 CREATE TABLE Employe (
-	code_mnemotechnique int PRIMARY KEY,
-	numero_avs int NOT NULL,
-	prenom varchar(50) NOT NULL,
-	nom varchar(50) NOT NULL,
-	nomMarital varchar(50) NULL, --Optionnel
-	date_naissance DATE NOT NULL,
-	lieu_naissance varchar(50) NOT NULL,
-	adresse varchar(255) NOT NULL,
-	fonction varchar(50) NOT NULL,	--CHECK 8 METIERS 
-	typeService varchar(50) NOT NULL, --CHECK 3 TYPES 
-	CONSTRAINT typeDeService CHECK( typeService IN ('Administratif', 'Surveillance', 'Medical')),
-	CONSTRAINT nom_metier CHECK( fonction IN ('Veterinaire', 'Infirmier', 'Gardien', 'Chef de secteur', 'Secretaire', 'Comptable', 'Chef du personnel', 'Directeur'))
+    code_mnemotechnique INT PRIMARY KEY,
+    numero_avs INT NOT NULL,
+    prenom VARCHAR(50) NOT NULL,
+    nom VARCHAR(50) NOT NULL,
+    nom_marital VARCHAR(50),
+    date_naissance DATE NOT NULL,
+    lieu_naissance VARCHAR(50) NOT NULL,
+    adresse VARCHAR(255) NOT NULL,
+    fonction VARCHAR(50) NOT NULL,
+    service VARCHAR(50) NOT NULL,
+    CONSTRAINT type_service CHECK(service IN ('Administratif', 'Surveillance', 'Medical')),
+    CONSTRAINT type_fonction CHECK(fonction IN ('Veterinaire', 'Infirmier', 'Gardien', 'Chef de secteur', 'Secretaire', 'Comptable', 'Chef du personnel', 'Directeur'))
 );
 
 CREATE TABLE Gardien (
-	code_employe int PRIMARY KEY,
+    code_employe INT PRIMARY KEY,
     grade VARCHAR(255),
     taux_occupation DECIMAL(5, 2) CHECK (taux_occupation BETWEEN 0 AND 100),  
-    FOREIGN KEY (code_employe) REFERENCES Employe(code_mnemotechnique)
-);
-
-CREATE TABLE ChefDeSecteur(
-	code_employe int PRIMARY KEY,
-	FOREIGN KEY(code_employe) REFERENCES Employe(code_mnemotechnique)
+    FOREIGN KEY(code_employe) REFERENCES Employe(code_mnemotechnique)
 );
 
 CREATE TABLE Secteur(
-	nom_secteur varchar(50) PRIMARY KEY,
-	code_chef_secteur int NOT NULL,
-	FOREIGN KEY(code_chef_secteur) REFERENCES ChefDeSecteur(code_employe)
+    nom_secteur VARCHAR(50) PRIMARY KEY,
+    code_chef_secteur INT NOT NULL,
+    FOREIGN KEY(code_chef_secteur) REFERENCES Employe(code_mnemotechnique)
 )
 
 CREATE TABLE Parcelle(
-	num_parcelle int PRIMARY KEY,
-	nom_secteur varchar(50) NOT NULL,
-	FOREIGN KEY(nom_secteur) REFERENCES Secteur(nom_secteur)
+    num_parcelle INT PRIMARY KEY,
+    nom_secteur VARCHAR(50) NOT NULL,
+    FOREIGN KEY(nom_secteur) REFERENCES Secteur(nom_secteur)
 );
 
 CREATE TABLE Salaire(
-	idSalaire int PRIMARY KEY,
-	mois varchar(50) NOT NULL, --CHECK 12 MOIS 
-	montant float NOT NULL, --PAS NEGATIF 
-	code_employe int,
-	FOREIGN KEY(code_employe) REFERENCES Employe(code_mnemotechnique),
-	CONSTRAINT nom_mois CHECK (mois IN ('Janvier', 'F�vrier', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Ao�t', 'Septembre', 'Octobre', 'Novembre', 'D�cembre')),
-	CONSTRAINT montant_negatif CHECK (montant >= 0)
+    id_salaire INT PRIMARY KEY,
+    mois INT NOT NULL,
+    montant DECIMAL(9, 2) NOT NULL,
+    code_employe INT,
+    FOREIGN KEY(code_employe) REFERENCES Employe(code_mnemotechnique),
+    CONSTRAINT num_mois CHECK (mois BETWEEN 1 AND 12),
+    CONSTRAINT montant_positif CHECK (montant >= 0)
 );
 
 CREATE TABLE Surveillance (
-	num_parcelle int,
-	code_gardien int,
-	datetime_debut datetime NOT NULL,	--CHECK DEBUT AVANT FIN 
-	datetime_fin datetime NOT NULL,
-	PRIMARY KEY(num_parcelle, code_gardien),
-	FOREIGN KEY(num_parcelle) REFERENCES Parcelle(num_parcelle),
-	FOREIGN KEY(code_gardien) REFERENCES Gardien(code_employe),
-	CONSTRAINT datetime_df CHECK (datetime_debut < datetime_fin)
+    num_parcelle INT,
+    code_gardien INT,
+    datetime_debut DATETIME NOT NULL,
+    datetime_fin DATETIME NOT NULL,
+    PRIMARY KEY(num_parcelle, code_gardien),
+    FOREIGN KEY(num_parcelle) REFERENCES Parcelle(num_parcelle),
+    FOREIGN KEY(code_gardien) REFERENCES Gardien(code_employe),
+    CONSTRAINT datetime_df CHECK (datetime_debut < datetime_fin)
 );
 
 CREATE TABLE Preference( 
-	nom_secteur varchar(50),
-	code_gardien int,
-	PRIMARY KEY(nom_secteur, code_gardien),
-	FOREIGN KEY(nom_secteur) REFERENCES Secteur(nom_secteur),
-	FOREIGN KEY(code_gardien) REFERENCES Gardien(code_employe)
+    nom_secteur VARCHAR(50),
+    code_gardien INT,
+    PRIMARY KEY(nom_secteur, code_gardien),
+    FOREIGN KEY(nom_secteur) REFERENCES Secteur(nom_secteur),
+    FOREIGN KEY(code_gardien) REFERENCES Gardien(code_employe)
 );
 
 CREATE TABLE Aversion( 
-	nom_secteur varchar(50),
-	code_gardien int,
-	PRIMARY KEY(nom_secteur, code_gardien),
-	FOREIGN KEY(nom_secteur) REFERENCES Secteur(nom_secteur),
-	FOREIGN KEY(code_gardien) REFERENCES Gardien(code_employe)
+    nom_secteur VARCHAR(50),
+    code_gardien INT,
+    PRIMARY KEY(nom_secteur, code_gardien),
+    FOREIGN KEY(nom_secteur) REFERENCES Secteur(nom_secteur),
+    FOREIGN KEY(code_gardien) REFERENCES Gardien(code_employe)
 );
