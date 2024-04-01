@@ -23,8 +23,8 @@ CREATE TABLE Employe (
     adresse VARCHAR(255) NOT NULL,
     fonction VARCHAR(50) NOT NULL,
     service VARCHAR(50) NOT NULL,
-    CONSTRAINT type_service CHECK(service IN ('Administratif', 'Surveillance', 'Medical')),
-    CONSTRAINT type_fonction CHECK(fonction IN ('Veterinaire', 'Infirmier', 'Gardien', 'Chef de secteur', 'Secretaire', 'Comptable', 'Chef du personnel', 'Directeur'))
+    CONSTRAINT type_service CHECK(service IN ('Administratif', 'Surveillance', 'Médical')),
+    CONSTRAINT type_fonction CHECK(fonction IN ('Vétérinaire', 'Infirmier', 'Gardien', 'Chef de secteur', 'Secrétaire', 'Comptable', 'Chef du personnel', 'Directeur'))
 );
 
 CREATE TABLE Gardien (
