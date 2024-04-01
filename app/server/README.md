@@ -15,7 +15,8 @@
 <!-- Should GET also go into /edit? -->
 - `GET` : Get detailed information on employee with **@code**
     - Params: **@code : String**
-    - Returns: `{attr_name: attr_val}` for each attribute of the employee. Include guard's attributes if employee is a guard.
+    - Returns: `200` : `{attr_name: attr_val}` for each attribute of the employee. Include guard's attributes if employee is a guard.
+    - Returns: `404` if employee with **@code** does not exist
 
 ```
 /staff/edit
