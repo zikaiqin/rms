@@ -34,6 +34,11 @@ CREATE TABLE Gardien (
     FOREIGN KEY(code_employe) REFERENCES Employe(code_mnemotechnique)
 );
 
+CREATE TABLE ChefDeSecteur(
+	code_employe INT PRIMARY KEY,
+	FOREIGN KEY(code_employe) REFERENCES Employe(code_mnemotechnique)
+);
+
 CREATE TABLE Secteur(
     nom_secteur VARCHAR(50) PRIMARY KEY,
     code_chef_secteur INT NOT NULL,
