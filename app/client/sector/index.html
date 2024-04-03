@@ -16,12 +16,22 @@
                 </ul>
                 <ul>
                     <!-- Navigation to other pages -->
-                    <li><a href="/schedule" class="contrast">Horaires</a></li>
+                    <li>
+                        <details class="dropdown">
+                            <summary role="button" class="outline contrast">
+                                Horaires
+                            </summary>
+                            <ul dir="rtl">
+                                <li><a href="/schedule/#staff">Employé</a></li>
+                                <li><a href="/schedule/#sector">Secteur</a></li>
+                            </ul>
+                        </details>
+                    </li>
                     <li><a href="/staff" class="contrast">Employés</a></li>
                     <li><a role="link" class="secondary current-page" aria-current="page">Secteurs</a></li>
                     <li><a href="/salary" class="contrast">Salaires</a></li>
                 </ul>
-              </nav>
+            </nav>
         </header>
         <main class="container stretch vert-flex">
             <!-- Page content here -->

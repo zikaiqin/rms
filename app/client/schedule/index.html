@@ -6,6 +6,7 @@
         <title>Horaires</title>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css"/>
         <link rel="stylesheet" href="../styles.css"/>
+        <link rel="stylesheet" href="schedule.css"/>
     </head>
     <body class="full-height vert-flex">
         <header class="container">
@@ -16,17 +17,28 @@
                 </ul>
                 <ul>
                     <!-- Navigation to other pages -->
-                    <li><a role="link" class="secondary current-page" aria-current="page">Horaires</a></li>
+                    <li>
+                        <details class="dropdown">
+                            <summary role="button" class="outline contrast">
+                                Horaires
+                            </summary>
+                            <ul dir="rtl">
+                                <li><a id="nav-schedule-staff" href="#staff">Employé</a></li>
+                                <li><a id="nav-schedule-sector" href="#sector">Secteur</a></li>
+                            </ul>
+                        </details>
+                    </li>
                     <li><a href="/staff" class="contrast">Employés</a></li>
                     <li><a href="/sector" class="contrast">Secteurs</a></li>
                     <li><a href="/salary" class="contrast">Salaires</a></li>
                 </ul>
-              </nav>
+            </nav>
         </header>
         <main class="container stretch vert-flex">
             <!-- Page content here -->
         </main>
         <footer class="container"></footer>
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+        <script src="schedule.js"></script>
     </body>
 </html>
