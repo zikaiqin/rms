@@ -43,7 +43,7 @@ CREATE TABLE Secteur(
     nom_secteur VARCHAR(50) PRIMARY KEY,
     code_chef_secteur INT NOT NULL,
     FOREIGN KEY(code_chef_secteur) REFERENCES Employe(code_mnemotechnique)
-)
+);
 
 CREATE TABLE Parcelle(
     num_parcelle INT PRIMARY KEY,
@@ -64,9 +64,9 @@ CREATE TABLE Salaire(
 CREATE TABLE Surveillance (
     num_parcelle INT,
     code_gardien INT,
-    datetime_debut DATETIME NOT NULL,
-    datetime_fin DATETIME NOT NULL,
-    PRIMARY KEY(num_parcelle, code_gardien),
+    datetime_debut SMALLDATETIME,
+    datetime_fin SMALLDATETIME,
+    PRIMARY KEY(num_parcelle, code_gardien, datetime_debut, datetime_fin),
     FOREIGN KEY(num_parcelle) REFERENCES Parcelle(num_parcelle),
     FOREIGN KEY(code_gardien) REFERENCES Gardien(code_employe),
     CONSTRAINT datetime_df CHECK (datetime_debut < datetime_fin)
