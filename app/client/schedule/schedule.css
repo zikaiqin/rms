@@ -1,0 +1,7 @@
+.no-stretch {
+    width: fit-content;
+}
+
+.no-click {
+    pointer-events: none;
+}
