@@ -20,4 +20,4 @@ Ouvrez le terminal à cet emplacement et faites rouler la commande suivante :
 npx http-server -p 3000 -o
 ```
 
-Notez que le serveur implémente le *hot reload* : tout changement aux fichiers sera reflété dans le navigateur suite à un *refresh*.
+Si vous êtes un développeur, notez que le serveur est en mode *hot reload* : toute modification aux fichiers sources sera reflétée dans le navigateur une fois que vous rafraîchissez avec <kbd>Ctrl</kbd> + <kbd>F5</kbd>.
