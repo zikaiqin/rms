@@ -1,16 +1,11 @@
+USE master
 DROP DATABASE IF EXISTS ProjetSession;
-CREATE DATABASE ProjetSession;
-USE ProjetSession;
+GO
 
-DROP TABLE IF EXISTS Surveillance;
-DROP TABLE IF EXISTS Preference;
-DROP TABLE IF EXISTS Aversion;
-DROP TABLE IF EXISTS Parcelle;
-DROP TABLE IF EXISTS Secteur;
-DROP TABLE IF EXISTS ChefDeSecteur;
-DROP TABLE IF EXISTS Gardien;
-DROP TABLE IF EXISTS Salaire;
-DROP TABLE IF EXISTS Employe;
+CREATE DATABASE ProjetSession;
+GO
+
+USE ProjetSession;
 
 CREATE TABLE Employe (
     code_mnemotechnique CHAR(3) PRIMARY KEY,
@@ -29,64 +24,85 @@ CREATE TABLE Employe (
         OR service LIKE 'Surveillance' AND fonction IN ('Gardien', 'Chef de secteur')
         OR service LIKE 'Médical' AND fonction IN ('Vétérinaire', 'Infirmier'))
 );
+GO
 
 CREATE TABLE Gardien(
     code_employe CHAR(3) PRIMARY KEY,
-    grade VARCHAR(255),
-    taux_occupation DECIMAL(5, 2) CHECK (taux_occupation BETWEEN 0 AND 100),  
+    grade VARCHAR(255) NOT NULL,
+    taux_occupation DECIMAL(5, 2) NOT NULL,
+    CONSTRAINT pourcentage CHECK (taux_occupation BETWEEN 0 AND 100),  
     FOREIGN KEY(code_employe) REFERENCES Employe(code_mnemotechnique)
+    ON DELETE CASCADE
 );
+GO
 
 CREATE TABLE ChefDeSecteur(
 	code_employe CHAR(3) PRIMARY KEY,
 	FOREIGN KEY(code_employe) REFERENCES Employe(code_mnemotechnique)
+    ON DELETE CASCADE
 );
+GO
 
 CREATE TABLE Secteur(
     nom_secteur VARCHAR(50) PRIMARY KEY,
     code_chef_secteur CHAR(3) NOT NULL,
-    FOREIGN KEY(code_chef_secteur) REFERENCES Employe(code_mnemotechnique)
+    FOREIGN KEY(code_chef_secteur) REFERENCES ChefDeSecteur(code_employe)
+    ON DELETE NO ACTION
 );
+GO
 
 CREATE TABLE Parcelle(
     num_parcelle INT PRIMARY KEY,
     nom_secteur VARCHAR(50) NOT NULL,
     FOREIGN KEY(nom_secteur) REFERENCES Secteur(nom_secteur)
+    ON DELETE CASCADE
 );
+GO
 
 CREATE TABLE Salaire(
-    id_salaire INT PRIMARY KEY,
+    id_salaire uniqueidentifier PRIMARY KEY DEFAULT newid(),
     mois INT NOT NULL,
     montant DECIMAL(9, 2) NOT NULL,
-    code_employe CHAR(3),
-    FOREIGN KEY(code_employe) REFERENCES Employe(code_mnemotechnique),
+    code_employe CHAR(3) NOT NULL,
+    FOREIGN KEY(code_employe) REFERENCES Employe(code_mnemotechnique)
+    ON DELETE CASCADE,
     CONSTRAINT num_mois CHECK (mois BETWEEN 1 AND 12),
     CONSTRAINT montant_positif CHECK (montant >= 0)
 );
+GO
 
 CREATE TABLE Surveillance(
     num_parcelle INT,
     code_gardien CHAR(3),
-    datetime_debut SMALLDATETIME,
-    datetime_fin SMALLDATETIME,
+    datetime_debut DATETIME2(0),
+    datetime_fin DATETIME2(0),
     PRIMARY KEY(num_parcelle, code_gardien, datetime_debut, datetime_fin),
-    FOREIGN KEY(num_parcelle) REFERENCES Parcelle(num_parcelle),
-    FOREIGN KEY(code_gardien) REFERENCES Gardien(code_employe),
+    FOREIGN KEY(num_parcelle) REFERENCES Parcelle(num_parcelle)
+    ON DELETE CASCADE,
+    FOREIGN KEY(code_gardien) REFERENCES Gardien(code_employe)
+    ON DELETE CASCADE,
     CONSTRAINT datetime_df CHECK (datetime_debut < datetime_fin)
 );
+GO
 
 CREATE TABLE Preference( 
     nom_secteur VARCHAR(50),
     code_gardien CHAR(3),
     PRIMARY KEY(nom_secteur, code_gardien),
-    FOREIGN KEY(nom_secteur) REFERENCES Secteur(nom_secteur),
+    FOREIGN KEY(nom_secteur) REFERENCES Secteur(nom_secteur)
+    ON DELETE CASCADE,
     FOREIGN KEY(code_gardien) REFERENCES Gardien(code_employe)
+    ON DELETE CASCADE
 );
+GO
 
 CREATE TABLE Aversion( 
     nom_secteur VARCHAR(50),
     code_gardien CHAR(3),
     PRIMARY KEY(nom_secteur, code_gardien),
-    FOREIGN KEY(nom_secteur) REFERENCES Secteur(nom_secteur),
+    FOREIGN KEY(nom_secteur) REFERENCES Secteur(nom_secteur)
+    ON DELETE CASCADE,
     FOREIGN KEY(code_gardien) REFERENCES Gardien(code_employe)
+    ON DELETE CASCADE
 );
+GO
