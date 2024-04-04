@@ -231,4 +231,4 @@ INSERT INTO Aversion (code_gardien, nom_secteur) VALUES
 --SELECT * FROM Secteur
 --SELECT * FROM Parcelle
 --SELECT * FROM Surveillance
-SELECT * FROM Aversion
+--SELECT * FROM Aversion
