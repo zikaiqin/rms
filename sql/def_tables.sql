@@ -61,12 +61,11 @@ GO
 
 CREATE TABLE Salaire(
     id_salaire uniqueidentifier PRIMARY KEY DEFAULT newid(),
-    mois INT NOT NULL,
+    date DATE NOT NULL,
     montant DECIMAL(9, 2) NOT NULL,
     code_employe CHAR(3) NOT NULL,
     FOREIGN KEY(code_employe) REFERENCES Employe(code_mnemotechnique)
     ON DELETE CASCADE,
-    CONSTRAINT num_mois CHECK (mois BETWEEN 1 AND 12),
     CONSTRAINT montant_positif CHECK (montant >= 0)
 );
 GO
@@ -74,14 +73,15 @@ GO
 CREATE TABLE Surveillance(
     num_parcelle INT,
     code_gardien CHAR(3),
-    datetime_debut DATETIME2(0),
-    datetime_fin DATETIME2(0),
-    PRIMARY KEY(num_parcelle, code_gardien, datetime_debut, datetime_fin),
+    dt_debut DATETIME2(0),
+    dt_fin DATETIME2(0),
+    PRIMARY KEY(num_parcelle, code_gardien, dt_debut, dt_fin),
     FOREIGN KEY(num_parcelle) REFERENCES Parcelle(num_parcelle)
     ON DELETE CASCADE,
     FOREIGN KEY(code_gardien) REFERENCES Gardien(code_employe)
     ON DELETE CASCADE,
-    CONSTRAINT datetime_df CHECK (datetime_debut < datetime_fin)
+    CONSTRAINT temps_positif CHECK (dt_debut < dt_fin),
+    CONSTRAINT une_heure_max CHECK (DATEDIFF(mi, dt_debut, dt_fin) <= 60)
 );
 GO
 
