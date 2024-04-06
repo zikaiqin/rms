@@ -5,19 +5,33 @@ const {protocol, hostname} = window.location
 const apiRoot = `${protocol}//${hostname}:${port}`
 
 class Route {
+    /**
+     * @param {JQuery.jqXHR} jqXHR
+     */
+    static withAlert = async (jqXHR) => {
+        return new Promise((resolve, reject) => {
+            jqXHR.then((res) => {resolve(res)})
+                .catch((err) => {
+                    const msg = err?.responseJSON?.message;
+                    window.alert(msg ?? 'Une erreur s\'est produite');
+                    reject(err);
+                });
+        });
+    }
+
     static get staff() {
-        return class {
+        return {
 
-            static get all() {
-                return {
-                    get: () => jQuery.get(apiRoot.concat('/staff'))
-                }
-            }
+            all: {
+                get: () => Route.withAlert(jQuery.get(apiRoot.concat('/staff')))
+            },
 
-            static get details() {
-                return {
-                    get: (code) => jQuery.get(apiRoot.concat('/staff/details?code=', code))
-                }
+            details: {
+                get: (code) => Route.withAlert(jQuery.get(apiRoot.concat('/staff/details?code=', code)))
+            },
+
+            delete: {
+                post: (code) => Route.withAlert(jQuery.post(apiRoot.concat('/staff/delete'), {code}))
             }
         }
     }

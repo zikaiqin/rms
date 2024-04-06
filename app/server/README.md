@@ -18,7 +18,7 @@ Le serveur requiert aussi l'installation des packages Python suivants :
 
 ## Démarrage
 
-Ouvrez le terminal à cet emplacement et faites rouler la commande suivante :
+Ouvrez le terminal à cet emplacement et exécutez la commande suivante :
 
 ```
 flask run
@@ -30,3 +30,11 @@ flask run --debug
 ```
 
 Ceci active le *hot reload*, ce qui redémarre le serveur automatiquement lorsque vous effectuez des modifications aux fichiers source.
+
+## Débogage
+
+Pour faire rouler le serveur en mode débogage, veuillez consulter le guide de débogage pour
+[PyCharm](https://www.jetbrains.com/help/pycharm/run-debug-configuration-flask-server.html)
+ou
+[VSCode](https://code.visualstudio.com/docs/python/tutorial-flask)
+selon votre choix de IDE.

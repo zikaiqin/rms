@@ -46,7 +46,7 @@ GO
 CREATE TABLE Secteur(
     nom_secteur VARCHAR(50) PRIMARY KEY,
     code_chef_secteur CHAR(3) NOT NULL,
-    FOREIGN KEY(code_chef_secteur) REFERENCES ChefDeSecteur(code_employe)
+    CONSTRAINT est_chef FOREIGN KEY(code_chef_secteur) REFERENCES ChefDeSecteur(code_employe)
     ON DELETE NO ACTION
 );
 GO

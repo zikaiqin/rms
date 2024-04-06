@@ -14,7 +14,7 @@ Le package [http-server](https://www.npmjs.com/package/http-server) sera install
 
 ## Démarrage
 
-Ouvrez le terminal à cet emplacement et faites rouler la commande suivante :
+Ouvrez le terminal à cet emplacement et exécutez la commande suivante :
 
 ```
 npx http-server -p 3000 -o

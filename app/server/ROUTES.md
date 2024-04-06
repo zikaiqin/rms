@@ -43,7 +43,7 @@
 - `POST` : Delete employee with **@code**
     - Params: **@code : String**
     - Returns: `200` if successful
-    - Returns: `403` if trying to delete a sector chief that is responsible for one or more sectors, as well as the list of sectors he supervises
+    - Returns: `409` if trying to delete a sector chief that is responsible for one or more sectors
 
 
 

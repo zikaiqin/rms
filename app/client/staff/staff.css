@@ -13,3 +13,18 @@ div[role=main] {
 div:has(#add-new) {
     text-align: center;
 }
+
+#details-modal article {
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+#details-modal header {
+    position: sticky;
+    top: 0;
+}
+
+#details-modal footer {
+    position: sticky;
+    bottom: 0;
+}

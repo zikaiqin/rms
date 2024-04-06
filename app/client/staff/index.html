@@ -64,10 +64,43 @@
             </div>
         </main>
         <footer class="container">
-            <div id="alert-container" class="container"></div>
+            <dialog id="details-modal">
+                <article>
+                    <header>
+                        <button
+                            aria-label="close"
+                            rel="prev"
+                        ></button>
+                        <h3>Détails Employé</h3>
+                    </header>
+                    <form id="details-form"></form>
+                    <footer>
+                        <button aria-label="close" class="secondary">
+                            Fermer
+                        </button>
+                        <button onclick="openDeleteModal()">
+                            Supprimer
+                        </button>
+                    </footer>
+                </article>
+            </dialog>
+            <dialog id="delete-modal">
+                <article>
+                    <h3>Voulez-vous supprimer cet employé?</h3>
+                    <footer>
+                        <button aria-label="close" class="secondary">
+                            Annuler
+                        </button>
+                        <button onclick="confirmDelete()">
+                            Supprimer
+                        </button>
+                    </footer>
+                </article>
+            </dialog>
         </footer>
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
         <script src="../requests.js"></script>
+        <script src="../modal.js"></script>
         <script src="staff.js"></script>
     </body>
 </html>
