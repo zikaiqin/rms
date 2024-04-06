@@ -1,0 +1,15 @@
+table {
+    margin-bottom: 0;
+}
+
+tfoot td {
+    text-align: center;
+}
+
+div[role=main] {
+    margin-bottom: var(--pico-typography-spacing-vertical);
+}
+
+div:has(#add-new) {
+    text-align: center;
+}

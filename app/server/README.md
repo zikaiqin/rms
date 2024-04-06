@@ -14,6 +14,7 @@ Le serveur requiert aussi l'installation des packages Python suivants :
 
 - [pyodbc](https://pypi.org/project/pyodbc/)
 - [Flask](https://pypi.org/project/Flask/)
+- [Flask-Cors](https://pypi.org/project/Flask-Cors/)
 
 ## Démarrage
 

@@ -1,5 +1,6 @@
 import pyodbc
 from flask import Flask, request, abort, make_response, jsonify
+from flask_cors import CORS
 
 DRIVER = 'ODBC Driver 18 for SQL Server'
 HOST_NAME = 'localhost'
@@ -14,6 +15,7 @@ conn_str = (
 )
 cnxn = pyodbc.connect(conn_str)
 app = Flask(__name__)
+CORS(app)
 
 
 @app.route('/staff', methods=['GET'])
@@ -56,7 +58,7 @@ def staff_details():
     # result of the sql query
     row = cur.fetchone()
     if not row:
-        abort(make_response(jsonify(message='Code mnémotechnique n''appartient à aucun employé'), 404))
+        abort(make_response(jsonify(message="Code mnémotechnique n'appartient à aucun employé"), 404))
 
     # names of each column/attribute
     keys = [col[0] for col in cur.description]
