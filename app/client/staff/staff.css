@@ -14,17 +14,17 @@ div:has(#add-new) {
     text-align: center;
 }
 
-#details-modal article {
+:is(#details-modal, #edit-modal) article {
     padding-top: 0;
     padding-bottom: 0;
 }
 
-#details-modal header {
+:is(#details-modal, #edit-modal) header {
     position: sticky;
     top: 0;
 }
 
-#details-modal footer {
+:is(#details-modal, #edit-modal) footer {
     position: sticky;
     bottom: 0;
 }

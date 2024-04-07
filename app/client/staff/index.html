@@ -64,6 +64,99 @@
             </div>
         </main>
         <footer class="container">
+            <dialog id="edit-modal">
+                <article>
+                    <header>
+                        <button
+                            aria-label="close"
+                            rel="prev"
+                        ></button>
+                        <h3>Ajouter Employé</h3>
+                    </header>
+                    <form id="edit-form" onsubmit="submitDetails(event)">
+                        <label>
+                            Prénom
+                            <input name="prenom" type="text" required autofocus />
+                        </label>
+                        <label>
+                            Nom
+                            <input name="nom" type="text" required />
+                        </label>
+                        <label>
+                            Nom marital
+                            <input name="nom_marital" type="text" />
+                        </label>
+                        <label>
+                            Code mnémotechnique
+                            <input
+                                name="code_mnemotechnique"
+                                type="text"
+                                minlength="3"
+                                maxlength="3"
+                                pattern="[a-zA-Z0-9]+"
+                                oninput="this.value = this.value.toUpperCase()"
+                                required />
+                            <small>Entrez une séquence alphanumérique de 3 caractères</small>
+                        </label>
+                        <label>
+                            Service
+                            <select name="service" onchange="onServiceChange()" required>
+                                <option selected disabled value="">
+                                    Selectionnez un service
+                                </option>
+                                <option data-key="admin">Administratif</option>
+                                <option data-key="surv">Surveillance</option>
+                                <option data-key="med">Médical</option>
+                            </select>
+                        </label>
+                        <label>
+                            Fonction
+                            <select name="fonction" onchange="onFunctionChange()" required disabled>
+                                <option selected disabled value="">
+                                    Selectionnez d'abord le service
+                                </option>
+                            </select>
+                        </label>
+                        <fieldset hidden>
+                            <label>
+                                Grade
+                                <input name="grade" type="text" />
+                            </label>
+                            <label>
+                                Taux d'occupation
+                                <input name="taux_occupation" type="number" min="0" max="100" />
+                                <small>Entrez un nombre entre 0 et 100</small>
+                            </label>
+                        </fieldset>
+                        <label>
+                            Adresse
+                            <input name="adresse" type="text" required />
+                        </label>
+                        <label>
+                            Date de naissance
+                            <input name="date_naissance" type="date" required />
+                        </label>
+                        <label>
+                            Lieu de naissance
+                            <input name="lieu_naissance" type="text" required />
+                        </label>
+                        <label>
+                            Numéro AVS
+                            <input name="numero_avs" type="text" pattern="[0-9]+" required />
+                            <small>Entrez une séquence numérique</small>
+                        </label>
+                        <input type="submit" hidden />
+                    </form>
+                    <footer>
+                        <button aria-label="close" class="secondary">
+                            Fermer
+                        </button>
+                        <button onclick="triggerSubmit()">
+                            Ajouter
+                        </button>
+                    </footer>
+                </article>
+            </dialog>
             <dialog id="details-modal">
                 <article>
                     <header>

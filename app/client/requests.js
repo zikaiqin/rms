@@ -32,7 +32,11 @@ class Route {
 
             delete: {
                 post: (code) => Route.withAlert(jQuery.post(apiRoot.concat('/staff/delete'), {code}))
-            }
+            },
+
+            add: {
+                post: (data) => Route.withAlert(jQuery.post(apiRoot.concat('/staff/add'), data))
+            },
         }
     }
 }

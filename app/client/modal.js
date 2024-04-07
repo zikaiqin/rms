@@ -1,13 +1,13 @@
 class Modal {
     static instances = {};
-    static currentlyOpen = [];
+    static visible = [];
     static escListener;
 
     static register(id, modal) {
         if (!Modal.escListener) {
             Modal.escListener = ({key}) => {
-                if (key === 'Escape')
-                    Modal.currentlyOpen.slice(-1)[0]?.close();
+                if (key === 'Escape' && Modal.visible.length)
+                    Modal.visible.slice(-1)[0].close();
             };
             $(document).on('keydown', Modal.escListener)
         }
@@ -43,7 +43,7 @@ class Modal {
             }, this.transitionTime);
         })
         cb();
-        Modal.currentlyOpen.push(this);
+        Modal.visible.push(this);
         this.getElement().showModal();
         return promise;
     }
@@ -55,8 +55,8 @@ class Modal {
             setTimeout(() => {
                 html.removeClass('modal-is-closing');
                 this.getElement().close();
-                Modal.currentlyOpen.pop();
-                if (Modal.currentlyOpen.length === 0)
+                Modal.visible.pop();
+                if (Modal.visible.length === 0)
                     $(document.documentElement).removeClass('modal-is-open modal-is-opening modal-is-closing');
                 cb();
                 resolve();

@@ -21,27 +21,34 @@ CORS(app)
 @app.route('/staff', methods=['GET'])
 def staff():
     """
-    This is the staff endpoint
+    Staff endpoint
 
-    Parameters: None
-
-    Returns: A list of partial details of all employees
+    Returns data: a list of partial details of all employees
     """
-    cur = cnxn.cursor()
     sql = 'SELECT code_mnemotechnique, prenom, COALESCE(nom_marital, nom) AS nom, fonction, service FROM Employe'
-    cur.execute(sql)
+    try:
+        cur = cnxn.cursor()
+        cur.execute(sql)
+    except Exception as e:
+        abort(make_response(jsonify(message=str(e)), 500))
+        
     return [list(row) for row in cur.fetchall()]
 
 
 @app.route('/staff/details', methods=['GET'])
 def staff_details():
     """
-    This is the staff details endpoint
+    Staff details endpoint
 
-    Parameters:
-        - ?code: code of the employee whose details we are trying to get
+    Query parameters:
+        - code: code of the employee to be doxed
 
-    Returns: A dict with all the attributes of the employee
+    Returns status code:
+        - 200 if successful
+        - 400 if code is malformed or missing
+        - 404 if no employee matches the code
+
+    Returns data: a dict with all the attributes of the employee
     """
     try:
         # get '?code=...' from query string
@@ -51,11 +58,14 @@ def staff_details():
     except:
         abort(make_response(jsonify(message='Code mnémotechnique manquant ou mal formaté'), 400))
 
-    cur = cnxn.cursor()
     sql = 'SELECT * FROM Employe LEFT JOIN Gardien ON code_mnemotechnique=code_employe WHERE code_mnemotechnique=?'
-    cur.execute(sql, CODE)
+    try:
+        cur = cnxn.cursor()
+        cur.execute(sql, CODE)
+    except Exception as e:
+        abort(make_response(jsonify(message=str(e)), 500))
 
-    # result of the sql query
+    # if the query did not return any rows, send 404
     row = cur.fetchone()
     if not row:
         abort(make_response(jsonify(message=f'Aucun employé associé au code "{CODE}"'), 404))
@@ -71,21 +81,94 @@ def staff_details():
 
 @app.route('/staff/delete', methods=['POST'])
 def staff_delete():
-    CODE = request.form['code']
-    cur = cnxn.cursor()
+    """
+    Staff delete endpoint
+
+    Form data properties:
+        - code: code of the employee to be deleted
+
+    Returns status code:
+        - 200 if successful
+        - 400 if code is malformed or missing
+        - 404 if none deleted (code not found)
+        - 409 if the employee supervises one or more sectors
+    """
+    try:
+        # get code from form data
+        CODE = request.form['code']
+        if not CODE or len(CODE) != 3:
+            raise Exception()
+    except:
+        abort(make_response(jsonify(message='Code mnémotechnique manquant ou mal formaté'), 400))
+
     sql = 'DELETE FROM Employe WHERE code_mnemotechnique=?'
     try:
+        cur = cnxn.cursor()
         cur.execute(sql, CODE)
     except pyodbc.IntegrityError as err:
+
+        # check if error was a reference constraint violation
         matches = re.search(r'REFERENCE constraint ".*"', err.args[1])
-        err_msg = matches.group(0) if matches else ''
-        if '"est_chef"' in err_msg:
+        sql_err = matches.group(0) if matches else ''
+
+        # if trying to delete a sector supervisor, send 409; otherwise, re-raise
+        if '"est_chef"' in sql_err:
             msg = f'L\'employé associé au code "{CODE}" ne peut pas être supprimé, car il supervise un ou plusieurs secteurs'
             abort(make_response(jsonify(message=msg), 409))
         else:
-            raise err
+            abort(make_response(jsonify(message=err.args[1]), 500))
+    except Exception as e:
+        abort(make_response(jsonify(message=str(e)), 500))
 
+    # if the query did not change any rows (code belongs to no one), send 404
     if cur.rowcount == 0:
         abort(make_response(jsonify(message=f'Aucun employé associé au code "{CODE}"'), 404))
+
+    return jsonify(success=True)
+
+
+@app.route('/staff/add', methods=['POST'])
+def staff_add():
+    """
+    Staff add endpoint
+
+    Form data properties: see KEYS
+
+    Returns status code:
+        - 200 if successful
+        - 400 if missing properties or fails unique check
+    """
+    # request form data must contain all of these properties
+    KEYS = ['code_mnemotechnique', 'numero_avs', 'prenom', 'nom', 'nom_marital', 'date_naissance',
+            'lieu_naissance', 'adresse', 'fonction', 'service', 'grade', 'taux_occupation']
+    param_fragment = ', '.join(f'@{key}=?' for key in KEYS)
+    try:
+        def raise_if_missing(k):
+            if k in request.form: return True
+            else: raise Exception(f'Attribut "{k}" manquant')
+        values = tuple((val if (val := request.form[key]) != '' else None) for key in KEYS if raise_if_missing(key))
+    except Exception as e:
+        abort(make_response(jsonify(message=str(e)), 400))
+
+    sql = f'SET NOCOUNT ON; EXEC insertionEmploye {param_fragment};'
+    try:
+        cur = cnxn.cursor()
+        cur.execute(sql, values)
+    except pyodbc.IntegrityError as err:
+ 
+        # check if missing values
+        matches = re.search(r'(?<=Cannot insert the value NULL into column \').*(?=\', table \'.*\')', err.args[1])
+        if col_name := matches and matches.group(0):
+            abort(make_response(jsonify(message=f'Attribut "{col_name}" manquant'), 400))
+
+        # check if error was a key violation
+        matches = re.search(r'Violation of (PRIMARY|UNIQUE) KEY constraint', err.args[1])
+        if sql_err := matches and matches.group(0):
+            msg = f'Le {'code mnémotechnique' if 'PRIMARY' in sql_err else 'numéro AVS'} doit être unique'
+            abort(make_response(jsonify(message=msg), 400))
+        else:
+            abort(make_response(jsonify(message=err.args[1]), 500))
+    except Exception as e:
+        abort(make_response(jsonify(message=str(e)), 500))
 
     return jsonify(success=True)
