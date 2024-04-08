@@ -1,6 +1,7 @@
 import pyodbc
 from flask import Flask, request, abort, make_response, jsonify
 from flask_cors import CORS
+from datetime import datetime
 import re
 
 DRIVER = 'ODBC Driver 18 for SQL Server'
@@ -211,3 +212,24 @@ def sector_get():
         res[sector]['dislikes'].append(list(rest))
 
     return jsonify([{'name': key, **val} for key, val in res.items()])
+
+
+@app.route('/salary', methods=['GET'])
+def get_salary():
+    try:
+        # get '?date=...' from query string
+        arg = request.args['date']
+        if not arg or not (DATE := datetime.strptime(arg, '%Y-%m')):
+            raise Exception()
+    except:
+        abort(make_response(jsonify(message='Date mal formatée'), 400))
+
+    sql = 'SELECT * FROM salairesDuMois(?)'
+
+    try:
+        cur = cnxn.cursor()
+        cur.execute(sql, str(DATE.date()))
+    except Exception as e:
+        abort(make_response(jsonify(message=str(e)), 500))
+
+    return [list(row) for row in cur.fetchall()]
