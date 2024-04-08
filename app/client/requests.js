@@ -39,4 +39,13 @@ class Route {
             },
         }
     }
+
+    static get sector() {
+        return {
+
+            all: {
+                get: () => Route.withAlert(jQuery.get(apiRoot.concat('/sector')))
+            },
+        }
+    }
 }

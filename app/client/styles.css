@@ -24,6 +24,10 @@
     border: none;
 }
 
+.muted {
+    color: var(--pico-muted-color);
+}
+
 table thead,
 table tfoot {
   position: sticky;
