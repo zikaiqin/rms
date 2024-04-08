@@ -16,19 +16,19 @@ const loadSectors = () => {
     })
 }
 
-const buildWithTag = (tag, label) => `<div class="tag-row"><kbd>${tag}</kbd>${label}</div>`
+const buildWithTag = (tag, label, ...classes) => `<div class="tag-row"><kbd${classes.length ? ` class="${classes.join(' ')}"` : ''}>${tag}</kbd>${label}</div>`
 
-const buildPairs = (title, list) => {
+const buildPairs = (title, list, ...rest) => {
     const header = `<h5>${title}</h5>`;
     content = list.reduce((prev, [fst, snd]) => {
-        return prev + buildWithTag(fst, snd);
+        return prev + buildWithTag(fst, snd, ...rest);
     }, '');
     return header + content
 }
 
 const buildGrid = (...sections) => `<div class="grid">${sections.map((s) => `<div>${s}</div>`).join('')}</div>`
 
-const buildParcels = (parcels) => buildPairs('Parcelles', parcels.map((num) => [num.toString().padStart(3, '0'), `Parcelle #${num}`]));
+const buildParcels = (parcels) => buildPairs('Parcelles', parcels.map((num) => [num.toString().padStart(3, '0'), `Parcelle #${num}`]), 'secondary');
 
 const buildEmployees = (title, list) => buildPairs(title, list.map(([code, ...names]) => [code, names.join(' ')]));
 

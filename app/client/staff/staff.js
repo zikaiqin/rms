@@ -1,21 +1,23 @@
 $(() => {
-    new Modal('#details-modal', {
-        onClose: () => { $('#details-form').empty() },
-    });
-    new Modal('#delete-modal');
+    reloadRows();
 
     const { open: openEdit } = new Modal('#edit-modal', {
         onClose: () => { resetEditForm() },
     });
     $('#add-new').on('click', () => openEdit());
 
-    reloadRows();
+    new Modal('#details-modal', {
+        onClose: () => { $('#details-form').empty() },
+    });
+    new Modal('#delete-modal');
 });
 
 const reloadRows = () => {
     Route.staff.all.get().then((data) => {
         if (!data.length) {
-            $('tbody').empty();
+            const noData = `<tr><td colspan="8" class="no-data muted"><em>Pas de données</em></td></tr>`
+            $('table').addClass('stretch');
+            $('tbody').empty().append(noData);
             return;
         }
         rows = data.map((row) => {
@@ -24,6 +26,7 @@ const reloadRows = () => {
             const cells = [...row, moreButton].map((val) => `<td>${val}</td>`);
             return $(`<tr>${cells.join('')}</tr>`);
         });
+        $('table').removeClass('stretch');
         $('tbody').empty().append(rows);
         $('tbody span').on('click', function() {
             const code = $(this).closest('tr').children().first().text();

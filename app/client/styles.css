@@ -28,6 +28,14 @@
     color: var(--pico-muted-color);
 }
 
+.no-data {
+    text-align: center;
+}
+
+kbd.secondary {
+    background-color: var(--pico-secondary-background);
+}
+
 table thead,
 table tfoot {
   position: sticky;
