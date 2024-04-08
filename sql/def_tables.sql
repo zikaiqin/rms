@@ -1,21 +1,13 @@
 USE master
---DROP DATABASE IF EXISTS ProjetSession;
+DROP DATABASE IF EXISTS ProjetSession;
 GO
 
---CREATE DATABASE ProjetSession;
+CREATE DATABASE ProjetSession;
 GO
 
 USE ProjetSession;
 
-DROP TABLE IF EXISTS Surveillance;
-DROP TABLE IF EXISTS Preference;
-DROP TABLE IF EXISTS Aversion;
-DROP TABLE IF EXISTS Parcelle;
-DROP TABLE IF EXISTS Secteur;
-DROP TABLE IF EXISTS ChefDeSecteur;
-DROP TABLE IF EXISTS Gardien;
-DROP TABLE IF EXISTS Salaire;
-DROP TABLE IF EXISTS Employe;
+
 
 CREATE TABLE Employe (
     code_mnemotechnique CHAR(3) PRIMARY KEY,
