@@ -54,7 +54,17 @@ const fillRows = (data) => {
         return;
     }
     rows = data.map((row) => {
-        const cells = row.map((val) => `<td>${val}</td>`);
+        const cells = row.map((val, idx) => {
+            switch (idx) {
+                case 5:
+                    return `<td>${(val === null) ? '<i class="muted">Temps plein</i>' :
+                        Number(val) === 100 ? 'Temps plein' : `${val}%`}</td>`;
+                case 6:
+                    return `<td>\$${val}</td>`
+                default:
+                    return `<td>${val}</td>`
+            }
+        });
         return $(`<tr>${cells.join('')}</tr>`);
     });
     $('table').removeClass('stretch');
