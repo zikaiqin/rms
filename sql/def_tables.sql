@@ -6,6 +6,7 @@ GO
 GO
 
 USE ProjetSession;
+
 DROP TABLE IF EXISTS Surveillance;
 DROP TABLE IF EXISTS Preference;
 DROP TABLE IF EXISTS Aversion;
@@ -55,7 +56,7 @@ GO
 CREATE TABLE Secteur(
     nom_secteur VARCHAR(50) PRIMARY KEY,
     code_chef_secteur CHAR(3) NOT NULL,
-    FOREIGN KEY(code_chef_secteur) REFERENCES ChefDeSecteur(code_employe)
+    CONSTRAINT est_chef FOREIGN KEY(code_chef_secteur) REFERENCES ChefDeSecteur(code_employe)
     ON DELETE NO ACTION
 );
 GO
@@ -82,14 +83,15 @@ GO
 CREATE TABLE Surveillance(
     num_parcelle INT,
     code_gardien CHAR(3),
-    datetime_debut DATETIME2(0),
-    datetime_fin DATETIME2(0),
-    PRIMARY KEY(num_parcelle, code_gardien, datetime_debut, datetime_fin),
+    dt_debut DATETIME2(0),
+    dt_fin DATETIME2(0),
+    PRIMARY KEY(num_parcelle, code_gardien, dt_debut, dt_fin),
     FOREIGN KEY(num_parcelle) REFERENCES Parcelle(num_parcelle)
     ON DELETE CASCADE,
     FOREIGN KEY(code_gardien) REFERENCES Gardien(code_employe)
     ON DELETE CASCADE,
-    CONSTRAINT datetime_df CHECK (datetime_debut < datetime_fin)
+    CONSTRAINT temps_positif CHECK (dt_debut < dt_fin),
+    CONSTRAINT une_heure_max CHECK (DATEDIFF(mi, dt_debut, dt_fin) <= 60)
 );
 GO
 
@@ -193,7 +195,7 @@ INSERT INTO Parcelle(num_parcelle,nom_secteur) VALUES
 	(8, 'Aquarium'),
 	(9, 'Aquarium');
 
-INSERT INTO Surveillance(num_parcelle,code_gardien, datetime_debut,datetime_fin) VALUES
+INSERT INTO Surveillance(num_parcelle,code_gardien, dt_debut,dt_fin) VALUES
 	(1, '2JD', '2024-04-01 10:00:00', '2024-04-01 11:00:00'),
 	(1, 'ASC', '2024-04-01 14:00:00', '2024-04-01 15:00:00'),
 	(2, 'CE4', '2024-04-02 11:00:00', '2024-04-02 12:00:00'),
@@ -223,12 +225,3 @@ INSERT INTO Aversion (code_gardien, nom_secteur) VALUES
 	('2SF', 'Aquarium'),
 	('CE4', 'Reptile'),
 	('ASC', 'Oiseau');
-
---SELECT * FROM Employe
---SELECT * FROM Salaire
---SELECT * FROM Gardien
---SELECT * FROM ChefDeSecteur
---SELECT * FROM Secteur
---SELECT * FROM Parcelle
---SELECT * FROM Surveillance
---SELECT * FROM Aversion
