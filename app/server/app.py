@@ -1,6 +1,7 @@
 import pyodbc
 from flask import Flask, request, abort, make_response, jsonify
 from flask_cors import CORS
+from datetime import datetime
 import re
 
 DRIVER = 'ODBC Driver 18 for SQL Server'
@@ -172,3 +173,63 @@ def staff_add():
         abort(make_response(jsonify(message=str(e)), 500))
 
     return jsonify(success=True)
+
+
+@app.route('/sector', methods=['GET'])
+def sector_get():
+    sql_parcels = 'SELECT * FROM Parcelle; '
+    sql_temp = (
+        'SELECT nom_secteur, {key}, prenom, COALESCE(nom_marital, nom) AS nom '
+        'FROM {table} JOIN Employe ON {key} = code_mnemotechnique; '
+    )
+    sql_sectors = sql_temp.format(key='code_chef_secteur', table='Secteur')
+    sql_likes = sql_temp.format(key='code_gardien', table='Preference')
+    sql_dislikes = sql_temp.format(key='code_gardien', table='Aversion')
+    sql = sql_sectors + sql_parcels + sql_likes + sql_dislikes
+
+    try:
+        cur = cnxn.cursor()
+        cur.execute(sql)
+    except Exception as e:
+        abort(make_response(jsonify(message=str(e)), 500))
+
+    def fetch_while_next():
+        yield cur.fetchall()
+        while cur.nextset():
+            yield cur.fetchall()
+
+    (sectors, parcels, likes, dislikes) = fetch_while_next()
+
+    res = {sector: {'supervisor': list(rest), 'parcels': [], 'likes': [], 'dislikes': []} for sector, *rest in sectors}
+
+    for num, sector in parcels:
+        res[sector]['parcels'].append(num)
+
+    for sector, *rest in likes:
+        res[sector]['likes'].append(list(rest))
+
+    for sector, *rest in dislikes:
+        res[sector]['dislikes'].append(list(rest))
+
+    return jsonify([{'name': key, **val} for key, val in res.items()])
+
+
+@app.route('/salary', methods=['GET'])
+def get_salary():
+    try:
+        # get '?date=...' from query string
+        arg = request.args['date']
+        if not arg or not (DATE := datetime.strptime(arg, '%Y-%m')):
+            raise Exception()
+    except:
+        abort(make_response(jsonify(message='Date mal formatée'), 400))
+
+    sql = 'SELECT * FROM salairesDuMois(?)'
+
+    try:
+        cur = cnxn.cursor()
+        cur.execute(sql, str(DATE.date()))
+    except Exception as e:
+        abort(make_response(jsonify(message=str(e)), 500))
+
+    return [list(row) for row in cur.fetchall()]

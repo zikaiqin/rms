@@ -72,3 +72,17 @@ BEGIN
     END CATCH
 END
 GO
+
+CREATE OR ALTER FUNCTION salairesDuMois(@date DATE)
+RETURNS TABLE
+AS
+RETURN
+    WITH T AS (
+        SELECT code_mnemotechnique, prenom, COALESCE(nom, nom_marital) AS nom, numero_avs, fonction, taux_occupation
+        FROM Employe LEFT JOIN Gardien
+        ON code_mnemotechnique = code_employe)
+    SELECT code_mnemotechnique, prenom, nom, numero_avs, fonction, taux_occupation, montant AS salaire
+    FROM T JOIN Salaire
+    ON code_mnemotechnique = code_employe
+    WHERE DATEPART(year, date) = DATEPART(year, @date) AND DATEPART(month, date) = DATEPART(month, @date)
+GO

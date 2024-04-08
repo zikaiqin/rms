@@ -23,19 +23,37 @@ class Route {
         return {
 
             all: {
-                get: () => Route.withAlert(jQuery.get(apiRoot.concat('/staff')))
+                get: () => Route.withAlert($.get(apiRoot.concat('/staff')))
             },
 
             details: {
-                get: (code) => Route.withAlert(jQuery.get(apiRoot.concat('/staff/details?code=', code)))
+                get: (code) => Route.withAlert($.get(apiRoot.concat('/staff/details'), {code}))
             },
 
             delete: {
-                post: (code) => Route.withAlert(jQuery.post(apiRoot.concat('/staff/delete'), {code}))
+                post: (code) => Route.withAlert($.post(apiRoot.concat('/staff/delete'), {code}))
             },
 
             add: {
-                post: (data) => Route.withAlert(jQuery.post(apiRoot.concat('/staff/add'), data))
+                post: (data) => Route.withAlert($.post(apiRoot.concat('/staff/add'), data))
+            },
+        }
+    }
+
+    static get sector() {
+        return {
+
+            all: {
+                get: () => Route.withAlert($.get(apiRoot.concat('/sector')))
+            },
+        }
+    }
+
+    static get salary() {
+        return {
+
+            all: {
+                get: (date) => Route.withAlert($.get(apiRoot.concat('/salary'), {date}))
             },
         }
     }
