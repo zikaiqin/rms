@@ -1,7 +1,20 @@
-.no-stretch {
-    width: fit-content;
+div[role="heading"] {
+    display: flex;
+    flex-direction: row;
+    justify-items: end;
+    align-items: baseline;
 }
-
-.no-click {
-    pointer-events: none;
+div[role="heading"] :is(input, select) {
+    width: auto;
+}
+div[role="heading"] * {
+    margin-left: var(--pico-spacing);
+}
+div[role="heading"] h3 {
+    margin-left: 0;
+    margin-right: auto;
+}
+table kbd {
+    padding: 0 0.25rem;
+    margin-right: 0.375rem;
 }

@@ -19,6 +19,11 @@ cnxn = pyodbc.connect(conn_str)
 app = Flask(__name__)
 CORS(app)
 
+def fetch_while_next(c):
+    yield c.fetchall()
+    while c.nextset():
+        yield c.fetchall()
+
 @app.route('/staff', methods=['GET'])
 def staff():
     """
@@ -193,12 +198,7 @@ def sector_get():
     except Exception as e:
         abort(make_response(jsonify(message=str(e)), 500))
 
-    def fetch_while_next():
-        yield cur.fetchall()
-        while cur.nextset():
-            yield cur.fetchall()
-
-    (sectors, parcels, likes, dislikes) = fetch_while_next()
+    (sectors, parcels, likes, dislikes) = fetch_while_next(cur)
 
     res = {sector: {'supervisor': list(rest), 'parcels': [], 'likes': [], 'dislikes': []} for sector, *rest in sectors}
 
@@ -233,3 +233,58 @@ def get_salary():
         abort(make_response(jsonify(message=str(e)), 500))
 
     return [list(row) for row in cur.fetchall()]
+
+
+@app.route('/schedule/<view>/options', methods=['GET'])
+def get_schedule_options(view):
+    match view:
+        case 'sector':
+            sql ='SELECT DISTINCT nom_secteur FROM Parcelle'
+        case 'staff':
+            sql = "SELECT code_mnemotechnique FROM Employe WHERE fonction LIKE 'Gardien'"
+        case _:
+            abort(404)
+    try:
+        cur = cnxn.cursor()
+        cur.execute(sql)
+    except Exception as e:
+        abort(make_response(jsonify(message=str(e)), 500))
+
+    return [row[0] for row in cur.fetchall()]
+
+
+@app.route('/schedule/sector', methods=['GET'])
+def get_sector_schedule():
+    try:
+        date, sector = request.args['date'], request.args['sector']
+        if not date or not sector:
+            raise Exception()
+    except:
+        abort(make_response(jsonify(message='Arguments manquants'), 400))
+    sql_header = 'SELECT num_parcelle FROM Parcelle WHERE nom_secteur LIKE ?; '
+    sql = (
+        "WITH T AS ("
+        "SELECT FORMAT(dt_debut, 'hh:mm') AS time, Parcelle.num_parcelle as num_parcelle, code_gardien "
+        "FROM Surveillance JOIN Parcelle "
+        "ON Surveillance.num_parcelle = Parcelle.num_parcelle "
+        "WHERE FORMAT(dt_debut, 'yyyy-MM-dd') LIKE ? "
+        "AND nom_secteur LIKE ?) "
+        "SELECT time, num_parcelle, code_gardien, prenom, COALESCE(nom_marital, nom) "
+        "FROM T JOIN Employe "
+        "ON T.code_gardien = Employe.code_mnemotechnique"
+    )
+    try:
+        cur = cnxn.cursor()
+        cur.execute(sql_header + sql, sector, date, sector)
+    except Exception as e:
+        abort(make_response(jsonify(message=str(e)), 500))
+
+    header = next(gen := fetch_while_next(cur))
+    if not header:
+        abort(make_response(jsonify(message='Ce secteur n\'a pas de parcelles'), 404))
+
+    res = {
+        'header': [row[0] for row in header],
+        'data': [list(row) for row in next(gen)]
+    }
+    return res

@@ -57,4 +57,25 @@ class Route {
             },
         }
     }
+
+    static get schedule() {
+        return {
+
+            staff: {
+                options: {
+                    get: () => Route.withAlert($.get(apiRoot.concat('/schedule/staff/options')))
+                },
+            },
+
+            sector: {
+                options: {
+                    get: () => Route.withAlert($.get(apiRoot.concat('/schedule/sector/options')))
+                },
+
+                one: {
+                    get: (date, sector) => Route.withAlert($.get(apiRoot.concat('/schedule/sector'), {date, sector}))
+                },
+            },
+        }
+    }
 }

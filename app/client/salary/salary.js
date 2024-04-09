@@ -6,12 +6,12 @@ const setupSelect = () => {
     const max = (new Date()).toISOString().match(/^\d{4}-\d{2}/)[0];
     const min = (([year, month]) => `${year - 1}-${month}`)(max.split('-'));
     const el = $('#month-input').attr({min, max});
-    $('#month-next').on('click', () => changeMonth(min, max)(1));
-    $('#month-prev').on('click', () => changeMonth(min, max)(-1));
+    $('#month-next').on('click', () => offsetMonth(min, max)(1));
+    $('#month-prev').on('click', () => offsetMonth(min, max)(-1));
     el.on('change', onChangeMonth(min, max)).val(max).trigger('change');
 }
 
-const changeMonth = (min, max) => (offset) => {
+const offsetMonth = (min, max) => (offset) => {
     if (offset === 0)
         return;
     const el = $('#month-input');
