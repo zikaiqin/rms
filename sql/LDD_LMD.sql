@@ -75,13 +75,13 @@ CREATE TABLE Surveillance(
     code_gardien CHAR(3),
     dt_debut DATETIME2(0),
     dt_fin DATETIME2(0),
-    PRIMARY KEY(num_parcelle, code_gardien, dt_debut, dt_fin),
+    PRIMARY KEY(code_gardien, dt_debut, dt_fin),
     FOREIGN KEY(num_parcelle) REFERENCES Parcelle(num_parcelle)
     ON DELETE CASCADE,
     FOREIGN KEY(code_gardien) REFERENCES Gardien(code_employe)
     ON DELETE CASCADE,
-    CONSTRAINT temps_positif CHECK (dt_debut < dt_fin),
-    CONSTRAINT une_heure_max CHECK (DATEDIFF(mi, dt_debut, dt_fin) <= 60)
+    CONSTRAINT dure_une_heure CHECK (DATEDIFF(s, dt_debut, dt_fin) = 3600), -- traite aussi le cas fin < debut
+    CONSTRAINT heure_pile CHECK ((DATEPART(mi, dt_debut) = 0) AND (DATEPART(s, dt_debut) = 0)),
 );
 GO
 
