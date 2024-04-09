@@ -1,37 +1,52 @@
 USE ProjetSession;
 GO
 
+-- Lance une exception si un gardien est assigné à plus qu'un secteur le même jour
 CREATE OR ALTER TRIGGER conflit_horaire ON Surveillance
 AFTER INSERT
 AS
 BEGIN
-    DECLARE @_code CHAR(3);
-    DECLARE @_start DATETIME2, @_end DATETIME2;
-    SELECT @_start = dt_debut, @_end = dt_fin, @_code = code_gardien FROM inserted;
-
+-- Nécessite curseur sur inserted pour les insertions multiples
     DECLARE @crsr CURSOR;
     SET @crsr = CURSOR FOR
-        SELECT dt_debut, dt_fin FROM Surveillance
-        WHERE code_gardien = @_code
-        AND DATEPART(year, dt_debut) = DATEPART(year, @_start)
-        AND DATEPART(dayofyear, dt_debut) = DATEPART(dayofyear, @_start);
+        SELECT DISTINCT code_gardien, DATEPART(year, dt_debut) AS year, DATEPART(dayofyear, dt_debut) AS doy
+        FROM inserted;
     OPEN @crsr;
 
-    DECLARE @start DATETIME2, @end DATETIME2;
-    FETCH NEXT FROM @crsr INTO @start, @end;
+    DECLARE @code CHAR(3), @year INT, @doy INT;
+    FETCH NEXT FROM @crsr INTO @code, @year, @doy;
 
+    DECLARE @count INT;
     WHILE @@FETCH_STATUS = 0
     BEGIN
-        IF (@_start > @start AND @_start < @end) OR (@_end > @start AND @_end < @end)
+        WITH T AS (
+            SELECT * FROM Surveillance
+            UNION
+            SELECT * FROM inserted),
+        S AS (
+            SELECT DISTINCT num_parcelle FROM T
+            WHERE code_gardien = @code
+            AND DATEPART(year, dt_debut) = @year
+            AND DATEPART(dayofyear, dt_debut) = @doy)
+        SELECT @count = COUNT(DISTINCT nom_secteur)
+        FROM S JOIN Parcelle
+        ON S.num_parcelle = Parcelle.num_parcelle;
+
+        IF (@count > 1)
         BEGIN
-            RAISERROR ('Il y a un conflit d''horaire avec une autre surveillance', 16, 1);
+            DECLARE @date VARCHAR(10);
+            SELECT @date = FORMAT(DATEADD(day, @doy - 1, DATEFROMPARTS(@year, 1, 1)), 'yyyy-MM-dd');
+            RAISERROR (
+                N'Conflit d''horaire le %s: gardien %s a été assigné à plusieurs secteurs', 16, 1,
+                @date, @code);
             ROLLBACK TRANSACTION;
         END
-        FETCH NEXT FROM @crsr INTO @start, @end;
+        FETCH NEXT FROM @crsr INTO @code, @year, @doy;
     END
 END
 GO
 
+-- Insère un employé avec grade et taux requis si l'employé est un gardien
 CREATE OR ALTER PROCEDURE insertionEmploye (
     @code_mnemotechnique CHAR(3),
     @numero_avs INT,
@@ -73,6 +88,7 @@ BEGIN
 END
 GO
 
+-- Retourne tous les salaires du mois de la @date
 CREATE OR ALTER FUNCTION salairesDuMois(@date DATE)
 RETURNS TABLE
 AS
