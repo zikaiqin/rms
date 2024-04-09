@@ -6,10 +6,11 @@
         <title>Secteurs</title>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css"/>
         <link rel="stylesheet" href="../styles.css"/>
+        <link rel="stylesheet" href="sector.css"/>
     </head>
-    <body class="full-height vert-flex">
-        <header class="container">
-            <nav>
+    <body class="full-height">
+        <header>
+            <nav class="container">
                 <ul>
                     <!-- Page title -->
                     <li><h1>Secteurs</h1></li>
@@ -19,24 +20,26 @@
                     <li>
                         <details class="dropdown">
                             <summary role="button" class="outline contrast">
-                                Horaires
+                                Surveillances
                             </summary>
                             <ul dir="rtl">
-                                <li><a href="/schedule/#staff">Employé</a></li>
-                                <li><a href="/schedule/#sector">Secteur</a></li>
+                                <li><a href="/schedule/staff">Gardien</a></li>
+                                <li><a href="/schedule/sector">Secteur</a></li>
                             </ul>
                         </details>
                     </li>
-                    <li><a href="/staff" class="contrast">Employés</a></li>
                     <li><a role="link" class="secondary current-page" aria-current="page">Secteurs</a></li>
                     <li><a href="/salary" class="contrast">Salaires</a></li>
+                    <li><a href="/staff" class="contrast">Employés</a></li>
                 </ul>
             </nav>
         </header>
-        <main class="container stretch vert-flex">
+        <main class="container">
             <!-- Page content here -->
         </main>
         <footer class="container"></footer>
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+        <script src="../requests.js"></script>
+        <script src="sector.js"></script>
     </body>
 </html>

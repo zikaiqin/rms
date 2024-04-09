@@ -5,7 +5,9 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Salaires</title>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css"/>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined">
         <link rel="stylesheet" href="../styles.css"/>
+        <link rel="stylesheet" href="salary.css"/>
     </head>
     <body class="full-height vert-flex">
         <header class="container">
@@ -19,24 +21,62 @@
                     <li>
                         <details class="dropdown">
                             <summary role="button" class="outline contrast">
-                                Horaires
+                                Surveillances
                             </summary>
                             <ul dir="rtl">
-                                <li><a href="/schedule/#staff">Employé</a></li>
-                                <li><a href="/schedule/#sector">Secteur</a></li>
+                                <li><a href="/schedule/staff">Gardien</a></li>
+                                <li><a href="/schedule/sector">Secteur</a></li>
                             </ul>
                         </details>
                     </li>
-                    <li><a href="/staff" class="contrast">Employés</a></li>
                     <li><a href="/sector" class="contrast">Secteurs</a></li>
                     <li><a role="link" class="secondary current-page" aria-current="page">Salaires</a></li>
+                    <li><a href="/staff" class="contrast">Employés</a></li>
                 </ul>
             </nav>
         </header>
-        <main class="container stretch vert-flex">
+        <main class="container stretch vert-flex overflow-auto">
             <!-- Page content here -->
+            <div role="main" class="stretch vert-flex overflow-auto">
+                <table class="striped stretch">
+                    <thead>
+                        <tr>
+                            <th scope="col">Code</th>
+                            <th scope="col">Prénom</th>
+                            <th scope="col">Nom</th>
+                            <th scope="col">AVS</th>
+                            <th scope="col">Fonction</th>
+                            <th scope="col">Taux d'occupation</th>
+                            <th scope="col">Salaire</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td colspan="8" class="no-data muted"><em>Pas de données</em></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div>
+                <div class="month-container">
+                    <span
+                        role="button"
+                        id="month-prev"
+                        class="icon-button contrast outline material-symbols-outlined"
+                    >arrow_back_ios</span>
+                    <input id="month-input" type="month">
+                    <span
+                        role="button"
+                        id="month-next"
+                        class="icon-button contrast outline material-symbols-outlined"
+                    >arrow_forward_ios</span>
+                </div>
+            </div>
         </main>
-        <footer class="container"></footer>
+        <footer class="container">
+        </footer>
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+        <script src="../requests.js"></script>
+        <script src="salary.js"></script>
     </body>
 </html>

@@ -7,8 +7,6 @@ GO
 
 USE ProjetSession;
 
-
-
 CREATE TABLE Employe (
     code_mnemotechnique CHAR(3) PRIMARY KEY,
     numero_avs INT NOT NULL UNIQUE,
@@ -77,13 +75,13 @@ CREATE TABLE Surveillance(
     code_gardien CHAR(3),
     dt_debut DATETIME2(0),
     dt_fin DATETIME2(0),
-    PRIMARY KEY(num_parcelle, code_gardien, dt_debut, dt_fin),
+    PRIMARY KEY(code_gardien, dt_debut, dt_fin),
     FOREIGN KEY(num_parcelle) REFERENCES Parcelle(num_parcelle)
     ON DELETE CASCADE,
     FOREIGN KEY(code_gardien) REFERENCES Gardien(code_employe)
     ON DELETE CASCADE,
-    CONSTRAINT temps_positif CHECK (dt_debut < dt_fin),
-    CONSTRAINT une_heure_max CHECK (DATEDIFF(mi, dt_debut, dt_fin) <= 60)
+    CONSTRAINT dure_une_heure CHECK (DATEDIFF(s, dt_debut, dt_fin) = 3600), -- traite aussi le cas fin < debut
+    CONSTRAINT heure_pile CHECK ((DATEPART(mi, dt_debut) = 0) AND (DATEPART(s, dt_debut) = 0)),
 );
 GO
 
@@ -109,7 +107,7 @@ CREATE TABLE Aversion(
 );
 GO
 
-INSERT INTO Employe (code_mnemotechnique,numero_avs,prenom,nom,nom_marital,date_naissance,lieu_naissance,adresse,fonction, service) VALUES 
+INSERT INTO Employe (code_mnemotechnique,numero_avs,prenom,nom,nom_marital,date_naissance,lieu_naissance,adresse,fonction, service) VALUES
 	('76A', 123, 'Eric', 'Guan', NULL, '2000-07-25', 'Montréal', '8520 rue Oregon', 'Vétérinaire', 'Médical'),
 	('7AD', 645, 'Eronk', 'Gonk', NULL, '1995-12-14', 'Sherbrooke', '16 croissant Toulon', 'Secrétaire', 'Administratif'),
 	('23B', 245, 'Dan', 'Tremblay', NULL, '1975-02-09', 'Montréal', '75 rue la Fontaine', 'Comptable', 'Administratif'),
@@ -127,7 +125,7 @@ INSERT INTO Employe (code_mnemotechnique,numero_avs,prenom,nom,nom_marital,date_
 	('ASC', 935, 'William', 'Lachapelle', NULL, '1999-08-22', 'Laval', '177 rue Beaupré', 'Gardien', 'Surveillance');
 
 
-INSERT INTO Salaire ( date, montant, code_employe) VALUES 
+INSERT INTO Salaire ( date, montant, code_employe) VALUES
 	( '2024-01-15', 8500.00, '76A'),
 	( '2024-02-15', 10000.00, '76A'),
 	( '2024-03-15', 10000.00, '76A'),
@@ -159,7 +157,7 @@ INSERT INTO Salaire ( date, montant, code_employe) VALUES
 
 
 
-INSERT INTO Gardien (code_employe,grade,taux_occupation) VALUES 
+INSERT INTO Gardien (code_employe,grade,taux_occupation) VALUES
 	('2JD', 'Grade 1', 100.00),
 	('2SF', 'Grade 2', 50.00),
 	('H41', 'Grade 3', 75.00),

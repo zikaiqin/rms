@@ -5,7 +5,9 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Employés</title>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css"/>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined">
         <link rel="stylesheet" href="../styles.css"/>
+        <link rel="stylesheet" href="staff.css"/>
     </head>
     <body class="full-height vert-flex">
         <header class="container">
@@ -19,24 +21,182 @@
                     <li>
                         <details class="dropdown">
                             <summary role="button" class="outline contrast">
-                                Horaires
+                                Surveillances
                             </summary>
                             <ul dir="rtl">
-                                <li><a href="/schedule/#staff">Employé</a></li>
-                                <li><a href="/schedule/#sector">Secteur</a></li>
+                                <li><a href="/schedule/staff">Gardien</a></li>
+                                <li><a href="/schedule/sector">Secteur</a></li>
                             </ul>
                         </details>
                     </li>
-                    <li><a role="link" class="secondary current-page" aria-current="page">Employés</a></li>
                     <li><a href="/sector" class="contrast">Secteurs</a></li>
                     <li><a href="/salary" class="contrast">Salaires</a></li>
+                    <li><a role="link" class="secondary current-page" aria-current="page">Employés</a></li>
                 </ul>
             </nav>
         </header>
-        <main class="container stretch vert-flex">
+        <main class="container stretch vert-flex overflow-auto">
             <!-- Page content here -->
+            <div role="main" class="stretch vert-flex overflow-auto">
+                <table class="striped stretch">
+                    <thead>
+                        <tr>
+                            <th scope="col">Code</th>
+                            <th scope="col">Prénom</th>
+                            <th scope="col">Nom</th>
+                            <th scope="col">Fonction</th>
+                            <th scope="col">Service</th>
+                            <th scope="col">
+                                <span
+                                    role="button"
+                                    class="icon-button secondary outline material-symbols-outlined"
+                                    onclick="reloadRows()"
+                                >refresh</span>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td colspan="8" class="no-data muted"><em>Pas de données</em></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div>
+                <button id="add-new" class="secondary">Nouveau Employé</button>
+            </div>
         </main>
-        <footer class="container"></footer>
+        <footer class="container">
+            <dialog id="edit-modal">
+                <article>
+                    <header>
+                        <button
+                            aria-label="close"
+                            rel="prev"
+                        ></button>
+                        <h3>Ajouter Employé</h3>
+                    </header>
+                    <form id="edit-form" onsubmit="submitDetails(event)">
+                        <label>
+                            Prénom
+                            <input name="prenom" type="text" required autofocus />
+                        </label>
+                        <label>
+                            Nom
+                            <input name="nom" type="text" required />
+                        </label>
+                        <label>
+                            Nom marital
+                            <input name="nom_marital" type="text" />
+                        </label>
+                        <label>
+                            Code mnémotechnique
+                            <input
+                                name="code_mnemotechnique"
+                                type="text"
+                                minlength="3"
+                                maxlength="3"
+                                pattern="[a-zA-Z0-9]+"
+                                oninput="this.value = this.value.toUpperCase()"
+                                required />
+                            <small>Entrez une séquence alphanumérique de 3 caractères</small>
+                        </label>
+                        <label>
+                            Service
+                            <select name="service" onchange="onServiceChange()" required>
+                                <option selected disabled value="">
+                                    Selectionnez un service
+                                </option>
+                                <option data-key="admin">Administratif</option>
+                                <option data-key="surv">Surveillance</option>
+                                <option data-key="med">Médical</option>
+                            </select>
+                        </label>
+                        <label>
+                            Fonction
+                            <select name="fonction" onchange="onFunctionChange()" required disabled>
+                                <option selected disabled value="">
+                                    Selectionnez d'abord le service
+                                </option>
+                            </select>
+                        </label>
+                        <fieldset hidden>
+                            <label>
+                                Grade
+                                <input name="grade" type="text" />
+                            </label>
+                            <label>
+                                Taux d'occupation
+                                <input name="taux_occupation" type="number" min="0" max="100" />
+                                <small>Entrez un nombre entre 0 et 100</small>
+                            </label>
+                        </fieldset>
+                        <label>
+                            Adresse
+                            <input name="adresse" type="text" required />
+                        </label>
+                        <label>
+                            Date de naissance
+                            <input name="date_naissance" type="date" required />
+                        </label>
+                        <label>
+                            Lieu de naissance
+                            <input name="lieu_naissance" type="text" required />
+                        </label>
+                        <label>
+                            Numéro AVS
+                            <input name="numero_avs" type="text" pattern="[0-9]+" required />
+                            <small>Entrez une séquence numérique</small>
+                        </label>
+                        <input type="submit" hidden />
+                    </form>
+                    <footer>
+                        <button aria-label="close" class="secondary">
+                            Annuler
+                        </button>
+                        <button onclick="triggerSubmit()">
+                            Ajouter
+                        </button>
+                    </footer>
+                </article>
+            </dialog>
+            <dialog id="details-modal">
+                <article>
+                    <header>
+                        <button
+                            aria-label="close"
+                            rel="prev"
+                        ></button>
+                        <h3>Détails Employé</h3>
+                    </header>
+                    <form id="details-form"></form>
+                    <footer>
+                        <button aria-label="close" class="secondary">
+                            Fermer
+                        </button>
+                        <button onclick="openDeleteModal()">
+                            Supprimer
+                        </button>
+                    </footer>
+                </article>
+            </dialog>
+            <dialog id="delete-modal">
+                <article>
+                    <h3>Voulez-vous supprimer cet employé?</h3>
+                    <footer>
+                        <button aria-label="close" class="secondary">
+                            Annuler
+                        </button>
+                        <button onclick="confirmDelete()">
+                            Supprimer
+                        </button>
+                    </footer>
+                </article>
+            </dialog>
+        </footer>
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+        <script src="../requests.js"></script>
+        <script src="../modal.js"></script>
+        <script src="staff.js"></script>
     </body>
 </html>

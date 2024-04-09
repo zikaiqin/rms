@@ -18,3 +18,34 @@
 .current-page {
     text-decoration: none !important;
 }
+
+.icon-button {
+    padding: 0 !important;
+    border: none;
+}
+
+.muted {
+    color: var(--pico-muted-color);
+}
+
+.no-data {
+    text-align: center;
+}
+
+kbd.secondary {
+    background-color: var(--pico-secondary-background);
+}
+
+table thead,
+table tfoot {
+  position: sticky;
+}
+table thead {
+  inset-block-start: 0; /* "top" */
+}
+table tfoot {
+  inset-block-end: 0; /* "bottom" */
+}
+table span {
+    display: table-cell !important;
+}

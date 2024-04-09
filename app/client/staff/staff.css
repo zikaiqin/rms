@@ -1,0 +1,30 @@
+table {
+    margin-bottom: 0;
+}
+
+tfoot td {
+    text-align: center;
+}
+
+div[role=main] {
+    margin-bottom: var(--pico-typography-spacing-vertical);
+}
+
+div:has(#add-new) {
+    text-align: center;
+}
+
+:is(#details-modal, #edit-modal) article {
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+:is(#details-modal, #edit-modal) header {
+    position: sticky;
+    top: 0;
+}
+
+:is(#details-modal, #edit-modal) footer {
+    position: sticky;
+    bottom: 0;
+}
