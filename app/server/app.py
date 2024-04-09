@@ -241,7 +241,7 @@ def get_schedule_options(view):
         case 'sector':
             sql ='SELECT DISTINCT nom_secteur FROM Parcelle'
         case 'staff':
-            sql = "SELECT code_mnemotechnique FROM Employe WHERE fonction LIKE 'Gardien'"
+            sql = "SELECT code_mnemotechnique, prenom, COALESCE(nom_marital, nom) FROM Employe WHERE fonction LIKE 'Gardien'"
         case _:
             abort(404)
     try:
@@ -250,7 +250,7 @@ def get_schedule_options(view):
     except Exception as e:
         abort(make_response(jsonify(message=str(e)), 500))
 
-    return [row[0] for row in cur.fetchall()]
+    return [(row[0] if view == 'sector' else list(row)) for row in cur.fetchall()]
 
 
 @app.route('/schedule/sector', methods=['GET'])
@@ -261,6 +261,7 @@ def get_sector_schedule():
             raise Exception()
     except:
         abort(make_response(jsonify(message='Arguments manquants'), 400))
+
     sql_header = 'SELECT num_parcelle FROM Parcelle WHERE nom_secteur LIKE ?; '
     sql = (
         "WITH T AS ("
@@ -288,3 +289,34 @@ def get_sector_schedule():
         'data': [list(row) for row in next(gen)]
     }
     return res
+
+
+@app.route('/schedule/staff', methods=['GET'])
+def get_staff_schedule():
+    try:
+        keys = ['code', 'start', 'end']
+        code, start, end = (request.args[key] for key in keys)
+        if not code or not start or not end:
+            raise Exception()
+    except:
+        abort(make_response(jsonify(message='Arguments manquants'), 400))
+
+    sql_check = "SELECT COUNT(*) AS count FROM Gardien WHERE code_employe=?; "
+    sql = (
+        "SELECT CONVERT(VARCHAR(20), dt_debut, 120) AS dt_debut, Parcelle.num_parcelle as num_parcelle, nom_secteur "
+        "FROM Surveillance JOIN Parcelle "
+        "ON Surveillance.num_parcelle = Parcelle.num_parcelle "
+        "WHERE code_gardien=? "
+        "AND dt_debut BETWEEN ? AND ?"
+    )
+    try:
+        cur = cnxn.cursor()
+        cur.execute(sql_check + sql, code, code, start, end)
+    except Exception as e:
+        abort(make_response(jsonify(message=str(e)), 500))
+
+    count = next(gen := fetch_while_next(cur))
+    if not count or count[0][0] < 1:
+        abort(make_response(jsonify(message=f'Aucun gardien associé au code {code}'), 404))
+    
+    return [list(row) for row in next(gen)]

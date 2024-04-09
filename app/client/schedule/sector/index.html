@@ -40,19 +40,20 @@
             <article class="stretch vert-flex overflow-auto">
                 <div role="heading">
                     <h3>Horaire du jour</h3>
-                    <select id="entity-picker" onchange="reloadRows()">
-                    </select>
+                    <select id="entity-picker" onchange="reloadRows()"></select>
                     <input type="date" id="date-picker" onchange="reloadRows()" />
                 </div>
-                <table class="striped stretch">
-                    <thead>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td colspan="8" class="no-data muted"><em>Pas de données</em></td>
-                        </tr>
-                    </tbody>
-                </table>
+                <div class="stretch vert-flex overflow-auto">
+                    <table class="striped stretch">
+                        <thead>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="8" class="no-data muted"><em>Pas de données</em></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </article>
         </main>
         <footer class="container"></footer>

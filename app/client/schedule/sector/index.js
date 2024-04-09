@@ -47,17 +47,19 @@ const buildTable = (header, data) => {
         max = Math.max(max, hour);
         schedule[parcel][hour] = [code, fname, lname];
     });
-    const hours = Array(max + 1 - min).fill().map((_, i) => i + min);
-    const rows = hours.map((hour) => `<tr><th scope="row">${hour.toString().padStart(2, '0')}:00</th>${
-        header.map((parcel) => `<td>${buildEmployee(schedule[parcel][hour]) ?? '<kbd class="secondary">N/A</kbd><i class="muted">Non surveillé</i>'}</td>`)
-    }</tr>`);
+    const hours = Array.from({length: max + 1 - min}, (_, i) => i + min);
+    const rows = hours.map((hour) => {
+        const rowHeader = `<th scope="row">${hour.toString().padStart(2, '0')}:00</th>`;
+        const cells = header.map((parcel) => `<td>${buildEmployee(schedule[parcel][hour])}</td>`);
+        return `<tr>${rowHeader}${cells}</tr>`;
+    });
     $('thead').empty().append(head);
     $('tbody').empty().append(rows);
 }
 
 const buildEmployee = (employee) => {
     if (!employee || employee.length !== 3) {
-        return undefined;
+        return '<kbd class="secondary">N/A</kbd><i class="muted">Non surveillé</i>';
     }
     const [code, fname, lname] = employee;
     return `<kbd>${code}</kbd>${fname} ${lname}`

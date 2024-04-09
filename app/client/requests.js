@@ -65,6 +65,10 @@ class Route {
                 options: {
                     get: () => Route.withAlert($.get(apiRoot.concat('/schedule/staff/options')))
                 },
+
+                between: {
+                    get: (code, start, end) => Route.withAlert($.get(apiRoot.concat('/schedule/staff'), {code, start, end}))
+                },
             },
 
             sector: {

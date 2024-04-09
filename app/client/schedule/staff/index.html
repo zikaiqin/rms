@@ -40,19 +40,21 @@
             <article class="stretch vert-flex overflow-auto">
                 <div role="heading">
                     <h3>Horaire de la semaine</h3>
-                    <select id="entity-picker">
-                    </select>
-                    <input type="week" id="date-picker" />
+                    <kbd id="code-hint" class="secondary">N/A</kbd>
+                    <select id="entity-picker" onchange="onEntityChange()"></select>
+                    <input type="week" id="date-picker" onchange="reloadRows()" />
                 </div>
-                <table class="striped stretch">
-                    <thead>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td colspan="8" class="no-data muted"><em>Pas de données</em></td>
-                        </tr>
-                    </tbody>
-                </table>
+                <div class="stretch vert-flex overflow-auto">
+                    <table class="striped stretch">
+                        <thead>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="8" class="no-data muted"><em>Pas de données</em></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </article>
         </main>
         <footer class="container"></footer>
