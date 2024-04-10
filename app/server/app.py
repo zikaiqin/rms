@@ -361,7 +361,7 @@ def schedule_sector():
         "SELECT FORMAT(dt_debut, 'hh:mm') AS time, Parcelle.num_parcelle as num_parcelle, code_gardien "
         "FROM Surveillance JOIN Parcelle "
         "ON Surveillance.num_parcelle = Parcelle.num_parcelle "
-        "WHERE FORMAT(dt_debut, 'yyyy-MM-dd') LIKE ? "
+        "WHERE CONVERT(DATE, dt_debut) = ? "
         "AND nom_secteur LIKE ?) "
         "SELECT time, num_parcelle, code_gardien, prenom, COALESCE(nom_marital, nom) "
         "FROM T JOIN Employe "
