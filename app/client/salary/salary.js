@@ -59,8 +59,7 @@ const fillRows = (data) => {
         const cells = row.map((val, idx) => {
             switch (idx) {
                 case 5:
-                    return `<td>${(val === null) ? '<i class="muted">Temps plein</i>' :
-                        Number(val) === 100 ? 'Temps plein' : `${val}%`}</td>`;
+                    return `<td>${parseOccupation(val)}</td>`;
                 case 6:
                     return `<td>\$${val}</td>`
                 default:
@@ -73,6 +72,8 @@ const fillRows = (data) => {
     $('tbody').empty().append(rows);
     $('tbody span').on('click', onClickEdit);
 };
+
+const parseOccupation = (val) => (val === null) ? '<i class="muted">Temps plein</i>' : Number(val) === 100 ? 'Temps plein' : `${val}%`
 
 const onClickEdit = (e) => {
     const btn = $(e.target);
@@ -108,7 +109,7 @@ const onClickEdit = (e) => {
                 fillRows(data);
             });
         });
-    })
+    });
     cancel.on('click', onCancel);
     confirm.on('click', () => {
         trigger.trigger('click');
@@ -117,6 +118,66 @@ const onClickEdit = (e) => {
     parentCell.append(confirm, cancel); 
 }
 
-const onClickAdd = (e) => {
-    console.log(e);
+const onClickAdd = () => {
+    const date = $('#month-input').val();
+    $('tbody span').attr('disabled', true);
+    Route.salary.add.get(date).then((data) => {
+        const row = $('<tr></tr>');
+        const codeMap = Object.fromEntries(data.map(([code, ...rest]) => [code, [...rest]]));
+        const options = data.map(([code, ..._]) => `<option>${code}</option>`);
+        const select = $('<select id="code-select"></select>').append(options);
+        const cells = data[0].slice(1).map((val, idx) => {
+            return idx === 4 ? $(`<td>${parseOccupation(val)}</td>`) : $(`<td>${val}</td>`)
+        });
+        select.on('change', function() {
+            const code = $(this).find(':selected').text();
+            const vals = codeMap[code];
+            cells.forEach((cell, idx) => {
+                const val = vals[idx];
+                if (idx === 4 && val === null) {
+                    cell.empty().append(parseOccupation(val));
+                } else {
+                    cell.text(idx === 4 ? parseOccupation(val) : val);
+                }
+            })
+        })
+        const cancel = $('<span role="button" class="icon-button secondary outline material-symbols-outlined">cancel</span>');
+        const confirm = $('<span role="button" class="icon-button secondary outline material-symbols-outlined">check_circle</span>');
+        const form = $('<form></form>');
+        const trigger = $('<input type="submit" hidden />');
+        const input = $(`<input id="edit-input" type="number" min="0" placeholder="0" />`);
+        form.append(input, trigger);
+        const onCancel = () => {
+            $(row).remove();
+            $('tbody span').removeAttr('disabled');
+        };
+        form.on('submit', (e) => {
+            e.preventDefault();
+            const val = input.val()
+            if (!val) {
+                onCancel();
+                return;
+            }
+            const code = select.find(':selected').text();
+            const date = $('#month-input').val();
+            Route.salary.add.post(code, date, val).finally(() => {
+                Route.salary.all.get(date).then((data) => {
+                    fillRows(data);
+                });
+            });
+        });
+        cancel.on('click', onCancel);
+        confirm.on('click', () => {
+            trigger.trigger('click');
+        });
+        row.append(
+            $('<td></td>').append(select),
+            ...cells,
+            $('<td></td>').append(form),
+            $('<td></td>').append(confirm, cancel),
+        );
+        $('tbody').append(row);
+        const el = $('div[role="main"]')
+        el.scrollTop(el.prop('scrollHeight'));
+    });
 }

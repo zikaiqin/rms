@@ -9,10 +9,10 @@
     margin: 0 var(--pico-block-spacing-horizontal);
 }
 
-#edit-input {
+#edit-input, #code-select {
     margin-bottom: 0;
 }
 
-td:has(span) {
+:is(th, td):has(span) {
     direction: rtl;
 }
