@@ -118,7 +118,8 @@ const onClickEdit = (e) => {
         trigger.trigger('click');
     });
     salaryCell.empty().append(form);
-    parentCell.append(confirm, cancel); 
+    parentCell.append(confirm, cancel);
+    input.trigger('focus');
 }
 
 const onClickAdd = () => {
@@ -148,7 +149,7 @@ const onClickAdd = () => {
         const confirm = $(confirmIcon);
         const form = $('<form></form>');
         const trigger = $('<input type="submit" hidden />');
-        const input = $(`<input id="edit-input" type="number" min="0" placeholder="0" />`);
+        const input = $(`<input id="edit-input" type="number" min="0" />`);
         form.append(input, trigger);
         const onCancel = () => {
             $(row).remove();
@@ -180,7 +181,6 @@ const onClickAdd = () => {
             $('<td></td>').append(confirm, cancel),
         );
         $('tbody').append(row);
-        const el = $('div[role="main"]')
-        el.scrollTop(el.prop('scrollHeight'));
+        input.trigger('focus');
     });
 }
