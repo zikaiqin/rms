@@ -3,6 +3,7 @@ from flask import Flask, request, abort, make_response, jsonify
 from flask_cors import CORS
 from datetime import datetime
 import re
+import math
 
 DRIVER = 'ODBC Driver 18 for SQL Server'
 HOST_NAME = 'localhost'
@@ -181,7 +182,7 @@ def staff_add():
 
 
 @app.route('/sector', methods=['GET'])
-def sector_get():
+def sector():
     sql_parcels = 'SELECT * FROM Parcelle; '
     sql_temp = (
         'SELECT nom_secteur, {key}, prenom, COALESCE(nom_marital, nom) AS nom '
@@ -215,7 +216,7 @@ def sector_get():
 
 
 @app.route('/salary', methods=['GET'])
-def get_salary():
+def salary():
     try:
         # get '?date=...' from query string
         arg = request.args['date']
@@ -235,8 +236,42 @@ def get_salary():
     return [list(row) for row in cur.fetchall()]
 
 
+@app.route('/salary/edit', methods=['POST'])
+def salary_edit():
+    try:
+        # get code, salary from form data
+        keys = ['code', 'date', 'salary']
+        CODE, datestr, SALARY = (request.form[key] for key in keys)
+        if not CODE or len(CODE) != 3:
+            raise Exception('Code mnémotechnique manquant ou mal formaté')
+        if not datestr or not (DATE := datetime.strptime(datestr, '%Y-%m')):
+            raise Exception('Date manquante ou mal formatée')
+        if not SALARY or math.isnan(nbr := float(SALARY)) or nbr < 0:
+            raise Exception('Salaire manquant ou mal formaté')
+    except ValueError:
+        abort(make_response(jsonify(message='Salaire mal formaté'), 400))
+    except Exception as e:
+        abort(make_response(jsonify(message=str(e)), 400))
+
+    try:
+        cur = cnxn.cursor()
+        if (nbr == 0):
+            sql = 'DELETE FROM Salaire WHERE code_employe=? AND date=?'
+            cur.execute(sql, CODE, str(DATE.date()))
+        else:
+            sql = 'UPDATE Salaire SET montant=? WHERE code_employe=? AND date=?'
+            cur.execute(sql, SALARY, CODE, str(DATE.date()))
+    except Exception as e:
+        abort(make_response(jsonify(message=str(e)), 500))
+
+    if cur.rowcount == 0:
+        abort(make_response(jsonify(message=f'Aucun salaire associé à l\'employé "{CODE}" le {datestr}'), 404))
+
+    return jsonify(success=True)
+
+
 @app.route('/schedule/<view>/options', methods=['GET'])
-def get_schedule_options(view):
+def schedule_options(view):
     match view:
         case 'sector':
             sql ='SELECT DISTINCT nom_secteur FROM Parcelle'
@@ -254,7 +289,7 @@ def get_schedule_options(view):
 
 
 @app.route('/schedule/sector', methods=['GET'])
-def get_sector_schedule():
+def schedule_sector():
     try:
         date, sector = request.args['date'], request.args['sector']
         if not date or not sector:
@@ -292,7 +327,7 @@ def get_sector_schedule():
 
 
 @app.route('/schedule/staff', methods=['GET'])
-def get_staff_schedule():
+def schedule_staff():
     try:
         keys = ['code', 'start', 'end']
         code, start, end = (request.args[key] for key in keys)

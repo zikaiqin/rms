@@ -47,6 +47,7 @@ const clampedMonth = (min, max, val) => {
 }
 
 const fillRows = (data) => {
+    $('#add-new').removeAttr('disabled');
     if (!data.length) {
         const noData = `<tr><td colspan="8" class="no-data muted"><em>Pas de données</em></td></tr>`
         $('table').addClass('stretch');
@@ -54,6 +55,7 @@ const fillRows = (data) => {
         return;
     }
     rows = data.map((row) => {
+        const editBtn = `<td><span role="button" class="icon-button secondary outline material-symbols-outlined">edit</span></td>`
         const cells = row.map((val, idx) => {
             switch (idx) {
                 case 5:
@@ -65,8 +67,56 @@ const fillRows = (data) => {
                     return `<td>${val}</td>`
             }
         });
-        return $(`<tr>${cells.join('')}</tr>`);
+        return `<tr>${cells.join('')}${editBtn}</tr>`;
     });
     $('table').removeClass('stretch');
     $('tbody').empty().append(rows);
+    $('tbody span').on('click', onClickEdit);
 };
+
+const onClickEdit = (e) => {
+    const btn = $(e.target);
+    btn.prop('hidden', true);
+    $('table span').not(btn).attr('disabled', true);
+    const parentCell = btn.parent();
+    const salaryCell = parentCell.siblings().eq(-1);
+    const text = salaryCell.text();
+    const val = text.slice(1);
+    const cancel = $('<span role="button" class="icon-button secondary outline material-symbols-outlined">cancel</span>');
+    const confirm = $('<span role="button" class="icon-button secondary outline material-symbols-outlined">check_circle</span>');
+    const form = $('<form></form>');
+    const trigger = $('<input type="submit" hidden />');
+    const input = $(`<input id="edit-input" type="number" min="0" placeholder="${val}" value="${val}" />`);
+    form.append(input, trigger);
+    const onCancel = () => {
+        parentCell.find('span').not(btn).remove();
+        salaryCell.empty().text(text);
+        btn.prop('hidden', false);
+        $('table span').not(btn).removeAttr('disabled');
+    };
+    form.on('submit', (e) => {
+        e.preventDefault();
+        const newVal = input.val()
+        if (val === newVal) {
+            onCancel();
+            return;
+        }
+        const code = parentCell.siblings().eq(0).text();
+        const date = $('#month-input').val();
+        Route.salary.edit.post(code, date, newVal).finally(() => {
+            Route.salary.all.get(date).then((data) => {
+                fillRows(data);
+            });
+        });
+    })
+    cancel.on('click', onCancel);
+    confirm.on('click', () => {
+        trigger.trigger('click');
+    });
+    salaryCell.empty().append(form);
+    parentCell.append(confirm, cancel); 
+}
+
+const onClickAdd = (e) => {
+    console.log(e);
+}
