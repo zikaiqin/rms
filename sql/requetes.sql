@@ -99,7 +99,7 @@ JOIN ChefDeSecteur ON Secteur.code_chef_secteur = ChefDeSecteur.code_employe
 WHERE ChefDeSecteur.code_employe = '0GS'
 GO
 
-RAISERROR('Stop execution', 25, -1)
+SET NOEXEC ON;
 
 
 -------------------------------------------------------------------------------------
