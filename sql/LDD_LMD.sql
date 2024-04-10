@@ -1,3 +1,4 @@
+-- LDD
 USE master
 DROP DATABASE IF EXISTS ProjetSession;
 GO
@@ -107,6 +108,8 @@ CREATE TABLE Aversion(
 );
 GO
 
+-- LMD
+
 INSERT INTO Employe (code_mnemotechnique,numero_avs,prenom,nom,nom_marital,date_naissance,lieu_naissance,adresse,fonction, service) VALUES
 	('76A', 123, 'Eric', 'Guan', NULL, '2000-07-25', 'Montréal', '8520 rue Oregon', 'Vétérinaire', 'Médical'),
 	('7AD', 645, 'Eronk', 'Gonk', NULL, '1995-12-14', 'Sherbrooke', '16 croissant Toulon', 'Secrétaire', 'Administratif'),
@@ -123,7 +126,6 @@ INSERT INTO Employe (code_mnemotechnique,numero_avs,prenom,nom,nom_marital,date_
 	('1DJ', 180, 'Sandra', 'Bouchard', NULL, '2000-01-12', 'Montréal', '1 rue de la gare', 'Comptable', 'Administratif'),
 	('632', 951, 'Louis', 'Morin', NULL, '1996-04-25', 'Québec', '1897 rue Breton', 'Infirmier', 'Médical'),
 	('ASC', 935, 'William', 'Lachapelle', NULL, '1999-08-22', 'Laval', '177 rue Beaupré', 'Gardien', 'Surveillance');
-
 
 INSERT INTO Salaire ( date, montant, code_employe) VALUES
 	( '2024-01-15', 8500.00, '76A'),
@@ -154,8 +156,6 @@ INSERT INTO Salaire ( date, montant, code_employe) VALUES
 	( '2023-06-15', 5200.00, '632'),
 	( '2023-06-15', 7000.00, '632'),
 	( '2024-04-15', 7900.00, 'ASC');
-
-
 
 INSERT INTO Gardien (code_employe,grade,taux_occupation) VALUES
 	('2JD', 'Grade 1', 100.00),
