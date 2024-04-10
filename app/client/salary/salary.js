@@ -1,3 +1,6 @@
+const confirmIcon = '<span role="button" class="icon-button secondary outline material-symbols-outlined" title="Confirmer">check_circle</span>'
+const cancelIcon = '<span role="button" class="icon-button secondary outline material-symbols-outlined" title="Annuler">cancel</span>'
+
 $(() => {
     setupSelect();
 });
@@ -55,7 +58,7 @@ const fillRows = (data) => {
         return;
     }
     rows = data.map((row) => {
-        const editBtn = `<td><span role="button" class="icon-button secondary outline material-symbols-outlined">edit</span></td>`
+        const editBtn = `<td><span role="button" class="icon-button secondary outline material-symbols-outlined" title="Modifier">edit</span></td>`
         const cells = row.map((val, idx) => {
             switch (idx) {
                 case 5:
@@ -83,8 +86,8 @@ const onClickEdit = (e) => {
     const salaryCell = parentCell.siblings().eq(-1);
     const text = salaryCell.text();
     const val = text.slice(1);
-    const cancel = $('<span role="button" class="icon-button secondary outline material-symbols-outlined">cancel</span>');
-    const confirm = $('<span role="button" class="icon-button secondary outline material-symbols-outlined">check_circle</span>');
+    const cancel = $(cancelIcon);
+    const confirm = $(confirmIcon);
     const form = $('<form></form>');
     const trigger = $('<input type="submit" hidden />');
     const input = $(`<input id="edit-input" type="number" min="0" placeholder="${val}" value="${val}" />`);
@@ -141,8 +144,8 @@ const onClickAdd = () => {
                 }
             })
         })
-        const cancel = $('<span role="button" class="icon-button secondary outline material-symbols-outlined">cancel</span>');
-        const confirm = $('<span role="button" class="icon-button secondary outline material-symbols-outlined">check_circle</span>');
+        const cancel = $(cancelIcon);
+        const confirm = $(confirmIcon);
         const form = $('<form></form>');
         const trigger = $('<input type="submit" hidden />');
         const input = $(`<input id="edit-input" type="number" min="0" placeholder="0" />`);
