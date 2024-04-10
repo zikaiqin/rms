@@ -5,6 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Employés</title>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css"/>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.colors.min.css"/>
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined">
         <link rel="stylesheet" href="../styles.css"/>
         <link rel="stylesheet" href="staff.css"/>
@@ -174,7 +175,7 @@
                         <button aria-label="close" class="secondary">
                             Fermer
                         </button>
-                        <button onclick="openDeleteModal()">
+                        <button onclick="openDeleteModal()" class="danger">
                             Supprimer
                         </button>
                     </footer>
@@ -187,7 +188,7 @@
                         <button aria-label="close" class="secondary">
                             Annuler
                         </button>
-                        <button onclick="confirmDelete()">
+                        <button onclick="confirmDelete()" class="danger">
                             Supprimer
                         </button>
                     </footer>

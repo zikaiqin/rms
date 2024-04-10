@@ -1,5 +1,5 @@
 # Projet de session IFT2935
 
-App source code in `/app`
+Les fichiers de l'application se trouvent dans le répertoire `/app`.
 
-SQL scripts in `/sql`
+Les scripts SQL sont dans le répertoire `/sql`.
