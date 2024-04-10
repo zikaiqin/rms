@@ -126,6 +126,7 @@ INSERT INTO Employe (code_mnemotechnique,numero_avs,prenom,nom,nom_marital,date_
 	('1DJ', 180, 'Sandra', 'Bouchard', NULL, '2000-01-12', 'Montréal', '1 rue de la gare', 'Comptable', 'Administratif'),
 	('632', 951, 'Louis', 'Morin', NULL, '1996-04-25', 'Québec', '1897 rue Breton', 'Infirmier', 'Médical'),
 	('ASC', 935, 'William', 'Lachapelle', NULL, '1999-08-22', 'Laval', '177 rue Beaupré', 'Gardien', 'Surveillance');
+GO
 
 INSERT INTO Salaire ( date, montant, code_employe) VALUES
 	( '2024-01-15', 8500.00, '76A'),
@@ -156,6 +157,7 @@ INSERT INTO Salaire ( date, montant, code_employe) VALUES
 	( '2023-06-15', 5200.00, '632'),
 	( '2023-06-15', 7000.00, '632'),
 	( '2024-04-15', 7900.00, 'ASC');
+GO
 
 INSERT INTO Gardien (code_employe,grade,taux_occupation) VALUES
 	('2JD', 'Grade 1', 100.00),
@@ -163,16 +165,19 @@ INSERT INTO Gardien (code_employe,grade,taux_occupation) VALUES
 	('H41', 'Grade 3', 75.00),
 	('CE4', 'Grade 4', 90.00),
 	('ASC', 'Grade 6', 100.00);
+GO
 
 INSERT INTO ChefDeSecteur (code_employe) VALUES
 	('0GS'),
 	('VY6');
+GO
 
 INSERT INTO Secteur(nom_secteur, code_chef_secteur) VALUES
 	('Mammifère', '0GS'),
 	('Oiseau', '0GS'),
 	('Reptile', 'VY6'),
 	('Aquarium', 'VY6');
+GO
 
 INSERT INTO Parcelle(num_parcelle,nom_secteur) VALUES
 	(1, 'Mammifère'),
@@ -184,6 +189,7 @@ INSERT INTO Parcelle(num_parcelle,nom_secteur) VALUES
 	(7, 'Aquarium'),
 	(8, 'Aquarium'),
 	(9, 'Aquarium');
+GO
 
 INSERT INTO Surveillance(num_parcelle,code_gardien, dt_debut,dt_fin) VALUES
 	(1, '2JD', '2024-04-01 10:00:00', '2024-04-01 11:00:00'),
@@ -199,6 +205,7 @@ INSERT INTO Surveillance(num_parcelle,code_gardien, dt_debut,dt_fin) VALUES
 	(8, 'H41', '2024-04-07 13:00:00', '2024-04-07 14:00:00'),
 	(9, 'CE4', '2024-04-04 14:00:00', '2024-04-04 15:00:00'),
 	(9, 'ASC', '2024-04-06 16:00:00', '2024-04-06 17:00:00');
+GO
 
 INSERT INTO Preference (code_gardien, nom_secteur) VALUES
 	('2JD', 'Reptile'),
@@ -208,6 +215,7 @@ INSERT INTO Preference (code_gardien, nom_secteur) VALUES
 	('H41', 'Reptile'),
 	('ASC', 'Mammifère'),
 	('ASC', 'Aquarium');
+GO
 
 INSERT INTO Aversion (code_gardien, nom_secteur) VALUES
 	('2JD', 'Aquarium'),
@@ -215,3 +223,4 @@ INSERT INTO Aversion (code_gardien, nom_secteur) VALUES
 	('2SF', 'Aquarium'),
 	('CE4', 'Reptile'),
 	('ASC', 'Oiseau');
+GO
