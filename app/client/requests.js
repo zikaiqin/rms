@@ -55,6 +55,16 @@ class Route {
             all: {
                 get: (date) => Route.withAlert($.get(apiRoot.concat('/salary'), {date}))
             },
+
+            edit: {
+                post: (code, date, salary) => Route.withAlert($.post(apiRoot.concat('/salary/edit'), {code, date, salary}))
+            },
+
+            add: {
+                get: (date) => Route.withAlert($.get(apiRoot.concat('/salary/add'), {date})),
+
+                post: (code, date, salary) => Route.withAlert($.post(apiRoot.concat('/salary/add'), {code, date, salary}))
+            },
         }
     }
 

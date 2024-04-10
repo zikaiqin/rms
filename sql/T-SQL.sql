@@ -94,7 +94,7 @@ RETURNS TABLE
 AS
 RETURN
     WITH T AS (
-        SELECT code_mnemotechnique, prenom, COALESCE(nom, nom_marital) AS nom, numero_avs, fonction, taux_occupation
+        SELECT code_mnemotechnique, prenom, COALESCE(nom_marital, nom) AS nom, numero_avs, fonction, taux_occupation
         FROM Employe LEFT JOIN Gardien
         ON code_mnemotechnique = code_employe)
     SELECT code_mnemotechnique, prenom, nom, numero_avs, fonction, taux_occupation, montant AS salaire

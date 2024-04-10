@@ -49,3 +49,14 @@ table tfoot {
 table span {
     display: table-cell !important;
 }
+
+.danger {
+    --pico-background-color: var(--pico-color-red-600);
+    --pico-border-color: var(--pico-color-red-600);
+    --pico-primary-focus: rgba(232, 2, 2, 0.5);
+}
+
+.danger:is(:hover,:active,:focus) {
+    --pico-background-color: var(--pico-color-red-550);
+    --pico-border-color: var(--pico-color-red-550);
+}

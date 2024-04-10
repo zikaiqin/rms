@@ -22,7 +22,7 @@ const reloadRows = () => {
         }
         rows = data.map((row) => {
             const moreButton =
-                `<span role="button" class="icon-button secondary outline material-symbols-outlined">open_in_new</span>`;
+                `<span role="button" class="icon-button secondary outline material-symbols-outlined" title="Voir détails">open_in_new</span>`;
             const cells = [...row, moreButton].map((val) => `<td>${val}</td>`);
             return $(`<tr>${cells.join('')}</tr>`);
         });

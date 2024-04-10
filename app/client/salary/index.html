@@ -48,6 +48,15 @@
                             <th scope="col">Fonction</th>
                             <th scope="col">Taux d'occupation</th>
                             <th scope="col">Salaire</th>
+                            <th>
+                                <span
+                                    role="button"
+                                    id="add-new"
+                                    class="icon-button secondary outline material-symbols-outlined"
+                                    onclick="onClickAdd()"
+                                    title="Nouveau"
+                                >add_circle</span>
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
@@ -57,20 +66,18 @@
                     </tbody>
                 </table>
             </div>
-            <div>
-                <div class="month-container">
-                    <span
-                        role="button"
-                        id="month-prev"
-                        class="icon-button contrast outline material-symbols-outlined"
-                    >arrow_back_ios</span>
-                    <input id="month-input" type="month">
-                    <span
-                        role="button"
-                        id="month-next"
-                        class="icon-button contrast outline material-symbols-outlined"
-                    >arrow_forward_ios</span>
-                </div>
+            <div class="month-container">
+                <span
+                    role="button"
+                    id="month-prev"
+                    class="icon-button contrast outline material-symbols-outlined"
+                >arrow_back_ios</span>
+                <input id="month-input" type="month">
+                <span
+                    role="button"
+                    id="month-next"
+                    class="icon-button contrast outline material-symbols-outlined"
+                >arrow_forward_ios</span>
             </div>
         </main>
         <footer class="container">
