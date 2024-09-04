@@ -15,14 +15,14 @@ $(() => {
 const reloadRows = () => {
     Route.staff.all.get().then((data) => {
         if (!data.length) {
-            const noData = `<tr><td colspan="8" class="no-data muted"><em>Pas de données</em></td></tr>`
+            const noData = `<tr><td colspan="6" class="no-data muted"><em>Pas de données</em></td></tr>`
             $('table').addClass('stretch');
             $('tbody').empty().append(noData);
             return;
         }
         rows = data.map((row) => {
             const moreButton =
-                `<span role="button" class="icon-button secondary outline material-symbols-outlined" title="Voir détails">open_in_new</span>`;
+                `<span role="button" class="icon-button secondary outline material-symbols-outlined" title="Voir détails">more_horiz</span>`;
             const cells = [...row, moreButton].map((val) => `<td>${val}</td>`);
             return $(`<tr>${cells.join('')}</tr>`);
         });

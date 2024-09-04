@@ -32,24 +32,6 @@
     text-align: center;
 }
 
-kbd.secondary {
-    background-color: var(--pico-secondary-background);
-}
-
-table thead,
-table tfoot {
-  position: sticky;
-}
-table thead {
-  inset-block-start: 0; /* "top" */
-}
-table tfoot {
-  inset-block-end: 0; /* "bottom" */
-}
-table span {
-    display: table-cell !important;
-}
-
 .danger {
     --pico-background-color: var(--pico-color-red-600);
     --pico-border-color: var(--pico-color-red-600);
@@ -59,4 +41,35 @@ table span {
 .danger:is(:hover,:active,:focus) {
     --pico-background-color: var(--pico-color-red-550);
     --pico-border-color: var(--pico-color-red-550);
+}
+
+kbd.secondary {
+    background-color: var(--pico-secondary-background);
+}
+
+table {
+    thead, tfoot {
+        position: sticky;
+    }
+    thead {
+        inset-block-start: 0; /* "top" */
+    }
+    tfoot {
+        inset-block-end: 0; /* "bottom" */
+    }
+    span {
+        display: table-cell !important;
+    }
+}
+
+/* fucking firefox */
+@-moz-document url-prefix() {
+table:has(.no-data) {
+    :is(thead, tfoot):not(:empty) {
+        height: 1em;
+    }
+    tbody {
+        bottom: 0;
+    }
+}
 }

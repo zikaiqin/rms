@@ -124,7 +124,7 @@ const onClickEdit = (e) => {
 
 const onClickAdd = () => {
     const date = $('#month-input').val();
-    $('tbody span').attr('disabled', true);
+    $('thead span').attr('disabled', true);
     Route.salary.add.get(date).then((data) => {
         const row = $('<tr></tr>');
         const codeMap = Object.fromEntries(data.map(([code, ...rest]) => [code, [...rest]]));
@@ -153,7 +153,7 @@ const onClickAdd = () => {
         form.append(input, trigger);
         const onCancel = () => {
             $(row).remove();
-            $('tbody span').removeAttr('disabled');
+            $('thead span').removeAttr('disabled');
         };
         form.on('submit', (e) => {
             e.preventDefault();
