@@ -49,7 +49,7 @@ const buildTable = (data, start) => {
         max = Math.max(max, hour);
         schedule[date][hour] = [parcel, sector];
     });
-    const hours = Array.from({length: max + 1 - min}, (_, i) => i + min);
+    const hours = Array.from({length: max + 1 - min}, (_, i) => (i + min) % 24);
     const rows = hours.map((hour) => {
         const rowHeader = `<th scope="row">${hour.toString().padStart(2, '0')}:00</th>`;
         const cells = days.map((date) => `<td>${buildParcel(schedule[date][hour])}</td>`)

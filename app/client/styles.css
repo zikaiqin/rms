@@ -1,5 +1,6 @@
 .full-height {
-    height: 100vh;
+    min-height: 100svh;
+    max-height: 100svh;
 }
 
 .vert-flex {
