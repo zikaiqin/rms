@@ -1,23 +1,28 @@
-# Serveur front-end
+# RMS &ndash; Front-End
 
-Ce guide vous expliquera la démarche à suivre pour partir le serveur front-end.
+RMS uses Node.js to serve front-end assets. See the following sections for instructions on how to run this project locally.
 
-## Dépendances
+
+
+## Dependencies
 
 ### Node.js
 
-Il est nécessaire d'installer [Node.js](https://nodejs.org/en/download/) sur votre ordinateur.
+To run this project locally, you must first [install Node.js](https://nodejs.org/en/download).
 
 ### http-server
 
-Le package [http-server](https://www.npmjs.com/package/http-server) sera installé via le terminal lors de la première exécution de la commade de démarrage.
+This project also requires [http-server](https://www.npmjs.com/package/http-server), which is a package for Node.js.
+It is automatically installed when you run the project for the first time.
 
-## Démarrage
 
-Ouvrez le terminal à cet emplacement et exécutez la commande suivante :
 
+## Starting the server
+
+To start the server, open a terminal in this directory and run the following command:
 ```
 npx http-server -p 3000
 ```
+http-server will automatically reload when changes are made to the files it serves.
 
-Si vous êtes un développeur, notez que le serveur est en mode *hot reload* : toute modification aux fichiers sources sera reflétée dans le navigateur une fois que vous rafraîchissez avec <kbd>Ctrl</kbd> + <kbd>F5</kbd>.
+To see the changes, you must *hard reload* the page, which is usually done using the <kbd>Ctrl</kbd> + <kbd>F5</kbd> shortcut.

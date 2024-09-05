@@ -1,5 +1,6 @@
-# Projet de session IFT2935
+# Resource Management System
 
-Les fichiers de l'application se trouvent dans le répertoire `/app`.
+A CRUD app I made for one of my university courses.
 
-Les scripts SQL sont dans le répertoire `/sql`.
+The UI is currently only available in French.
+Localisation efforts are underway.

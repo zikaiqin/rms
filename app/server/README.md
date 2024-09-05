@@ -1,40 +1,49 @@
-# Serveur back-end
+# RMS &ndash; Back-End
 
-Ce guide vous expliquera la démarche à suivre pour partir le serveur back-end.
+RMS uses Python and Flask for its back-end. See the following sections for instructions on how to run this project locally.
 
-## Dépendances
+
+
+## Dependencies
 
 ### Python
 
-Il est nécessaire d'installer la version la plus récente de [Python 3.12](https://www.python.org/downloads/) sur votre ordinateur.
+To run this project locally, you must [install Python 3.12](https://www.python.org/downloads/).
 
 ### Packages
 
-Le serveur requiert aussi l'installation des packages Python suivants :
+The following Python packages are also required for this project:
 
 - [pyodbc](https://pypi.org/project/pyodbc/)
 - [Flask](https://pypi.org/project/Flask/)
 - [Flask-Cors](https://pypi.org/project/Flask-Cors/)
 
-## Démarrage
-
-Ouvrez le terminal à cet emplacement et exécutez la commande suivante :
-
+The easiest way to install a package is by running the following command in the terminal:
 ```
-flask run
+pip install <package-name>
 ```
 
-Si vous êtes un développeur, faites plutôt :
+
+
+## Starting the server
+
+To start the server, open a terminal in this directory and run the following command:
 ```
 flask run --debug
 ```
+The server will start listening on `localhost:5000`.
+The optional `--debug` flag allows Flask to automatically reload when changes to the code are detected.
 
-Ceci active le *hot reload*, ce qui redémarre le serveur automatiquement lorsque vous effectuez des modifications aux fichiers source.
+All routes are documented in the `ROUTES.md` file.
 
-## Débogage
 
-Pour faire rouler le serveur en mode débogage, veuillez consulter le guide de débogage pour
+
+## Debugging the server
+
+There are many ways of [debugging a Flask application](https://flask.palletsprojects.com/en/3.0.x/debugging/).
+Some popular IDEs for instance include built-in tools for that very purpose.
+
+Check out the guides for debugging Flask using
 [PyCharm](https://www.jetbrains.com/help/pycharm/run-debug-configuration-flask-server.html)
-ou
-[VSCode](https://code.visualstudio.com/docs/python/tutorial-flask)
-selon votre choix de IDE.
+or
+[VSCode](https://code.visualstudio.com/docs/python/tutorial-flask).
