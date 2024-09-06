@@ -1,3 +1,7 @@
+import $ from 'jquery';
+import { Staff } from '../common/requests.js';
+import Modal from '../common/modal.js';
+
 $(() => {
     reloadRows();
 
@@ -10,17 +14,29 @@ $(() => {
         onClose: () => { $('#details-form').empty() },
     });
     new Modal('#delete-modal');
+
+    attachListeners();
 });
 
+const attachListeners = () => {
+    $('#refresh').on('click', reloadRows);
+    $('#edit-form').on('submit', submitDetails);
+    $('#service-picker').on('change', onServiceChange);
+    $('#role-picker').on('change', onRoleChange);
+    $('#submit-new').on('click', triggerSubmit);
+    $('#delete').on('click', openDeleteModal);
+    $('#confirm-delete').on('click', confirmDelete);
+}
+
 const reloadRows = () => {
-    Route.staff.all.get().then((data) => {
+    Staff.all.get().then((data) => {
         if (!data.length) {
             const noData = `<tr><td colspan="6" class="no-data muted"><em>Pas de données</em></td></tr>`
             $('table').addClass('stretch');
             $('tbody').empty().append(noData);
             return;
         }
-        rows = data.map((row) => {
+        const rows = data.map((row) => {
             const moreButton =
                 `<span role="button" class="icon-button secondary outline material-symbols-outlined" title="Voir détails">more_horiz</span>`;
             const cells = [...row, moreButton].map((val) => `<td>${val}</td>`);
@@ -40,7 +56,7 @@ const submitDetails = (e) => {
     const data = new FormData(e.target);
     const payload = {};
     data.forEach((val, key) => { payload[key] = val; })
-    Route.staff.add.post(payload).then(() => {
+    Staff.add.post(payload).then(() => {
         reloadRows();
         Modal.get('#edit-modal').close();
     });
@@ -68,9 +84,9 @@ const onServiceChange = () => {
     $('#edit-form select[name="fonction"]').prop('disabled', false).empty().append(def, ...options);
 };
 
-const onFunctionChange = () => {
-    const fonc = $('#edit-form select[name="fonction"] :selected').text().trim();
-    if (fonc === 'Gardien') {
+const onRoleChange = () => {
+    const role = $('#edit-form select[name="fonction"] :selected').text().trim();
+    if (role === 'Gardien') {
         showGuardFieldset();
     } else { 
         hideGuardFieldset();
@@ -102,7 +118,7 @@ const hideGuardFieldset = () => {
 }
 
 const openDetailsModal = (code) => {
-    Route.staff.details.get(code).then((data) => {
+    Staff.details.get(code).then((data) => {
         Modal.get('#details-modal').open(fillModalFields(data));
     });
 };
@@ -113,7 +129,7 @@ const openDeleteModal = () => {
 
 const confirmDelete = () => {
     const code = $('#details-form input[name="code_mnemotechnique"]').val();
-    Route.staff.delete.post(code).then(() => {
+    Staff.delete.post(code).then(() => {
         reloadRows();
         Modal.get('#delete-modal').close().then(() => {
             Modal.get('#details-modal').close();

@@ -49,9 +49,9 @@
                             <th scope="col">Service</th>
                             <th scope="col">
                                 <span
+                                    id="refresh"
                                     role="button"
                                     class="icon-button secondary outline material-symbols-outlined"
-                                    onclick="reloadRows()"
                                     title="Rafraîchir"
                                 >refresh</span>
                             </th>
@@ -78,7 +78,7 @@
                         ></button>
                         <h3>Ajouter Employé</h3>
                     </header>
-                    <form id="edit-form" onsubmit="submitDetails(event)">
+                    <form id="edit-form">
                         <label>
                             Prénom
                             <input name="prenom" type="text" required autofocus />
@@ -105,7 +105,7 @@
                         </label>
                         <label>
                             Service
-                            <select name="service" onchange="onServiceChange()" required>
+                            <select id="service-picker" name="service" required>
                                 <option selected disabled value="">
                                     Selectionnez un service
                                 </option>
@@ -116,7 +116,7 @@
                         </label>
                         <label>
                             Fonction
-                            <select name="fonction" onchange="onRoleChange()" required disabled>
+                            <select id="role-picker" name="fonction" required disabled>
                                 <option selected disabled value="">
                                     Selectionnez d'abord le service
                                 </option>
@@ -156,7 +156,7 @@
                         <button aria-label="close" class="secondary">
                             Annuler
                         </button>
-                        <button onclick="triggerSubmit()">
+                        <button id="submit-new">
                             Ajouter
                         </button>
                     </footer>
@@ -176,7 +176,7 @@
                         <button aria-label="close" class="secondary">
                             Fermer
                         </button>
-                        <button onclick="openDeleteModal()" class="danger">
+                        <button id="delete" class="danger">
                             Supprimer
                         </button>
                     </footer>
@@ -189,16 +189,13 @@
                         <button aria-label="close" class="secondary">
                             Annuler
                         </button>
-                        <button onclick="confirmDelete()" class="danger">
+                        <button id="confirm-delete" class="danger">
                             Supprimer
                         </button>
                     </footer>
                 </article>
             </dialog>
         </footer>
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-        <script src="../scripts/common/requests.js"></script>
-        <script src="../scripts/common/modal.js"></script>
-        <script src="../scripts/pages/staff.js"></script>
+        <script type="module" src="../scripts/pages/staff.js"></script>
     </body>
 </html>

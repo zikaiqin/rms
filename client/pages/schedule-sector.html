@@ -40,8 +40,8 @@
             <article class="stretch vert-flex overflow-auto">
                 <div role="heading">
                     <h3>Horaire du jour</h3>
-                    <select id="entity-picker" onchange="reloadRows()"></select>
-                    <input type="date" id="date-picker" onchange="reloadRows()" />
+                    <select id="entity-picker"></select>
+                    <input type="date" id="date-picker" />
                 </div>
                 <div class="stretch vert-flex overflow-auto">
                     <table class="striped stretch">
@@ -57,8 +57,6 @@
             </article>
         </main>
         <footer class="container"></footer>
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-        <script src="../scripts/common/requests.js"></script>
-        <script src="../scripts/pages/schedule-sector.js"></script>
+        <script type="module" src="../scripts/pages/schedule-sector.js"></script>
     </body>
 </html>

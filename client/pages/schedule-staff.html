@@ -41,8 +41,8 @@
                 <div role="heading">
                     <h3>Horaire de la semaine</h3>
                     <kbd id="code-hint" class="secondary">N/A</kbd>
-                    <select id="entity-picker" onchange="onEntityChange()"></select>
-                    <input type="week" id="date-picker" onchange="reloadRows()" />
+                    <select id="entity-picker"></select>
+                    <input type="week" id="date-picker" />
                 </div>
                 <div class="stretch vert-flex overflow-auto">
                     <table class="striped stretch">
@@ -58,9 +58,6 @@
             </article>
         </main>
         <footer class="container"></footer>
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.30.1/moment.min.js"></script>
-        <script src="../scripts/common/requests.js"></script>
-        <script src="../scripts/pages/schedule-staff.js"></script>
+        <script type="module" src="../scripts/pages/schedule-staff.js"></script>
     </body>
 </html>

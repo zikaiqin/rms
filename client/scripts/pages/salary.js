@@ -1,8 +1,9 @@
-const confirmIcon = '<span role="button" class="icon-button secondary outline material-symbols-outlined" title="Confirmer">check_circle</span>'
-const cancelIcon = '<span role="button" class="icon-button secondary outline material-symbols-outlined" title="Annuler">cancel</span>'
+import $ from 'jquery';
+import { Salary } from '../common/requests';
 
 $(() => {
     setupSelect();
+    $('#add-new').on('click', onClickAdd);
 });
 
 const setupSelect = () => {
@@ -34,7 +35,7 @@ const onChangeMonth = (min, max) => (e) => {
     }
     $('#month-next').attr('disabled', date === max);
     $('#month-prev').attr('disabled', date === min);
-    Route.salary.all.get(date).then((data) => {
+    Salary.all.get(date).then((data) => {
         fillRows(data);
     });
 }
@@ -52,12 +53,10 @@ const clampedMonth = (min, max, val) => {
 const fillRows = (data) => {
     $('#add-new').removeAttr('disabled');
     if (!data.length) {
-        const noData = `<tr><td colspan="8" class="no-data muted"><em>Pas de données</em></td></tr>`
-        $('table').addClass('stretch');
-        $('tbody').empty().append(noData);
+        insertEmptyRow();
         return;
     }
-    rows = data.map((row) => {
+    const rows = data.map((row) => {
         const editBtn = `<td><span role="button" class="icon-button secondary outline material-symbols-outlined" title="Modifier">edit</span></td>`
         const cells = row.map((val, idx) => {
             switch (idx) {
@@ -75,6 +74,12 @@ const fillRows = (data) => {
     $('tbody').empty().append(rows);
     $('tbody span').on('click', onClickEdit);
 };
+
+const insertEmptyRow = () => {
+    const noData = `<tr><td colspan="8" class="no-data muted"><em>Pas de données</em></td></tr>`
+    $('table').addClass('stretch');
+    $('tbody').empty().append(noData);
+}
 
 const parseOccupation = (val) => (val === null) ? '<i class="muted">Temps plein</i>' : Number(val) === 100 ? 'Temps plein' : `${val}%`
 
@@ -107,8 +112,8 @@ const onClickEdit = (e) => {
         }
         const code = parentCell.siblings().eq(0).text();
         const date = $('#month-input').val();
-        Route.salary.edit.post(code, date, newVal).finally(() => {
-            Route.salary.all.get(date).then((data) => {
+        Salary.edit.post(code, date, newVal).finally(() => {
+            Salary.all.get(date).then((data) => {
                 fillRows(data);
             });
         });
@@ -125,7 +130,7 @@ const onClickEdit = (e) => {
 const onClickAdd = () => {
     const date = $('#month-input').val();
     $('thead span').attr('disabled', true);
-    Route.salary.add.get(date).then((data) => {
+    Salary.add.get(date).then((data) => {
         const row = $('<tr></tr>');
         const codeMap = Object.fromEntries(data.map(([code, ...rest]) => [code, [...rest]]));
         const options = data.map(([code, ..._]) => `<option>${code}</option>`);
@@ -154,6 +159,9 @@ const onClickAdd = () => {
         const onCancel = () => {
             $(row).remove();
             $('thead span').removeAttr('disabled');
+            if ($('tbody').children().length === 0) {
+                insertEmptyRow();
+            }
         };
         form.on('submit', (e) => {
             e.preventDefault();
@@ -164,8 +172,8 @@ const onClickAdd = () => {
             }
             const code = select.find(':selected').text();
             const date = $('#month-input').val();
-            Route.salary.add.post(code, date, val).finally(() => {
-                Route.salary.all.get(date).then((data) => {
+            Salary.add.post(code, date, val).finally(() => {
+                Salary.all.get(date).then((data) => {
                     fillRows(data);
                 });
             });
@@ -180,7 +188,14 @@ const onClickAdd = () => {
             $('<td></td>').append(form),
             $('<td></td>').append(confirm, cancel),
         );
+        if ($('tbody').has('.no-data')) {
+            $('tbody').empty();
+            $('table').removeClass('stretch');
+        }
         $('tbody').append(row);
         input.trigger('focus');
     });
 }
+
+const confirmIcon = '<span role="button" class="icon-button secondary outline material-symbols-outlined" title="Confirmer">check_circle</span>'
+const cancelIcon = '<span role="button" class="icon-button secondary outline material-symbols-outlined" title="Annuler">cancel</span>'

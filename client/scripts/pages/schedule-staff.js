@@ -1,3 +1,7 @@
+import $ from 'jquery';
+import moment from 'moment';
+import { Schedule } from '../common/requests';
+
 $(() => {
     rebuildPage()
 });
@@ -6,11 +10,17 @@ const rebuildPage = () => {
     setDate();
     buildOptions().then((code) => {
         const [start, end] = getWeekAsInterval();
-        Route.schedule.staff.between.get(code, start, end).then((data) => {
+        Schedule.staff.between.get(code, start, end).then((data) => {
             buildTable(data, start);
+            attachListeners();
         });
     });
 };
+
+const attachListeners = () => {
+    $('#entity-picker').on('change', onEntityChange);
+    $('#date-picker').on('change', reloadRows);
+}
 
 const setDate = () => {
     const week = `${moment().year()}-W${moment().week()}`;
@@ -18,7 +28,7 @@ const setDate = () => {
 };
 
 const buildOptions = async () => new Promise((resolve, reject) => {
-    Route.schedule.staff.options.get().then((data) => {
+    Schedule.staff.options.get().then((data) => {
         const fst_code = data[0][0];
         resolve(fst_code);
         const options = data.map(([code, fname, lname]) => `<option value="${code}" title="${code}">${fname} ${lname}</option>`);
@@ -73,7 +83,7 @@ const buildParcel = (parcel) => {
 const reloadRows = () => {
     const code = $('#entity-picker').val();
     const [start, end] = getWeekAsInterval();
-    Route.schedule.staff.between.get(code, start, end).then((data) => {
+    Schedule.staff.between.get(code, start, end).then((data) => {
         buildTable(data, start);
     }).catch(({status}) => {
         if (status === 404) rebuildPage();

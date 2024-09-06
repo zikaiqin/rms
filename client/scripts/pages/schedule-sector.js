@@ -1,3 +1,6 @@
+import $ from 'jquery';
+import { Schedule } from '../common/requests';
+
 $(() => {
     rebuildPage();
 });
@@ -6,16 +9,22 @@ const rebuildPage = () => {
     setDate();
     buildOptions().then((sector) => {
         const date = $('#date-picker').val();
-        Route.schedule.sector.one.get(date, sector).then(({header, data}) => {
+        Schedule.sector.one.get(date, sector).then(({header, data}) => {
             buildTable(header, data);
+            attachListeners();
         });
     });
+}
+
+const attachListeners = () => {
+    $('#entity-picker').on('change', reloadRows);
+    $('#date-picker').on('change', reloadRows);
 }
 
 const reloadRows = () => {
     const sector = $('#entity-picker').val();
     const date = $('#date-picker').val();
-    Route.schedule.sector.one.get(date, sector).then(({header, data}) => {
+    Schedule.sector.one.get(date, sector).then(({header, data}) => {
         buildTable(header, data);
     }).catch(({status}) => {
         if (status === 404) rebuildPage();
@@ -28,7 +37,7 @@ const setDate = () => {
 }
 
 const buildOptions = async () => new Promise((resolve, reject) => {
-    Route.schedule.sector.options.get().then((data) => {
+    Schedule.sector.options.get().then((data) => {
         resolve(data[0]);
         const options = data.map((val) => `<option>${val}</option>`);
         $('#entity-picker').append(options)

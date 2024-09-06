@@ -1,9 +1,12 @@
+import $ from 'jquery';
+import { Sector } from '../common/requests';
+
 $(() => {
     loadSectors();
 });
 
 const loadSectors = () => {
-    Route.sector.all.get().then((data) => {
+    Sector.all.get().then((data) => {
         const sectors = data.map(({name, supervisor, parcels, likes, dislikes}) => {
             const editBtn = `<span role="button" class="icon-button secondary outline material-symbols-outlined" title="Modifier">edit</span>`;
             const parcelEl = buildParcels(parcels);
@@ -29,7 +32,7 @@ const buildWithTag = (tag, label, ...classes) => `<div class="tag-row"><kbd${cla
 
 const buildPairs = (title, list, ...rest) => {
     const header = `<h5>${title}</h5>`;
-    content = list.reduce((prev, [fst, snd]) => {
+    const content = list.reduce((prev, [fst, snd]) => {
         return prev + buildWithTag(fst, snd, ...rest);
     }, '');
     return header + content

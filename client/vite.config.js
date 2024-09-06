@@ -2,6 +2,7 @@
 import { defineConfig } from 'vite'
 import { resolve } from 'path'
 import fs from 'fs'
+import moment from 'moment/moment';
 
 const staticDir = resolve(__dirname);
 
@@ -10,6 +11,7 @@ export default defineConfig({
   publicDir: '../public',
   build: {
     rollupOptions: {
+      external: ['jquery', 'moment'],
       input: {
         sector: '/sector.html',
         staff: '/staff.html',
@@ -19,6 +21,10 @@ export default defineConfig({
       },
       output: {
         dir: resolve(staticDir, 'dist'),
+        paths: {
+          jquery: 'https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js',
+          moment: 'https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.30.1/moment.min.js',
+        }
       },
     },
   },

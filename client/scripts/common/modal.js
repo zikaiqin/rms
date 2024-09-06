@@ -1,3 +1,5 @@
+import $ from 'jquery';
+
 class Modal {
     static instances = {};
     static visible = [];
@@ -21,15 +23,16 @@ class Modal {
     /**
      * @param {String} id
      */
-    constructor(id,
-        {onOpen = () => {}, onClose = () => {}, transitionTime = 200}
-        = {onOpen: () => {}, onClose: () => {}, transitionTime: 200}
+    constructor(
+        id,
+        {onOpen = () => {}, onClose = () => {}, transitionTime = 200} =
+        {onOpen: () => {}, onClose: () => {}, transitionTime: 200},
     ) {
         this.getElement = () => $(id).get(0);
         this.onOpen = onOpen;
         this.onClose = onClose;
         this.transitionTime = transitionTime;
-        $(`${id} button[aria-label="close"]`).on('click', () => { this.close() })
+        $(`${id} button[aria-label="close"]`).on('click', () => { this.close() });
         Modal.register(id, this);
     }
 
@@ -41,7 +44,7 @@ class Modal {
                 html.removeClass('modal-is-opening');
                 resolve();
             }, this.transitionTime);
-        })
+        });
         cb();
         Modal.visible.push(this);
         this.getElement().showModal();
@@ -56,11 +59,14 @@ class Modal {
                 html.removeClass('modal-is-closing');
                 this.getElement().close();
                 Modal.visible.pop();
-                if (Modal.visible.length === 0)
+                if (Modal.visible.length === 0) {
                     $(document.documentElement).removeClass('modal-is-open modal-is-opening modal-is-closing');
+                }
                 cb();
                 resolve();
             }, this.transitionTime);
         });
     }
 }
+
+export default Modal;
