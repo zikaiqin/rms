@@ -1,0 +1,16 @@
+{
+  "name": "qzk-rms",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --port 3000",
+    "build": "vite build",
+    "preview": "vite preview --port 80"
+  },
+  "devDependencies": {
+    "jquery": "^3.7.1",
+    "moment": "^2.30.1",
+    "vite": "^5.4.3"
+  }
+}
