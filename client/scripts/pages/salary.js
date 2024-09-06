@@ -1,4 +1,5 @@
 import $ from 'jquery';
+import { debounce } from 'lodash-es';
 import { Salary } from '../common/requests';
 
 $(() => {
@@ -12,7 +13,7 @@ const setupSelect = () => {
     const el = $('#month-input').attr({min, max});
     $('#month-next').on('click', () => offsetMonth(min, max)(1));
     $('#month-prev').on('click', () => offsetMonth(min, max)(-1));
-    el.on('change', onChangeMonth(min, max)).val(max).trigger('change');
+    el.on('change', debounce(onChangeMonth(min, max), 200, { leading: true })).val(max).trigger('change');
 }
 
 const offsetMonth = (min, max) => (offset) => {

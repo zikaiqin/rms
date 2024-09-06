@@ -1,4 +1,5 @@
 import $ from 'jquery';
+import { debounce } from 'lodash-es';
 import { Schedule } from '../common/requests';
 
 $(() => {
@@ -18,7 +19,7 @@ const rebuildPage = () => {
 
 const attachListeners = () => {
     $('#entity-picker').on('change', reloadRows);
-    $('#date-picker').on('change', reloadRows);
+    $('#date-picker').on('change', debounce(reloadRows, 200, { leading: true }));
 }
 
 const reloadRows = () => {
