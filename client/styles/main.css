@@ -1,3 +1,14 @@
+@import url('@picocss/pico/css/pico.css');
+@import url('@picocss/pico/css/pico.colors.css');
+@import url('material-symbols/outlined.css');
+
+.material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    :is(th, td):has(&) {
+        direction: rtl;
+    }
+}
+
 .full-height {
     min-height: 100svh;
     max-height: 100svh;

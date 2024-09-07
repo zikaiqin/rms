@@ -1,7 +1,7 @@
 import $ from 'jquery';
 import moment from 'moment';
 import { debounce } from 'lodash-es';
-import { Schedule } from '../common/requests';
+import { Schedule } from '@scripts/common/requests';
 
 $(() => {
     rebuildPage()

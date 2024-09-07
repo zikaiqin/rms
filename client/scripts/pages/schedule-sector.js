@@ -1,6 +1,6 @@
 import $ from 'jquery';
 import { debounce } from 'lodash-es';
-import { Schedule } from '../common/requests';
+import { Schedule } from '@scripts/common/requests';
 
 $(() => {
     rebuildPage();

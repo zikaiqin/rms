@@ -1,5 +1,5 @@
 import $ from 'jquery';
-import { Sector } from '../common/requests';
+import { Sector } from '@scripts/common/requests';
 
 $(() => {
     loadSectors();

@@ -12,7 +12,3 @@
 #edit-input, #code-select {
     margin-bottom: 0;
 }
-
-:is(th, td):has(span) {
-    direction: rtl;
-}

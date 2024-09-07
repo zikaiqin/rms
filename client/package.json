@@ -6,12 +6,15 @@
   "scripts": {
     "dev": "vite --port 3000",
     "build": "vite build --emptyOutDir",
-    "preview": "vite preview --port 80"
+    "preview": "vite preview --port 80 --outDir \"../dist\""
   },
   "devDependencies": {
+    "@picocss/pico": "^2.0.6",
     "jquery": "^3.7.1",
     "lodash-es": "^4.17.21",
+    "material-symbols": "^0.23.0",
     "moment": "^2.30.1",
+    "postcss-url": "^10.1.3",
     "vite": "^5.4.3"
   }
 }

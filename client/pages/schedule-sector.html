@@ -4,10 +4,8 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Surveillances Secteur</title>
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css"/>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined">
-        <link rel="stylesheet" href="../styles/main.css"/>
-        <link rel="stylesheet" href="../styles/schedule.css"/>
+        <link rel="stylesheet" href="@styles/main.css"/>
+        <link rel="stylesheet" href="@styles/schedule.css"/>
     </head>
     <body class="full-height vert-flex">
         <header class="container">
@@ -39,7 +37,15 @@
             <!-- Page content here -->
             <article class="stretch vert-flex overflow-auto">
                 <div role="heading">
-                    <h3>Horaire du jour</h3>
+                    <h3>
+                        Horaire du jour
+                        <span
+                            id="refresh"
+                            role="button"
+                            class="icon-button secondary outline material-symbols-outlined"
+                            title="Rafraîchir"
+                        >refresh</span>
+                    </h3>
                     <select id="entity-picker"></select>
                     <input type="date" id="date-picker" />
                 </div>
@@ -57,6 +63,6 @@
             </article>
         </main>
         <footer class="container"></footer>
-        <script type="module" src="../scripts/pages/schedule-sector.js"></script>
+        <script type="module" src="@scripts/pages/schedule-sector.js"></script>
     </body>
 </html>

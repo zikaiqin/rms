@@ -1,6 +1,6 @@
 import $ from 'jquery';
 import { debounce } from 'lodash-es';
-import { Salary } from '../common/requests';
+import { Salary } from '@scripts/common/requests';
 
 $(() => {
     setupSelect();

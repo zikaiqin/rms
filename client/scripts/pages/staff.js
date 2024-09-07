@@ -1,6 +1,6 @@
 import $ from 'jquery';
-import { Staff } from '../common/requests.js';
-import Modal from '../common/modal.js';
+import { Staff } from '@scripts/common/requests.js';
+import Modal from '@scripts/common/modal.js';
 
 $(() => {
     reloadRows();
