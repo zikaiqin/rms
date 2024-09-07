@@ -87,11 +87,13 @@ export default defineConfig({
 
           if (req.url in routes) {
             req.url = routes[req.url]
-          } else if (req.url.split('/')[1] in alias) {
+          }
+          else if (req.url.split('/').some((dir) => (dir in alias))) {
             const paths = req.url.split('/');
-            paths[1] = alias[paths[1]];
-            req.url = paths.join('/');
-          } else if (!/^@/.test(req.url.slice(1))) {
+            const index = paths.findIndex((dir) => (dir in alias));
+            req.url = paths.slice(index).with(0, alias[paths[index]]).join('/');
+          }
+          else if (!/^@/.test(req.url.slice(1))) {
             const filePath = resolve(__dirname, req.url.slice(1));
             if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
               req.url = filePath;
