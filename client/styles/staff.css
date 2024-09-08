@@ -2,6 +2,10 @@ table {
     margin-bottom: 0;
 }
 
+fieldset {
+    margin-bottom: 0;
+}
+
 tfoot td {
     text-align: center;
 }
@@ -27,6 +31,23 @@ div:has(#add-new) {
 :is(#details-modal, #edit-modal) footer {
     position: sticky;
     bottom: 0;
+}
+
+.rate-field {
+    display: flex;
+    align-items: center;
+    margin-top: calc(var(--pico-spacing) * 0.25);
+    margin-bottom: var(--pico-spacing);
+
+    input[type="range"] {
+        margin-bottom: 0;
+    }
+}
+
+.indicator {
+    width: 2.4rem;
+    text-align: center;
+    margin-right: calc(var(--pico-spacing) * 0.5);
 }
 
 .suggest {

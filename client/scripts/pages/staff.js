@@ -63,6 +63,7 @@ const attachListeners = () => {
     $('#edit-form').on('submit', submitDetails);
     $('#dept-picker').on('change', onDeptChange);
     $('#role-picker').on('change', onRoleChange);
+    $('#rate-picker').on('input', onRateChange);
     $('#submit-new').on('click', triggerSubmit);
     $('#delete').on('click', openDeleteModal);
     $('#confirm-delete').on('click', confirmDelete);
@@ -125,17 +126,17 @@ const onRoleChange = () => {
     }
     if (role === 'Gardien') {
         showGuardFieldset();
-    } else { 
+    } else {
         hideGuardFieldset();
     }
 }
 
 const onDeptChange = () => {
-    hideGuardFieldset();
     const key = $('#dept-picker :selected').data('key');
     const dept = deptList[key];
     const roleKey = $('#role-picker :selected').data('key');
     if (roleKey < 0 || dept !== deptMap[roleList[roleKey]]) {
+        hideGuardFieldset();
         $('#role-picker').val('')
             .children()
             .removeClass('suggest')
@@ -145,6 +146,11 @@ const onDeptChange = () => {
             })
             .addClass('suggest');
     }
+};
+const onRateChange = () => {
+    const input = $('#rate-picker');
+    const indicator = input.parent().find('.indicator');
+    indicator.text(input.val());
 };
 
 const triggerSubmit = () => { $('#edit-form input[type="submit"]').trigger('click'); };
@@ -159,8 +165,12 @@ const showGuardFieldset = () => {
     $('#edit-form fieldset input').prop('required', true);
 }
 const hideGuardFieldset = () => {
-    $('#edit-form fieldset input').prop('required', false).val('');
-    $('#edit-form fieldset').prop('hidden', true);
+    const fieldset = $('#edit-form fieldset');
+    fieldset.find('input').prop('required', false);
+    fieldset.find('input:not(#rate-picker)').val('');
+    fieldset.find('#rate-picker').val(100);
+    fieldset.find('.indicator').text(100);
+    fieldset.prop('hidden', true);
 }
 
 const openDetailsModal = (code) => {

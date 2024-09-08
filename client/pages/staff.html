@@ -124,8 +124,17 @@
                             </label>
                             <label>
                                 Taux d'occupation
-                                <input name="taux_occupation" type="number" min="0" max="100" />
-                                <small>Entrez un nombre entre 0 et 100</small>
+                                <span class="rate-field">
+                                    <kbd class="indicator">100</kbd>
+                                    <input
+                                        id="rate-picker"
+                                        name="taux_occupation"
+                                        type="range"
+                                        min="10"
+                                        max="100"
+                                        step="5"
+                                        value="100" />
+                                </span>
                             </label>
                         </fieldset>
                         <label>
@@ -142,8 +151,14 @@
                         </label>
                         <label>
                             Numéro AVS
-                            <input name="numero_avs" type="text" pattern="[0-9]+" required />
-                            <small>Entrez une séquence numérique</small>
+                            <input
+                                name="numero_avs"
+                                type="text"
+                                minlength="5"
+                                maxlength="5"
+                                pattern="[0-9]+"
+                                required />
+                            <small>Entrez une séquence numérique de 5 caractères</small>
                         </label>
                         <input type="submit" hidden />
                     </form>
