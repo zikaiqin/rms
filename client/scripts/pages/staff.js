@@ -2,7 +2,47 @@ import $ from 'jquery';
 import { Staff } from '@scripts/common/requests.js';
 import Modal from '@scripts/common/modal.js';
 
+const roleMap = {
+    'Administratif': [
+        'Secrétaire',
+        'Comptable',
+        'Chef du personnel',
+        'Directeur',
+    ],
+    'Surveillance': [
+        'Gardien',
+        'Chef de secteur',
+    ],
+    'Médical': [
+        'Vétérinaire',
+        'Infirmier',
+    ]
+};
+const roleList = Object.values(roleMap).flat();
+const deptList = Object.keys(roleMap);
+const deptMap = Object.fromEntries(
+    Object.entries(roleMap)
+        .map(([dept, roles]) => roles.map((role) => [role, dept]))
+        .flat(),
+);
+
+const staffFieldLabels = {
+    prenom: 'Prénom',
+    nom_marital: 'Nom marital',
+    nom: 'Nom',
+    code_mnemotechnique: 'Code mnémotechnique',
+    service: 'Service',
+    fonction: 'Fonction',
+    grade: 'Grade',
+    taux_occupation: 'Taux d\'occupation',
+    adresse: 'Adresse',
+    date_naissance: 'Date de naissance',
+    lieu_naissance: 'Lieu de naissance',
+    numero_avs: 'Numéro AVS',
+};
+
 $(() => {
+    buildOptions();
     reloadRows();
 
     const { open: openEdit } = new Modal('#edit-modal', {
@@ -21,11 +61,20 @@ $(() => {
 const attachListeners = () => {
     $('#refresh').on('click', reloadRows);
     $('#edit-form').on('submit', submitDetails);
-    $('#service-picker').on('change', onServiceChange);
+    $('#dept-picker').on('change', onDeptChange);
     $('#role-picker').on('change', onRoleChange);
     $('#submit-new').on('click', triggerSubmit);
     $('#delete').on('click', openDeleteModal);
     $('#confirm-delete').on('click', confirmDelete);
+}
+
+const buildOptions = () => {
+    $('#dept-picker').append(
+        deptList.map((dept, index) => `<option data-key="${index}">${dept}</option>`),
+    );
+    $('#role-picker').append(
+        roleList.map((role, index) => `<option data-key="${index}">${role}</option>`),
+    );
 }
 
 const reloadRows = () => {
@@ -62,30 +111,18 @@ const submitDetails = (e) => {
     });
 };
 
-const onServiceChange = () => {
-    hideGuardFieldset();
-    const service = $('#edit-form select[name="service"] :selected').data('key');
-    const def = '<option selected disabled value="">Selectionnez une fonction</option>';
-    let options;
-    switch (service) {
-        case 'admin':
-            options = ['Secrétaire', 'Comptable', 'Chef du personnel', 'Directeur'].map((text) => `<option>${text}</option>`);
-            break;
-        case 'surv':
-            options = ['Gardien', 'Chef de secteur'].map((text) => `<option>${text}</option>`);
-            break;
-        case 'med':
-            options = ['Vétérinaire', 'Infirmier'].map((text) => `<option>${text}</option>`);
-            break;
-        default:
-            resetFunctionSelect();
-            return;
-    }
-    $('#edit-form select[name="fonction"]').prop('disabled', false).empty().append(def, ...options);
-};
-
 const onRoleChange = () => {
-    const role = $('#edit-form select[name="fonction"] :selected').text().trim();
+    const key = $('#role-picker :selected').data('key');
+    if (key === undefined) {
+        return;
+    }
+    $('#role-picker').children().removeClass('suggest');
+    const role = roleList[key];
+    const dept = deptMap[role];
+    const deptKey = $('#dept-picker :selected').data('key');
+    if (deptKey === undefined || dept !== deptList[deptKey]) {
+        $('#dept-picker').val(dept);
+    }
     if (role === 'Gardien') {
         showGuardFieldset();
     } else { 
@@ -93,20 +130,29 @@ const onRoleChange = () => {
     }
 }
 
+const onDeptChange = () => {
+    hideGuardFieldset();
+    const key = $('#dept-picker :selected').data('key');
+    const dept = deptList[key];
+    const roleKey = $('#role-picker :selected').data('key');
+    if (roleKey < 0 || dept !== deptMap[roleList[roleKey]]) {
+        $('#role-picker').val('')
+            .children()
+            .removeClass('suggest')
+            .filter((_, el) => {
+                const optKey = $(el).data('key');
+                return (optKey >= 0) && (dept === deptMap[roleList[optKey]]);
+            })
+            .addClass('suggest');
+    }
+};
+
 const triggerSubmit = () => { $('#edit-form input[type="submit"]').trigger('click'); };
 
 const resetEditForm = () => {
     $('#edit-form').trigger('reset');
-    resetFunctionSelect();
     hideGuardFieldset();
 };
-
-const resetFunctionSelect = () => {
-    $('#edit-form select[name="fonction"]').prop('disabled', true).empty().append(
-        '<option selected disabled value="">Selectionnez d\'abord le service</option>'
-    );
-    hideGuardFieldset();
-}
 
 const showGuardFieldset = () => {
     $('#edit-form fieldset').prop('hidden', false);
@@ -150,21 +196,6 @@ const fillModalFields = (data) => {
             return field;
         });
     formEl.append(fields);
-};
-
-const staffFieldLabels = {
-    prenom: 'Prénom',
-    nom_marital: 'Nom marital',
-    nom: 'Nom',
-    code_mnemotechnique: 'Code mnémotechnique',
-    service: 'Service',
-    fonction: 'Fonction',
-    grade: 'Grade',
-    taux_occupation: 'Taux d\'occupation',
-    adresse: 'Adresse',
-    date_naissance: 'Date de naissance',
-    lieu_naissance: 'Lieu de naissance',
-    numero_avs: 'Numéro AVS',
 };
 
 const convert = new Proxy(

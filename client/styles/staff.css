@@ -28,3 +28,7 @@ div:has(#add-new) {
     position: sticky;
     bottom: 0;
 }
+
+.suggest {
+    color: var(--pico-color);
+}
