@@ -130,7 +130,7 @@ const onClickEdit = (e) => {
 
 const onClickAdd = () => {
     const date = $('#month-input').val();
-    $('thead span').attr('disabled', true);
+    $('#add-new').attr('disabled', true);
     Salary.add.get(date).then((data) => {
         const row = $('<tr></tr>');
         const codeMap = Object.fromEntries(data.map(([code, ...rest]) => [code, [...rest]]));
@@ -159,7 +159,7 @@ const onClickAdd = () => {
         form.append(input, trigger);
         const onCancel = () => {
             $(row).remove();
-            $('thead span').removeAttr('disabled');
+            $('#add-new').removeAttr('disabled');
             if ($('tbody').children().length === 0) {
                 insertEmptyRow();
             }
@@ -189,7 +189,7 @@ const onClickAdd = () => {
             $('<td></td>').append(form),
             $('<td></td>').append(confirm, cancel),
         );
-        if ($('tbody').has('.no-data')) {
+        if ($('tbody').find('.no-data').length > 0) {
             $('tbody').empty();
             $('table').removeClass('stretch');
         }
