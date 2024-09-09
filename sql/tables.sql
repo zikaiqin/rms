@@ -71,7 +71,7 @@ CREATE TABLE Salaire(
 GO
 
 CREATE TABLE Surveillance(
-    num_parcelle INT,
+    num_parcelle INT NOT NULL,
     code_gardien CHAR(3),
     dt_debut DATETIME2(0),
     dt_fin DATETIME2(0),
@@ -88,17 +88,7 @@ GO
 CREATE TABLE Preference( 
     nom_secteur VARCHAR(50),
     code_gardien CHAR(3),
-    PRIMARY KEY(nom_secteur, code_gardien),
-    FOREIGN KEY(nom_secteur) REFERENCES Secteur(nom_secteur)
-    ON DELETE CASCADE,
-    FOREIGN KEY(code_gardien) REFERENCES Gardien(code_employe)
-    ON DELETE CASCADE
-);
-GO
-
-CREATE TABLE Aversion( 
-    nom_secteur VARCHAR(50),
-    code_gardien CHAR(3),
+    prefere BIT NOT NULL,
     PRIMARY KEY(nom_secteur, code_gardien),
     FOREIGN KEY(nom_secteur) REFERENCES Secteur(nom_secteur)
     ON DELETE CASCADE,

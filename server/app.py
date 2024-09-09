@@ -185,13 +185,12 @@ def staff_add():
 def sector():
     sql_parcels = 'SELECT * FROM Parcelle; '
     sql_temp = (
-        'SELECT nom_secteur, {key}, prenom, COALESCE(nom_marital, nom) AS nom '
+        'SELECT nom_secteur, {key}, prenom, COALESCE(nom_marital, nom) AS nom {cols} '
         'FROM {table} JOIN Employe ON {key} = code_mnemotechnique; '
     )
-    sql_sectors = sql_temp.format(key='code_chef_secteur', table='Secteur')
-    sql_likes = sql_temp.format(key='code_gardien', table='Preference')
-    sql_dislikes = sql_temp.format(key='code_gardien', table='Aversion')
-    sql = sql_sectors + sql_parcels + sql_likes + sql_dislikes
+    sql_sectors = sql_temp.format(key='code_chef_secteur', table='Secteur', cols='')
+    sql_prefs = sql_temp.format(key='code_gardien', table='Preference', cols=', prefere')
+    sql = sql_sectors + sql_parcels + sql_prefs
 
     try:
         cur = cnxn.cursor()
@@ -199,18 +198,16 @@ def sector():
     except Exception as e:
         abort(make_response(jsonify(message=str(e)), 500))
 
-    (sectors, parcels, likes, dislikes) = fetch_while_next(cur)
+    (sectors, parcels, prefs) = fetch_while_next(cur)
 
     res = {sector: {'supervisor': list(rest), 'parcels': [], 'likes': [], 'dislikes': []} for sector, *rest in sectors}
 
     for num, sector in parcels:
         res[sector]['parcels'].append(num)
 
-    for sector, *rest in likes:
-        res[sector]['likes'].append(list(rest))
-
-    for sector, *rest in dislikes:
-        res[sector]['dislikes'].append(list(rest))
+    for sector, *rest in prefs:
+        pref = 'likes' if rest[-1] else 'dislikes'
+        res[sector][pref].append(list(rest)[:-1])
 
     return jsonify([{'name': key, **val} for key, val in res.items()])
 
