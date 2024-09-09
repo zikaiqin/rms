@@ -32,11 +32,14 @@ const setDate = () => {
 
 const buildOptions = async () => new Promise((resolve, reject) => {
     Schedule.staff.options.get().then((data) => {
-        const fst_code = data[0][0];
-        resolve(fst_code);
         const options = data.map(([code, fname, lname]) =>
+            `<option value="${code}">${fname} ${lname}</option>`);
+        $('#entity-picker select').append(options);
+        $('#entity-picker').prop('hidden', false);
+        resolve(data[0][0]);
+        const listItems = data.map(([code, fname, lname]) =>
             `<li><label class="tag-cell"><input type="radio" name="tag" value="${code}" hidden /><kbd>${code}</kbd> ${fname} ${lname}</label></li>`);
-        $('#entity-picker ul').append(options).find('input').first().prop('checked', true);
+        $('#entity-picker ul').append(listItems).find('input').first().prop('checked', true);
         setSelection();
     }).catch((e) => reject(e))
 });
@@ -85,7 +88,7 @@ const buildParcel = (parcel) => {
 }
 
 const reloadRows = () => {
-    const code = $('#entity-picker :checked').val();
+    const code = $('#entity-picker input:checked').val();
     const [start, end] = getWeekAsInterval();
     Schedule.staff.between.get(code, start, end).then((data) => {
         buildTable(data, start);
@@ -100,11 +103,11 @@ const onEntityChange = () => {
 };
 
 const setSelection = () => {
-    const [code, ...names] = $('#entity-picker label:has(:checked)').text().split(' ');
-    $('#entity-picker li[hidden]').removeAttr('hidden');
-    $('#entity-picker li:has(:checked)').attr('hidden', '');
-    $('#entity-picker').removeAttr('open');
-    $('#entity-picker summary').empty().append(
-        `<span class="tag-cell"><kbd>${code}</kbd> ${names.join(' ')}</span>`
-    );
+    const picker = $('#entity-picker');
+    picker.removeAttr('open');
+    picker.find('li[hidden]').removeAttr('hidden');
+    picker.find('li:has(:checked)').attr('hidden', '');
+    const code = picker.find('input:checked').val();
+    picker.find('select').val(code);
+    picker.find('summary kbd').empty().text(code);
 };
