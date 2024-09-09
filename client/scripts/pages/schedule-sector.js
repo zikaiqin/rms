@@ -60,7 +60,7 @@ const buildTable = (header, data) => {
     const hours = Array.from({length: max + 1 - min}, (_, i) => (i + min) % 24);
     const rows = hours.map((hour) => {
         const rowHeader = `<th scope="row">${hour.toString().padStart(2, '0')}:00</th>`;
-        const cells = header.map((parcel) => `<td>${buildEmployee(schedule[parcel][hour])}</td>`);
+        const cells = header.map((parcel) => `<td><span class="tag-cell">${buildEmployee(schedule[parcel][hour])}</span></td>`);
         return `<tr>${rowHeader}${cells}</tr>`;
     });
     $('thead').empty().append(head);

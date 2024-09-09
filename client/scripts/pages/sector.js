@@ -28,7 +28,7 @@ const onEdit = function() {
     console.log(name);
 };
 
-const buildWithTag = (tag, label, ...classes) => `<div class="tag-row"><kbd${classes.length ? ` class="${classes.join(' ')}"` : ''}>${tag}</kbd>${label}</div>`
+const buildWithTag = (tag, label, ...classes) => `<div class="tag-cell"><kbd${classes.length ? ` class="${classes.join(' ')}"` : ''}>${tag}</kbd>${label}</div>`
 
 const buildPairs = (title, list, ...rest) => {
     const header = `<h5>${title}</h5>`;
