@@ -237,6 +237,25 @@ def preferences():
     return [list(row) for row in cur.fetchall()]
 
 
+@app.route('/preferences', methods=['POST'])
+def preferences_edit():
+    try:
+        DATA = request.get_json()
+        if not DATA or 'preferences' not in DATA or 'sector' not in DATA or len(DATA['sector']) <= 0:
+            raise Exception()
+    except:
+        abort(make_response(jsonify(message='Arguments manquant'), 400))
+
+    sector = DATA['sector']
+    preferences = DATA['preferences']
+    if len(preferences) == 0:
+        return ('Aucun changement', 204)
+
+    # TODO sql queries
+
+    return jsonify(success=True)
+
+
 @app.route('/salary', methods=['GET'])
 def salary():
     try:

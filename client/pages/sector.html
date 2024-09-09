@@ -37,6 +37,53 @@
             <!-- Page content here -->
         </main>
         <footer class="container"></footer>
+        <div id="modal-container"></div>
+            <dialog id="preference-modal">
+                <article>
+                    <header>
+                        <button
+                            aria-label="close"
+                            rel="prev"
+                        ></button>
+                        <h3>Modification Préférences</h3>
+                    </header>
+                    <table class="striped">
+                        <thead>
+                            <tr>
+                                <th>Gardien</th>
+                                <th><div>
+                                    <span
+                                        class="material-symbols-outlined"
+                                        title="Aucune préférence"
+                                    >do_not_disturb_on</span>
+                                </div></th>
+                                <th><div>
+                                    <span
+                                        class="material-symbols-outlined"
+                                        title="Préfère"
+                                    >thumb_up</span>
+                                </div></th>
+                                <th><div>
+                                    <span
+                                        class="material-symbols-outlined"
+                                        title="N'apprécie pas"
+                                    >thumb_down</span>
+                                </div></th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                    <footer>
+                        <button aria-label="close" class="secondary">
+                            Annuler
+                        </button>
+                        <button id="submit-preferences" disabled>
+                            Enregistrer
+                        </button>
+                    </footer>
+                </article>
+            </dialog>
+        </div>
         <script type="module" src="@scripts/pages/sector.js"></script>
     </body>
 </html>

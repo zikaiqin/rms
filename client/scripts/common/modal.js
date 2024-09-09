@@ -16,6 +16,10 @@ class Modal {
         Modal.instances[id] = modal
     }
 
+    /**
+     * @param {string} id 
+     * @returns {Modal}
+     */
     static get(id) {
         return Modal.instances[id]
     }
@@ -45,7 +49,7 @@ class Modal {
                 resolve();
             }, this.transitionTime);
         });
-        cb();
+        cb.call(this);
         Modal.visible.push(this);
         this.getElement().showModal();
         return promise;
@@ -62,7 +66,7 @@ class Modal {
                 if (Modal.visible.length === 0) {
                     $(document.documentElement).removeClass('modal-is-open modal-is-opening modal-is-closing');
                 }
-                cb();
+                cb.call(this);
                 resolve();
             }, this.transitionTime);
         });

@@ -36,6 +36,15 @@ const Sector = {
     all: {
         get: () => withAlert($.get(apiRoot.concat('/sector'))),
     },
+    preferences: {
+        get: (sector) => withAlert($.get(apiRoot.concat('/preferences'), {sector})),
+        post: (sector, preferences) => withAlert($.ajax({
+            url:apiRoot.concat('/preferences'),
+            type: 'post',
+            contentType: 'application/json',
+            data: JSON.stringify({sector, preferences}),
+        })),
+    },
 };
 
 const Salary = {
