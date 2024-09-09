@@ -7,10 +7,16 @@ div[role="heading"] {
 div[role="heading"] :is(input, select) {
     width: auto;
 }
-div[role="heading"] > * {
-    margin-left: var(--pico-spacing);
-}
 div[role="heading"] h3 {
     margin-left: 0;
     margin-right: auto;
+}
+div[role="heading"] > :is(input, select) {
+    margin-left: var(--pico-spacing);
+}
+div[role="heading"] > div {
+    display: flex;
+    & > * {
+        margin-left: var(--pico-spacing);
+    }
 }

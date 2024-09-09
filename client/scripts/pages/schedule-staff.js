@@ -34,9 +34,10 @@ const buildOptions = async () => new Promise((resolve, reject) => {
     Schedule.staff.options.get().then((data) => {
         const fst_code = data[0][0];
         resolve(fst_code);
-        const options = data.map(([code, fname, lname]) => `<option value="${code}" title="${code}">${fname} ${lname}</option>`);
-        $('#entity-picker').append(options);
-        setCode(fst_code);
+        const options = data.map(([code, fname, lname]) =>
+            `<li><label class="tag-cell"><input type="radio" name="tag" value="${code}" hidden /><kbd>${code}</kbd> ${fname} ${lname}</label></li>`);
+        $('#entity-picker ul').append(options).find('input').first().prop('checked', true);
+        setSelection();
     }).catch((e) => reject(e))
 });
 
@@ -84,7 +85,7 @@ const buildParcel = (parcel) => {
 }
 
 const reloadRows = () => {
-    const code = $('#entity-picker').val();
+    const code = $('#entity-picker :checked').val();
     const [start, end] = getWeekAsInterval();
     Schedule.staff.between.get(code, start, end).then((data) => {
         buildTable(data, start);
@@ -94,15 +95,16 @@ const reloadRows = () => {
 };
 
 const onEntityChange = () => {
-    setCode($('#entity-picker').val());
+    setSelection();
     reloadRows();
 };
 
-const setCode = (code) => {
-    const el = $('#code-hint');
-    if (!code) {
-        el.addClass('secondary').text('N/A');
-    } else {
-        el.removeClass('secondary').text(code);
-    }
+const setSelection = () => {
+    const [code, ...names] = $('#entity-picker label:has(:checked)').text().split(' ');
+    $('#entity-picker li[hidden]').removeAttr('hidden');
+    $('#entity-picker li:has(:checked)').attr('hidden', '');
+    $('#entity-picker').removeAttr('open');
+    $('#entity-picker summary').empty().append(
+        `<span class="tag-cell"><kbd>${code}</kbd> ${names.join(' ')}</span>`
+    );
 };

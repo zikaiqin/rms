@@ -38,9 +38,13 @@
             <article class="stretch vert-flex overflow-auto">
                 <div role="heading">
                     <h3>Horaire de la semaine</h3>
-                    <kbd id="code-hint" class="secondary">N/A</kbd>
-                    <select id="entity-picker"></select>
-                    <input type="week" id="date-picker" />
+                    <div>
+                        <details class="dropdown tag-picker" id="entity-picker">
+                            <summary>Sélectionnez un gardien</summary>
+                            <ul></ul>
+                        </details>
+                        <input type="week" id="date-picker" />
+                    </div>
                 </div>
                 <div class="stretch vert-flex overflow-auto">
                     <table class="striped stretch">
