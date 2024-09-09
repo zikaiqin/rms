@@ -34,7 +34,9 @@ const reloadRows = () => {
 
 const setDate = () => {
     const date = new Date().toISOString().split('T')[0];
-    $('#date-picker').val(date);
+    const year = Number(date.split('-')[0]);
+    const [min, max] = [-1, 1].map((offset) => date.split('-').with(0, year + offset).join('-'));
+    $('#date-picker').val(date).attr({min, max});
 }
 
 const buildOptions = async () => new Promise((resolve, reject) => {

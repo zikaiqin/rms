@@ -25,7 +25,9 @@ const attachListeners = () => {
 
 const setDate = () => {
     const week = `${moment().year()}-W${moment().week()}`;
-    $('#date-picker').val(week);
+    const year = Number(week.split('-')[0]);
+    const [min, max] = [-1, 1].map((offset) => week.split('-').with(0, year + offset).join('-'));
+    $('#date-picker').val(week).attr({min, max});
 };
 
 const buildOptions = async () => new Promise((resolve, reject) => {
