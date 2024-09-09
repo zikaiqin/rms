@@ -167,7 +167,7 @@ const onClickAdd = () => {
         form.on('submit', (e) => {
             e.preventDefault();
             const val = input.val()
-            if (!val) {
+            if (!val || Number(val) <= 0) {
                 onCancel();
                 return;
             }

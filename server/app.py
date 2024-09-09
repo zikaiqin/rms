@@ -251,7 +251,29 @@ def preferences_edit():
     if len(preferences) == 0:
         return ('Aucun changement', 204)
 
-    # TODO sql queries
+    comp = set()
+    for row in preferences:
+        if row['code'] in comp:
+            abort(make_response(jsonify(message='Une seule préférence par gardien'), 400))
+        else:
+            comp.add(row['code'])
+
+    sql = (
+        'BEGIN TRAN; '
+        'IF (? IS NULL) BEGIN '
+        'DELETE FROM Preference WHERE nom_secteur=? AND code_gardien=?; END; '
+        'ELSE BEGIN '
+        'UPDATE Preference SET prefere=? WHERE nom_secteur=? AND code_gardien=?; '
+        'IF (@@ROWCOUNT = 0) BEGIN '
+        'INSERT INTO Preference(prefere, nom_secteur, code_gardien) VALUES (?, ?, ?); END; '
+        'END; '
+        'COMMIT TRAN;'
+    )
+    try:
+        cursor = cnxn.cursor()
+        cursor.executemany(sql, [(p['prefers'], sector, p['code']) * 3 for p in preferences])
+    except Exception as e:
+        abort(make_response(jsonify(message=str(e)), 500))
 
     return jsonify(success=True)
 

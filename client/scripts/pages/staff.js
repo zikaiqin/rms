@@ -51,7 +51,10 @@ $(() => {
     $('#add-new').on('click', () => openEdit());
 
     new Modal('#details-modal', {
-        onClose: () => { $('#details-form').empty() },
+        onClose: () => {
+            $('#details-form').empty();
+            $('#details-modal h3').empty();
+        },
     });
     new Modal('#delete-modal');
 
@@ -175,6 +178,9 @@ const hideGuardFieldset = () => {
 
 const openDetailsModal = (code) => {
     Staff.details.get(code).then((data) => {
+        $('#details-modal h3').append(
+            `<kbd>${data.code_mnemotechnique}</kbd> ${data.prenom} ${data.nom_marital ? data.nom_marital + ` (${data.nom})` : data.nom}`,
+        );
         Modal.get('#details-modal').open(fillModalFields(data));
     });
 };

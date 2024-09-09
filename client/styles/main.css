@@ -77,6 +77,10 @@ kbd.secondary {
     background-color: var(--pico-secondary-background);
 }
 
+::placeholder {
+    font-style: italic;
+}
+
 table {
     thead, tfoot {
         position: sticky;

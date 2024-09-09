@@ -12,7 +12,7 @@ $(() => {
     new Modal('#preference-modal', {
         onClose: function() {
             const modal = $(this.getElement());
-            modal.removeAttr('data-sector');
+            modal.removeData('sector');
             modal.find('h3 span').remove();
             modal.find('tbody').empty();
             $('#submit-preferences').prop('disabled', true);
@@ -31,7 +31,7 @@ $(() => {
         const changes = [];
         modal.find('input:checked:not(input[data-initial])').each(function() {
             const input = $(this);
-            const prefers = input.val();
+            const prefers = JSON.parse(input.val());
             const code = input.attr('name');
             changes.push({ code, prefers });
         });
@@ -75,7 +75,7 @@ const attachEditButtons = (jq, name) => {
             btn.on('click', () => {
                 Sector.preferences.get(name).then((data) => {
                     const modal = $('#preference-modal');
-                    modal.attr('data-sector', name)
+                    modal.data('sector', name);
                     modal.find('h3').append(`<span> &ndash; ${name}</span>`);
                     const rows = buildPrefRows(data);
                     modal.find('tbody').append(rows);
