@@ -212,6 +212,31 @@ def sector():
     return jsonify([{'name': key, **val} for key, val in res.items()])
 
 
+@app.route('/preferences', methods=['GET'])
+def preferences():
+    try:
+        # get '?code=...' from query string
+        SECTOR = request.args['sector']
+        if not SECTOR or len(SECTOR) <= 0:
+            raise Exception()
+    except:
+        abort(make_response(jsonify(message='Nom de secteur manquant'), 400))
+
+    sql = (
+        "WITH T AS (SELECT code_mnemotechnique, prenom, COALESCE(nom_marital, nom) AS nom FROM Employe WHERE fonction LIKE 'Gardien'), "
+        "S AS (SELECT * FROM Preference WHERE nom_secteur=?) "
+        "SELECT code_mnemotechnique, prenom, nom, prefere "
+        "FROM T LEFT JOIN S ON code_mnemotechnique = code_gardien"
+    )
+    try:
+        cur = cnxn.cursor()
+        cur.execute(sql, SECTOR)
+    except Exception as e:
+        abort(make_response(jsonify(message=str(e)), 500))
+
+    return [list(row) for row in cur.fetchall()]
+
+
 @app.route('/salary', methods=['GET'])
 def salary():
     try:
