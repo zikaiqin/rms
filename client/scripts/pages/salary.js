@@ -131,7 +131,7 @@ const onClickEdit = (e) => {
 const onClickAdd = () => {
     const date = $('#month-input').val();
     $('#add-new').attr('disabled', true);
-    Salary.add.get(date).then((data) => {
+    Salary.options.get(date).then((data) => {
         const row = $('<tr></tr>');
         const codeMap = Object.fromEntries(data.map(([code, ...rest]) => [code, [...rest]]));
         const options = data.map(([code, ..._]) => `<option>${code}</option>`);

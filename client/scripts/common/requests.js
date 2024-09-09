@@ -19,7 +19,7 @@ const withAlert = async (jqXHR) => {
 
 const Staff = {
     all: {
-        get: () => withAlert($.get(apiRoot.concat('/staff'))),
+        get: (role) => withAlert($.get(apiRoot.concat('/staff'), {role})),
     },
     details: {
         get: (code) => withAlert($.get(apiRoot.concat('/staff/details'), {code})),
@@ -45,6 +45,9 @@ const Sector = {
             data: JSON.stringify({sector, preferences}),
         })),
     },
+    supervisor: {
+        get: () => withAlert($.get(apiRoot.concat('/sector/supervisor'))),
+    },
 };
 
 const Salary = {
@@ -54,8 +57,10 @@ const Salary = {
     edit: {
         post: (code, date, salary) => withAlert($.post(apiRoot.concat('/salary/edit'), {code, date, salary})),
     },
+    options: {
+        get: (date) => withAlert($.get(apiRoot.concat('/salary/options'), {date})),
+    },
     add: {
-        get: (date) => withAlert($.get(apiRoot.concat('/salary/add'), {date})),
         post: (code, date, salary) => withAlert($.post(apiRoot.concat('/salary/add'), {code, date, salary})),
     },
 };
@@ -63,7 +68,7 @@ const Salary = {
 const Schedule = {
     staff: {
         options: {
-            get: () => withAlert($.get(apiRoot.concat('/schedule/staff/options'))),
+            get: () => withAlert($.get(apiRoot.concat('/staff'), {role: 'Gardien'})),
         },
         between: {
             get: (code, start, end) => withAlert($.get(apiRoot.concat('/schedule/staff'), {code, start, end})),

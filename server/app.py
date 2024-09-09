@@ -32,10 +32,19 @@ def staff():
 
     Returns data: a list of partial details of all employees
     """
-    sql = 'SELECT code_mnemotechnique, prenom, COALESCE(nom_marital, nom) AS nom, fonction, service FROM Employe'
+    ROLE = request.args['role'] if 'role' in request.args else None
+    sql = (
+        'SELECT code_mnemotechnique, prenom, COALESCE(nom_marital, nom) AS nom' +
+        (' ' if ROLE else ', fonction, service ') +
+        'FROM Employe ' +
+        ('WHERE fonction=?' if ROLE else '')
+    )
     try:
         cur = cnxn.cursor()
-        cur.execute(sql)
+        if ROLE:
+            cur.execute(sql, ROLE)
+        else:
+            cur.execute(sql)
     except Exception as e:
         abort(make_response(jsonify(message=str(e)), 500))
         
@@ -212,6 +221,30 @@ def sector():
     return jsonify([{'name': key, **val} for key, val in res.items()])
 
 
+@app.route('/sector/supervisor', methods=['GET'])
+def supervisor():
+    sql = (
+        "WITH T AS (SELECT code_mnemotechnique, prenom, COALESCE(nom_marital, nom) AS nom FROM Employe WHERE fonction='Chef de secteur') "
+        "SELECT code_mnemotechnique, prenom, nom, nom_secteur "
+        "FROM T LEFT JOIN Secteur ON code_mnemotechnique = code_chef_secteur"
+    )
+    try:
+        cur = cnxn.cursor()
+        cur.execute(sql)
+    except Exception as e:
+        abort(make_response(jsonify(message=str(e)), 500))
+
+    rows = cur.fetchall()
+    supervisors = {}
+
+    for [code, fname, lname, sector] in rows:
+        s = supervisors.setdefault(code, { 'fname': fname, 'lname': lname, 'sectors': [] })
+        if sector:
+            s['sectors'].append(sector)
+
+    return [[code, r['fname'], r['lname'], r['sectors']] for [code, r] in supervisors.items()]
+
+
 @app.route('/preferences', methods=['GET'])
 def preferences():
     try:
@@ -222,19 +255,24 @@ def preferences():
     except:
         abort(make_response(jsonify(message='Nom de secteur manquant'), 400))
 
+    sql_check = "SELECT COUNT(*) AS count FROM Secteur WHERE nom_secteur=?; "
     sql = (
-        "WITH T AS (SELECT code_mnemotechnique, prenom, COALESCE(nom_marital, nom) AS nom FROM Employe WHERE fonction LIKE 'Gardien'), "
+        "WITH T AS (SELECT code_mnemotechnique, prenom, COALESCE(nom_marital, nom) AS nom FROM Employe WHERE fonction='Gardien'), "
         "S AS (SELECT * FROM Preference WHERE nom_secteur=?) "
         "SELECT code_mnemotechnique, prenom, nom, prefere "
         "FROM T LEFT JOIN S ON code_mnemotechnique = code_gardien"
     )
     try:
         cur = cnxn.cursor()
-        cur.execute(sql, SECTOR)
+        cur.execute(sql_check + sql, SECTOR, SECTOR)
     except Exception as e:
         abort(make_response(jsonify(message=str(e)), 500))
 
-    return [list(row) for row in cur.fetchall()]
+    count = next(gen := fetch_while_next(cur))
+    if not count or count[0][0] < 1:
+        abort(make_response(jsonify(message=f'Aucun secteur au nom {SECTOR}'), 404))
+
+    return [list(row) for row in next(gen)]
 
 
 @app.route('/preferences', methods=['POST'])
@@ -336,7 +374,8 @@ def salary_edit():
     return jsonify(success=True)
 
 
-def salary_add_options():
+@app.route('/salary/options', methods=['GET'])
+def salary_options():
     try:
         # get '?date=...' from query string
         arg = request.args['date']
@@ -363,10 +402,8 @@ def salary_add_options():
     return [list(row) for row in cur.fetchall()]
 
 
-@app.route('/salary/add', methods=['GET', 'POST'])
+@app.route('/salary/add', methods=['POST'])
 def salary_add():
-    if request.method == 'GET':
-        return salary_add_options()
 
     CODE, DATE, SALARY, nbr, _ = assert_salary_keys()
     if nbr == 0:
@@ -397,7 +434,7 @@ def schedule_options(view):
         case 'sector':
             sql ='SELECT DISTINCT nom_secteur FROM Parcelle'
         case 'staff':
-            sql = "SELECT code_mnemotechnique, prenom, COALESCE(nom_marital, nom) FROM Employe WHERE fonction LIKE 'Gardien'"
+            sql = "SELECT code_mnemotechnique, prenom, COALESCE(nom_marital, nom) FROM Employe WHERE fonction='Gardien'"
         case _:
             abort(404)
     try:
@@ -418,14 +455,14 @@ def schedule_sector():
     except:
         abort(make_response(jsonify(message='Arguments manquants'), 400))
 
-    sql_header = 'SELECT num_parcelle FROM Parcelle WHERE nom_secteur LIKE ?; '
+    sql_header = 'SELECT num_parcelle FROM Parcelle WHERE nom_secteur=?; '
     sql = (
         "WITH T AS ("
         "SELECT FORMAT(dt_debut, 'hh:mm') AS time, Parcelle.num_parcelle as num_parcelle, code_gardien "
         "FROM Surveillance JOIN Parcelle "
         "ON Surveillance.num_parcelle = Parcelle.num_parcelle "
         "WHERE CONVERT(DATE, dt_debut) = ? "
-        "AND nom_secteur LIKE ?) "
+        "AND nom_secteur=?) "
         "SELECT time, num_parcelle, code_gardien, prenom, COALESCE(nom_marital, nom) "
         "FROM T JOIN Employe "
         "ON T.code_gardien = Employe.code_mnemotechnique"
