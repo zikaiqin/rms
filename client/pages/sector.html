@@ -37,7 +37,7 @@
             <!-- Page content here -->
         </main>
         <footer class="container"></footer>
-        <div id="modal-container"></div>
+        <div id="modal-container">
             <dialog id="preference-modal">
                 <article>
                     <header>
@@ -48,7 +48,7 @@
                         <h3>Modification Préférences</h3>
                     </header>
                     <div class="table-container overflow-auto">
-                        <table class="striped">
+                        <table class="striped option-table">
                             <thead>
                                 <tr>
                                     <th>Gardien</th>
@@ -79,7 +79,36 @@
                         <button aria-label="close" class="secondary">
                             Annuler
                         </button>
-                        <button id="submit-preferences" disabled>
+                        <button id="submit-preference" disabled>
+                            Enregistrer
+                        </button>
+                    </footer>
+                </article>
+            </dialog>
+            <dialog id="supervisor-modal">
+                <article>
+                    <header>
+                        <button
+                            aria-label="close"
+                            rel="prev"
+                        ></button>
+                        <h3>Modification Superviseurs</h3>
+                    </header>
+                    <div class="table-container overflow-auto">
+                        <table class="striped option-table">
+                            <thead>
+                                <tr>
+                                    <th>Secteur</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                    <footer>
+                        <button aria-label="close" class="secondary">
+                            Annuler
+                        </button>
+                        <button id="submit-supervisor" disabled>
                             Enregistrer
                         </button>
                     </footer>

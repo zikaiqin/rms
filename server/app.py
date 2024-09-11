@@ -245,6 +245,35 @@ def supervisor():
     return [[code, r['fname'], r['lname'], r['sectors']] for [code, r] in supervisors.items()]
 
 
+@app.route('/sector/supervisor', methods=['POST'])
+def supervisor_edit():
+    try:
+        DATA = request.get_json()
+        if not DATA:
+            raise Exception()
+    except:
+        abort(make_response(jsonify(message='Arguments manquant'), 400))
+
+    if len(DATA) == 0:
+        return ('Aucun changement', 204)
+
+    comp = set()
+    for row in DATA:
+        if row['sector'] in comp:
+            abort(make_response(jsonify(message='Un seul superviseur par secteur'), 400))
+        else:
+            comp.add(row['sector'])
+
+    sql = 'UPDATE Secteur SET code_chef_secteur=? WHERE nom_secteur=?'
+    try:
+        cursor = cnxn.cursor()
+        cursor.executemany(sql, [(s['supervisor'], s['sector']) for s in DATA])
+    except Exception as e:
+        abort(make_response(jsonify(message=str(e)), 500))
+
+    return jsonify(success=True)
+
+
 @app.route('/preferences', methods=['GET'])
 def preferences():
     try:

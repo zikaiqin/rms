@@ -47,6 +47,12 @@ const Sector = {
     },
     supervisor: {
         get: () => withAlert($.get(apiRoot.concat('/sector/supervisor'))),
+        post: (sectors) => withAlert($.ajax({
+            url:apiRoot.concat('/sector/supervisor'),
+            type: 'post',
+            contentType: 'application/json',
+            data: JSON.stringify(sectors),
+        })),
     },
 };
 

@@ -21,7 +21,9 @@ body > header {
     }
 }
 
-#preference-modal {
+.option-table {
+    margin-bottom: 0;
+
     div:has(> :is(span.material-symbols-outlined, input[type="radio"])) {
         display: flex;
         justify-content: center;
@@ -41,8 +43,11 @@ body > header {
             border: var(--pico-border-width) dashed var(--pico-secondary-background);
         }
     }
-    table {
-        margin-bottom: 0;
+    th:has(> kbd:only-child) {
+        text-align: center;
+    }
+    th > kbd:only-child {
+        border-bottom: none;
     }
 }
 .table-container {

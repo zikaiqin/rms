@@ -15,17 +15,32 @@ $(() => {
             modal.removeData('sector');
             modal.find('h3 span').remove();
             modal.find('tbody').empty();
-            $('#submit-preferences').prop('disabled', true);
+            $('#submit-preference').prop('disabled', true);
         },
     });
-    $('#preference-modal table').on('change', function() {
-        if ($(this).find('input[data-initial]:not(:checked)').length > 0) {
-            $('#submit-preferences').prop('disabled', false);
-        } else {
-            $('#submit-preferences').prop('disabled', true);
-        }
+    new Modal('#supervisor-modal', {
+        onClose: function() {
+            const modal = $(this.getElement());
+            modal.find('thead th').first().siblings().remove();
+            modal.find('tbody').empty();
+            $('#submit-supervisor').prop('disabled', true);
+        },
     });
-    $('#submit-preferences').on('click', () => {
+    reloadSectors();
+    attachListeners();
+});
+
+const attachListeners = () => {
+    ['preference', 'supervisor'].forEach((name) => {
+        $(`#${name}-modal table`).on('change', function() {
+            if ($(this).find('input[data-initial]:not(:checked)').length > 0) {
+                $(`#submit-${name}`).prop('disabled', false);
+            } else {
+                $(`#submit-${name}`).prop('disabled', true);
+            }
+        });
+    });
+    $('#submit-preference').on('click', () => {
         const modal = $('#preference-modal');
         const sector = modal.data('sector');
         const changes = [];
@@ -42,9 +57,25 @@ $(() => {
             Modal.get('#preference-modal').close();
             reloadSectors();
         });
-    })
-    reloadSectors();
-});
+    });
+    $('#submit-supervisor').on('click', () => {
+        const modal = $('#supervisor-modal');
+        const changes = [];
+        modal.find('input:checked:not(input[data-initial])').each(function() {
+            const input = $(this);
+            const supervisor = input.val();
+            const sector = input.attr('name');
+            changes.push({ sector, supervisor });
+        });
+        if (changes.length <= 0) {
+            return;
+        }
+        Sector.supervisor.post(changes).then(() => {
+            Modal.get('#supervisor-modal').close();
+            reloadSectors();
+        });
+    });
+}
 
 const reloadSectors = () => {
     $('main').empty();
@@ -71,17 +102,27 @@ const attachEditButtons = (jq, name) => {
         const div = $(this);
         const data = div.data('section');
         const btn = $(editBtn);
-        if (data === sectionData.preferences) {
-            btn.on('click', () => {
-                Sector.preferences.get(name).then((data) => {
-                    const modal = $('#preference-modal');
-                    modal.data('sector', name);
-                    modal.find('h3').append(`<span> &ndash; ${name}</span>`);
-                    const rows = buildPrefRows(data);
-                    modal.find('tbody').append(rows);
-                    Modal.get('#preference-modal').open();
+        switch (data) {
+            case sectionData.preferences:
+                btn.on('click', () => {
+                    Sector.preferences.get(name).then((data) => {
+                        const modal = $('#preference-modal');
+                        modal.data('sector', name);
+                        modal.find('h3').append(`<span> &ndash; ${name}</span>`);
+                        const rows = buildPrefRows(data);
+                        modal.find('tbody').append(rows);
+                        Modal.get('#preference-modal').open();
+                    });
                 });
-            })
+                break;
+            case sectionData.supervisor:
+                btn.on('click', () => {
+                    Sector.supervisor.get().then((data) => {
+                        buildSuperTable(data);
+                        Modal.get('#supervisor-modal').open();
+                    });
+                });
+                break;
         }
         div.append(btn);
     });
@@ -98,6 +139,28 @@ const buildPrefRows = (guards) => {
         return `<tr><td>${guardLabel}</td>${inputs}</tr>`;
     });
 };
+
+const buildSuperTable = (data) => {
+    const supervisors = [];
+    const sectors = [];
+    data.forEach(([code, fname, lname, s]) => {
+        s.forEach((sector) => sectors.push([sector, code]));
+        supervisors.push([code, `${fname} ${lname}`]);
+    });
+    const table = $('#supervisor-modal table');
+    table.find('thead tr').append(supervisors.map(
+        ([code, name]) => `<th scope="col"><kbd data-tooltip="${name}" data-placement="left">${code}</kbd></th>`,
+    ));
+    const rows = sectors.map(([sector, supervisor]) => {
+        const options = supervisors.reduce((prev, [code, _]) => {
+            return prev + `<td><div><input type="radio" name="${sector}" value="${code}" ${
+                code === supervisor ? 'title="Valeur initiale" data-initial checked ' : ''
+            }/></div></td>`;
+        }, '');
+        return `<tr><th scope="row">${sector}</th>${options}</tr>`;
+    });
+    table.find('tbody').append(rows);
+}
 
 const buildWithTag = (tag, label, parentEl, ...classes) => `<${parentEl} class="tag-cell"><kbd${classes.length ? ` class="${classes.join(' ')}"` : ''}>${tag}</kbd>${label}</${parentEl}>`;
 
