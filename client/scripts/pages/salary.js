@@ -1,6 +1,7 @@
 import $ from 'jquery';
 import { debounce } from 'lodash-es';
 import { Salary } from '@scripts/common/requests';
+import { isInputTypeSupported, spamOnHold } from '@scripts/common/util';
 
 $(() => {
     setupSelect();
@@ -10,46 +11,66 @@ $(() => {
 const setupSelect = () => {
     const max = (new Date()).toISOString().match(/^\d{4}-\d{2}/)[0];
     const min = (([year, month]) => `${year - 1}-${month}`)(max.split('-'));
-    const el = $('#month-input').attr({min, max});
-    $('#month-next').on('click', () => offsetMonth(min, max)(1));
-    $('#month-prev').on('click', () => offsetMonth(min, max)(-1));
-    el.on('change', debounce(onChangeMonth(min, max), 200, { leading: true })).val(max).trigger('change');
+    const el = $('#month-input');
+    if (isInputTypeSupported('month', 'nonce')) {
+        el.attr({min, max});
+    } else {
+        el.prop('readonly', true).attr('title', 'Switch to a newer browser for full feature support');
+    }
+    [['#next-month', 1], ['#prev-month', -1]].forEach(([id, offset]) => {
+        spamOnHold(id, offsetMonth(min, max).bind(null, offset));
+    });
+    el.on('input', () => {
+        $('#next-month', '#prev-month').attr('disabled', true);
+    });
+    el.on('change', debounce(onChangeMonth(min, max), 200)).val(max).trigger('change');
 }
 
-const offsetMonth = (min, max) => (offset) => {
-    if (offset === 0)
-        return;
-    const el = $('#month-input');
-    const [year, month] = el.val().split('-').map((x) => Number(x));
-    const newmonth = (month + offset - 1 + 12) % 12 + 1;
-    const newyear = year + (offset < 0 ? -Number(month + offset <= 0) : Number(month + offset > 12));
-    const newVal = clampedMonth(min, max, `${newyear}-${newmonth.toString().padStart(2, '0')}`);
-    el.val(newVal).trigger('change');
+const offsetMonth = (min, max) => {
+    const [minDate, maxDate] = [min, max].map((date) => {
+        const arr = date.split('-');
+        return { year: Number(arr[0]), month: Number(arr[1]) }
+    });
+    return (offset) => {
+        const el = $('#month-input');
+        const val = el.get(0).validity.valid ? el.val() : el.data('prev');
+        const [year, month] = val.split('-').map((x) => Number(x));
+        const newmonth = (month + offset - 1 + 12) % 12 + 1;
+        const newyear = year + (offset < 0 ? -Number(month + offset <= 0) : Number(month + offset > 12));
+        if (newyear <= minDate.year && newmonth <= minDate.month) {
+            $('#prev-month').attr('disabled', true);
+        } else if (newyear >= maxDate.year && newmonth >= maxDate.month) {
+            $('#next-month').attr('disabled', true);
+        }
+        const newVal = `${newyear}-${newmonth.toString().padStart(2, '0')}`;
+        el.val(newVal).trigger('change');
+    };
 }
 
 const onChangeMonth = (min, max) => (e) => {
     const el = $(e.target);
-    let date = el.val();
-    if (!date) {
-        el.val(max).trigger('change');
-        return;
+    const valid = e.target.validity.valid;
+    if (!valid) {
+        el.attr('aria-invalid', !valid);
+    } else {
+        const val = el.val();
+        $('#next-month').attr('disabled', val === max);
+        $('#prev-month').attr('disabled', val === min);
+        if (val === el.data('prev')) {
+            el.removeAttr('aria-invalid');
+            return;
+        }
+        if (el.attr('aria-invalid')) {
+            el.attr('aria-invalid', false);
+        }
+        el.data('prev', val);
+        Salary.all.get(val).then((data) => {
+            fillRows(data);
+        }).finally(() => {
+            el.removeAttr('aria-invalid');
+        });
     }
-    $('#month-next').attr('disabled', date === max);
-    $('#month-prev').attr('disabled', date === min);
-    Salary.all.get(date).then((data) => {
-        fillRows(data);
-    });
-}
-
-const clampedMonth = (min, max, val) => {
-    const [lowyr, lowmo] = min.split('-');
-    const [hiyr, himo] = max.split('-');
-    const [yr, mo] = val.split('-');
-    const newyr = Number(yr) < Number(lowyr) ? lowyr : (Number(yr) > Number(hiyr) ? hiyr : yr);
-    const newmo = newyr === lowyr && Number(mo) < Number(lowmo) ? lowmo :
-        newyr === hiyr && Number(mo) > Number(himo) ? himo : mo;
-    return `${newyr}-${newmo}`;
-}
+};
 
 const fillRows = (data) => {
     $('#add-new').removeAttr('disabled');

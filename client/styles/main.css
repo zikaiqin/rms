@@ -28,9 +28,18 @@
     text-decoration: none !important;
 }
 
-.icon-button {
-    padding: 0 !important;
+.icon-button:not([role="group"] .icon-button) {
+    padding: 0;
     border: none;
+}
+
+.icon-button:is([role="group"] > .icon-button) {
+    text-align: center;
+    padding: var(--pico-form-element-spacing-vertical) 0.5rem;
+    input + &, &:has(+ input) {
+        background-color: var(--pico-form-element-background-color);
+        border: var(--pico-border-width) solid var(--pico-form-element-border-color);
+    }
 }
 
 .muted {

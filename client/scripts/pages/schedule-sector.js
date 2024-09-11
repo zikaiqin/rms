@@ -7,7 +7,7 @@ $(() => {
 });
 
 const rebuildPage = () => {
-    setDate();
+    buildDatePicker();
     buildOptions().then((sector) => {
         const date = $('#date-picker').val();
         Schedule.sector.one.get(date, sector).then(({header, data}) => {
@@ -19,24 +19,39 @@ const rebuildPage = () => {
 
 const attachListeners = () => {
     $('#entity-picker').on('change', reloadRows);
-    $('#date-picker').on('change', debounce(reloadRows, 200, { leading: true }));
+    $('#date-picker').on('change', debounce(onDateChange.bind({ prev: $('#date-picker').val() }), 200));
 }
 
-const reloadRows = () => {
+const reloadRows = async () => {
     const sector = $('#entity-picker').val();
     const date = $('#date-picker').val();
-    Schedule.sector.one.get(date, sector).then(({header, data}) => {
+    return Schedule.sector.one.get(date, sector).then(({header, data}) => {
         buildTable(header, data);
     }).catch(({status}) => {
         if (status === 404) rebuildPage();
     });
 }
 
-const setDate = () => {
+const buildDatePicker = () => {
     const date = new Date().toISOString().split('T')[0];
     const year = Number(date.split('-')[0]);
     const [min, max] = [-1, 1].map((offset) => date.split('-').with(0, year + offset).join('-'));
     $('#date-picker').val(date).attr({min, max});
+}
+
+const onDateChange = (e) => {
+    const el = $(e.target);
+    const valid = e.target.validity.valid;
+    if (!valid) {
+        el.attr('aria-invalid', !valid);
+    } else {
+        if (el.attr('aria-invalid')) {
+            el.attr('aria-invalid', false);
+        }
+        reloadRows().finally(() => {
+            el.removeAttr('aria-invalid');
+        });
+    }
 }
 
 const buildOptions = async () => new Promise((resolve, reject) => {

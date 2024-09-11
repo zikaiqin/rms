@@ -39,14 +39,30 @@
                 <div role="heading">
                     <h3>Horaire de la semaine</h3>
                     <div>
-                        <details class="dropdown tag-picker" id="entity-picker" hidden>
+                        <details class="dropdown tag-picker" id="entity-picker" title="Sélectionnez un gardien" hidden>
                             <summary class="tag-cell">
                                 <kbd></kbd>
                                 <select></select>
                             </summary>
                             <ul></ul>
                         </details>
-                        <input type="week" id="date-picker" />
+                        <div role="group">
+                            <button
+                                id="prev-date"
+                                class="icon-button outline secondary material-symbols-outlined"
+                                title="Semaine précédente"
+                            >
+                                keyboard_arrow_left
+                            </button>
+                            <input id="date-picker" type="week" required />
+                            <button
+                                id="next-date"
+                                class="icon-button outline secondary material-symbols-outlined"
+                                title="Semaine prochaine"
+                            >
+                                keyboard_arrow_right
+                            </button>
+                        </div>
                     </div>
                 </div>
                 <div class="stretch vert-flex overflow-auto">
