@@ -18,9 +18,9 @@ The following Python packages are also required for this project:
 - [Flask](https://pypi.org/project/Flask/)
 - [Flask-Cors](https://pypi.org/project/Flask-Cors/)
 
-The easiest way to install a package is by running the following command in the terminal:
+To install them, run the following command in the terminal:
 ```
-pip install <package-name>
+pip install -r requirements.txt
 ```
 
 
