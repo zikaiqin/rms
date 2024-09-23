@@ -121,9 +121,9 @@ const onDateOffset = (min, max) => {
         const newWeek = (week + offset - 1 + 52) % 52 + 1;
         const newYear = year + (offset < 0 ? -Number(week + offset <= 0) : Number(week + offset > 52));
         if (newYear <= minDate.year && newWeek <= minDate.week) {
-            $('#prev-date').attr('disabled', true);
+            $('#prev-date').prop('disabled', true);
         } else if (newYear >= maxDate.year && newWeek >= maxDate.week) {
-            $('#next-date').attr('disabled', true);
+            $('#next-date').prop('disabled', true);
         }
         const newVal = `${newYear}-W${newWeek.toString().padStart(2, '0')}`;
         el.val(newVal).trigger('change');
@@ -138,8 +138,8 @@ const onDateChange = (min, max) => (e) => {
     }
     else {
         const val = el.val();
-        $('#next-date').attr('disabled', val === max);
-        $('#prev-date').attr('disabled', val === min);
+        $('#next-date').prop('disabled', val === max);
+        $('#prev-date').prop('disabled', val === min);
         if (val === el.data('prev')) {
             el.removeAttr('aria-invalid');
             return;

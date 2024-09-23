@@ -11,7 +11,7 @@ $(() => {
 const setupSelect = () => {
     const max = (new Date()).toISOString().match(/^\d{4}-\d{2}/)[0];
     const min = (([year, month]) => `${year - 1}-${month}`)(max.split('-'));
-    const el = $('#month-input');
+    const el = $('#date-picker');
     if (isInputTypeSupported('month', 'nonce')) {
         el.attr({min, max});
     } else {
@@ -21,7 +21,7 @@ const setupSelect = () => {
         spamOnHold(id, offsetMonth(min, max).bind(null, offset));
     });
     el.on('input', () => {
-        $('#next-month', '#prev-month').attr('disabled', true);
+        $('#next-month, #prev-month').attr('disabled', true);
     });
     el.on('change', debounce(onChangeMonth(min, max), 200)).val(max).trigger('change');
 }
@@ -32,7 +32,7 @@ const offsetMonth = (min, max) => {
         return { year: Number(arr[0]), month: Number(arr[1]) }
     });
     return (offset) => {
-        const el = $('#month-input');
+        const el = $('#date-picker');
         const val = el.get(0).validity.valid ? el.val() : el.data('prev');
         const [year, month] = val.split('-').map((x) => Number(x));
         const newmonth = (month + offset - 1 + 12) % 12 + 1;
@@ -133,7 +133,7 @@ const onClickEdit = (e) => {
             return;
         }
         const code = parentCell.siblings().eq(0).text();
-        const date = $('#month-input').val();
+        const date = $('#date-picker').val();
         Salary.edit.post(code, date, newVal).finally(() => {
             Salary.all.get(date).then((data) => {
                 fillRows(data);
@@ -145,12 +145,12 @@ const onClickEdit = (e) => {
         trigger.trigger('click');
     });
     salaryCell.empty().append(form);
-    parentCell.append(confirm, cancel);
+    parentCell.append(cancel, confirm);
     input.trigger('focus');
 }
 
 const onClickAdd = () => {
-    const date = $('#month-input').val();
+    const date = $('#date-picker').val();
     $('#add-new').attr('disabled', true);
     Salary.options.get(date).then((data) => {
         const row = $('<tr></tr>');
@@ -193,7 +193,7 @@ const onClickAdd = () => {
                 return;
             }
             const code = select.find(':selected').text();
-            const date = $('#month-input').val();
+            const date = $('#date-picker').val();
             Salary.add.post(code, date, val).finally(() => {
                 Salary.all.get(date).then((data) => {
                     fillRows(data);
@@ -208,7 +208,7 @@ const onClickAdd = () => {
             $('<td></td>').append(select),
             ...cells,
             $('<td></td>').append(form),
-            $('<td></td>').append(confirm, cancel),
+            $('<td></td>').append(cancel, confirm),
         );
         if ($('tbody').find('.no-data').length > 0) {
             $('tbody').empty();

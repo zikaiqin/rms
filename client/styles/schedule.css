@@ -20,3 +20,10 @@ div[role="heading"] > div {
         margin-left: var(--pico-spacing);
     }
 }
+
+#date-picker:read-only {
+    width: calc(2rem + 9ch);
+    & + button, button:has(+ &) {
+        --pico-box-shadow: none;
+    }
+}
