@@ -345,6 +345,27 @@ def preferences_edit():
     return jsonify(success=True)
 
 
+@app.route('/parcel', methods=['GET'])
+def parcel():
+    sql = (
+        'SELECT Secteur.nom_secteur, num_parcelle FROM Secteur LEFT JOIN Parcelle '
+        'ON Secteur.nom_secteur = Parcelle.nom_secteur'
+    )
+    try:
+        cur = cnxn.cursor()
+        cur.execute(sql)
+    except Exception as e:
+        abort(make_response(jsonify(message=str(e)), 500))
+
+    res = {}
+    for [sector, parcel] in cur.fetchall():
+        s = res.setdefault(sector, [])
+        if parcel is not None:
+            s.append(parcel)
+
+    return res
+
+
 @app.route('/salary', methods=['GET'])
 def salary():
     try:

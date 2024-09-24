@@ -114,6 +114,45 @@
                     </footer>
                 </article>
             </dialog>
+            <dialog id="parcel-modal">
+                <article>
+                    <header>
+                        <button
+                            aria-label="close"
+                            rel="prev"
+                        ></button>
+                        <h3>Modification Parcelles</h3>
+                    </header>
+                    <div class="table-container overflow-auto">
+                        <table class="form-table striped">
+                            <thead>
+                                <tr>
+                                    <th id="parcel-col" scope="col"><div class="icon-row"><span>N<sup>o</sup></span></div></th>
+                                    <th colspan="2" scope="col">Modifications</th>
+                                    <th id="sector-col" scope="col"><div class="icon-row"><span>Secteur</span></div></th>
+                                    <th scope="col">
+                                        <div class="icon-button-container">
+                                            <span id="add-parcel" class="icon-button secondary outline material-symbols-outlined" role="button" title="Nouveau">
+                                                add
+                                            </span>
+                                        </div>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </div>
+                    <footer>
+                        <button aria-label="close" class="secondary">
+                            Annuler
+                        </button>
+                        <button id="submit-parcel" disabled>
+                            Enregistrer
+                        </button>
+                    </footer>
+                </article>
+            </dialog>
         </div>
         <script type="module" src="@scripts/pages/sector.js"></script>
     </body>

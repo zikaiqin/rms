@@ -21,9 +21,24 @@ body > header {
     }
 }
 
-.option-table {
-    margin-bottom: 0;
+.icon-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
 
+    span.material-symbols-outlined {
+        margin-left: calc(var(--pico-spacing) * 0.25);
+    }
+}
+
+.error-indicator {
+    height: 100%;
+}
+
+.option-table, .form-table {
+    margin-bottom: 0;
+}
+.option-table {
     div:has(> :is(span.material-symbols-outlined, input[type="radio"])) {
         display: flex;
         justify-content: center;
@@ -50,6 +65,104 @@ body > header {
         border-bottom: none;
     }
 }
+.form-table {
+    input, select {
+        margin-bottom: 0;
+    }
+    thead, tfoot {
+        z-index: 1;
+    }
+}
 .table-container {
-    max-height: calc(100svh - 15rem);
+    max-height: calc(100svh - 12rem);
+}
+#parcel-modal td:has(.icon-button-container) {
+    padding-left: calc(var(--pico-spacing) / 2);
+}
+#parcel-modal .indicator + td {
+    padding-right: calc(var(--pico-spacing) / 2);
+}
+
+.notice {
+    font-style: italic;
+}
+.notice, .index {
+    transition: color var(--pico-transition);
+}
+.modified {
+    select, .index {
+        color: var(--pico-mod-color);
+        font-weight: bolder;
+        font-style: italic;
+    }
+    select * {
+        color: var(--pico-color);
+        font-weight: var(--pico-font-weight);
+        font-style: normal;
+    }
+    .notice {
+        color: var(--pico-muted-color);
+        text-decoration: line-through;
+    }
+}
+.deleted {
+    select, .index {
+        color: var(--pico-muted-color);
+        font-style: italic;
+    }
+    select {
+        text-decoration: line-through;
+    }
+    .notice {
+        color: var(--pico-del-color);
+        font-weight: bolder;
+    }
+}
+.inserted {
+    select, .index {
+        color: var(--pico-ins-color);
+        font-weight: bolder;
+        font-style: italic;
+    }
+    select * {
+        color: var(--pico-color);
+        font-weight: var(--pico-font-weight);
+        font-style: normal;
+    }
+    .notice {
+        color: var(--pico-ins-color);
+        font-weight: bolder;
+    }
+    .index {
+        padding-left: calc(var(--pico-spacing) / 2);
+        input {
+            padding: var(--pico-form-element-spacing-vertical) calc(var(--pico-spacing) / 2);
+            max-width: calc(2 * var(--pico-border-width) + var(--pico-spacing) + 4ch);
+        }
+        input[aria-invalid] {
+            padding: var(--pico-form-element-spacing-vertical) calc(var(--pico-spacing) / 2) !important;
+            background-image: none;
+        }
+    }
+}
+
+[aria-invalid="true"] {
+    .index:not(.inserted .index), &.inserted input {
+        color: var(--pico-form-element-invalid-border-color);
+        font-weight: bolder;
+    }
+    select:not(:is(.inserted, .deleted) select), .notice:is(.deleted .notice) {
+        color: var(--pico-form-element-invalid-border-color);
+    }
+    &.inserted :is(.notice, select) {
+        color: var(--pico-muted-color);
+        font-weight: var(--pico-font-weight);
+    }
+    [data-tooltip]::before {
+        font-weight: 600;
+    }
+}
+
+#sector-col {
+    padding-left: calc(var(--pico-spacing) + var(--pico-form-element-spacing-horizontal));
 }

@@ -2,8 +2,19 @@
 @import url('@picocss/pico/css/pico.colors.css');
 @import url('material-symbols/outlined.css');
 
+:root {
+    --pico-mod-color: #d9c26a;
+}
+
 .material-symbols-outlined {
     font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+
+    &[data-tooltip] {
+        border-bottom: none;
+    }
+    &[data-tooltip]::before {
+        font-family: var(--pico-font-family);
+    }
 }
 
 .full-height {
@@ -42,6 +53,14 @@
     }
 }
 
+:is(td, th) > .icon-button-container {
+    display: flex;
+    justify-content: end;
+}
+:is(td, th):has(> .icon-button-container) {
+    width: 0;
+}
+
 .muted {
     color: var(--pico-muted-color);
 }
@@ -76,10 +95,8 @@
     --pico-border-color: var(--pico-color-red-550);
 }
 
-.material-symbols-outlined[role="button"] {
-    :is(th, td):has(&) {
-        direction: rtl;
-    }
+.warning {
+    color: var(--pico-color-pumpkin-200);
 }
 
 kbd.secondary {
@@ -130,7 +147,7 @@ table {
 
 /* fucking firefox */
 @-moz-document url-prefix() {
-table:has(.no-data) {
+table.stretch:has(.no-data) {
     :is(thead, tfoot):not(:empty) {
         height: 1em;
     }

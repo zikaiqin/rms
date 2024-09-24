@@ -54,6 +54,9 @@ const Sector = {
             data: JSON.stringify(sectors),
         })),
     },
+    parcels: {
+        get: () => withAlert($.get(apiRoot.concat('/parcel'))),
+    },
 };
 
 const Salary = {
