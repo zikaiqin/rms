@@ -151,7 +151,7 @@ const onClickEdit = (e) => {
 
 const onClickAdd = () => {
     const date = $('#date-picker').val();
-    $('#add-new').attr('disabled', true);
+    $('table span').attr('disabled', true);
     Salary.options.get(date).then((data) => {
         const row = $('<tr></tr>');
         const codeMap = Object.fromEntries(data.map(([code, ...rest]) => [code, [...rest]]));
@@ -180,7 +180,7 @@ const onClickAdd = () => {
         form.append(input, trigger);
         const onCancel = () => {
             $(row).remove();
-            $('#add-new').removeAttr('disabled');
+            $('table span').removeAttr('disabled');
             if ($('tbody').children().length === 0) {
                 insertEmptyRow();
             }
