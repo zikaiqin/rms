@@ -1,6 +1,6 @@
 import $ from 'jquery';
 import { Staff } from '@scripts/common/requests.js';
-import Modal from '@scripts/common/modal.js';
+import { Modal } from '@scripts/common/components.js';
 
 const roleMap = {
     'Administratif': [
@@ -91,14 +91,14 @@ const reloadRows = () => {
         }
         const rows = data.map((row) => {
             const moreButton =
-                `<span role="button" class="icon-button secondary outline material-symbols-outlined" title="Voir détails">more_horiz</span>`;
+                `<span role="button" class="icon-button secondary outline material-symbols-outlined" value="${row[0]}" title="Voir détails">more_horiz</span>`;
             const cells = [...row, moreButton].map((val) => `<td>${val}</td>`);
             return $(`<tr>${cells.join('')}</tr>`);
         });
         $('table').removeClass('stretch');
         $('tbody').empty().append(rows);
         $('tbody span').on('click', function() {
-            const code = $(this).closest('tr').children().first().text();
+            const code = $(this).attr('value');
             openDetailsModal(code);
         });
     });
@@ -179,7 +179,10 @@ const hideGuardFieldset = () => {
 const openDetailsModal = (code) => {
     Staff.details.get(code).then((data) => {
         $('#details-modal h3').append(
-            `<kbd>${data.code_mnemotechnique}</kbd> ${data.prenom} ${data.nom_marital ? data.nom_marital + ` (${data.nom})` : data.nom}`,
+            `<span class="tag-cell">\
+                <kbd>${data.code_mnemotechnique}</kbd>\
+                ${data.prenom} ${data.nom_marital ? data.nom_marital + ` (${data.nom})` : data.nom}\
+            <span>`,
         );
         Modal.get('#details-modal').open(fillModalFields(data));
     });
