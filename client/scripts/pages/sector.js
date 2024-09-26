@@ -1,6 +1,6 @@
 import $ from 'jquery';
 import { Sector } from '@scripts/common/requests';
-import Modal from '@scripts/common/modal';
+import { Modal, TagPicker } from '@scripts/common/components';
 
 const sectionData = {
     supervisor: 'super',
@@ -38,7 +38,6 @@ $(() => {
     new Modal('#supervisor-modal', {
         onClose: function() {
             const modal = $(this.getElement());
-            modal.find('thead th').first().siblings().remove();
             modal.find('tbody').empty();
             $('#submit-supervisor').prop('disabled', true);
         },
@@ -56,8 +55,10 @@ $(() => {
 });
 
 const attachListeners = () => {
+    // Enable/disable submit for pref, super modal
     ['preference', 'supervisor'].forEach((name) => {
-        $(`#${name}-modal table`).on('change', function() {
+        const evName = name === 'preference' ? 'change' : 'picker.change';
+        $(`#${name}-modal table`).on(evName, function() {
             if ($(this).find('input[data-initial]:not(:checked)').length > 0) {
                 $(`#submit-${name}`).prop('disabled', false);
             } else {
@@ -182,21 +183,23 @@ const buildPrefRows = (guards) => {
 const buildSuperTable = (data) => {
     const supervisors = [];
     const sectors = [];
-    data.forEach(([code, fname, lname, s]) => {
-        s.forEach((sector) => sectors.push([sector, code]));
+    data.forEach(([code, fname, lname, s], idx) => {
+        s.forEach((sector) => sectors.push([sector, idx]));
         supervisors.push([code, `${fname} ${lname}`]);
     });
     const table = $('#supervisor-modal table');
-    table.find('thead tr').append(supervisors.map(
-        ([code, name]) => `<th scope="col"><kbd data-tooltip="${name}" data-placement="left">${code}</kbd></th>`,
-    ));
-    const rows = sectors.map(([sector, supervisor]) => {
-        const options = supervisors.reduce((prev, [code, _]) => {
-            return prev + `<td><div><input type="radio" name="${sector}" value="${code}" ${
-                code === supervisor ? 'title="Valeur initiale" data-initial checked ' : ''
-            }/></div></td>`;
-        }, '');
-        return `<tr><th scope="row">${sector}</th>${options}</tr>`;
+    const rows = sectors.sort().map(([sector, idx]) => {
+        const row = $(`<tr><th scope="row"><span>${sector}</span></th><td><details></details></td></tr>`);
+        new TagPicker(
+            supervisors,
+            row.find('details'),
+            {
+                initial: idx,
+                title: `Superviseur du secteur ${sector}`,
+                name: sector,
+            },
+        );
+        return row;
     });
     table.find('tbody').append(rows);
 }
@@ -319,9 +322,11 @@ const onChangeParcel = function() {
 
 const onCancelInsert = function() {
     const row = $(this).closest('tr');
-    const parcel = row.data('parcel');
+    const parcel = row.find('input').attr('data-prev');
     const {parcels} = $('#parcel-modal').data();
-    parcels.delete(parcel);
+    if (parcel) {
+        parcels.delete(Number(parcel));
+    }
     row.remove();
     onParcelFormChange();
 };
@@ -425,6 +430,7 @@ const onAddParcel = () => {
     row.find('.indicator + td').append(select);
     row.find('.icon-button-container').append(cancelButton, resetButton);
     modal.find('table').append(row);
+    input.trigger('focus');
     onParcelFormChange();
 };
 
@@ -452,7 +458,7 @@ const onParcelFormChange = () => {
     Object.entries(sectors).forEach(([sector, count]) => {
         if (count <= 0) {
             invalid.push(sector);
-            modal.find(`:is(tr, select):has([data-initial][value="${sector}"])`).attr('aria-invalid', true)
+            modal.find(`:is(tr, select):not(.inserted, .inserted select):has([data-initial][value="${sector}"])`).attr('aria-invalid', true)
                 .filter('tr').find('.index span').attr('data-tooltip', `Secteur ${sector} n'a pas de parcelles`);
         }
     });

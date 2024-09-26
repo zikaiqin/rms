@@ -50,7 +50,7 @@ body > header {
         margin: 0;
 
         &:checked:not(&[data-initial]) {
-            --pico-border-color: var(--pico-color-amber-150);
+            --pico-border-color: var(--pico-mod-focus-color);
             --pico-primary-focus: color-mix(in hsl, var(--pico-border-color), transparent 37.5%);
         }
 
@@ -66,7 +66,7 @@ body > header {
     }
 }
 .form-table {
-    input, select {
+    input, select, details {
         margin-bottom: 0;
     }
     thead, tfoot {
@@ -81,6 +81,36 @@ body > header {
 }
 #parcel-modal .indicator + td {
     padding-right: calc(var(--pico-spacing) / 2);
+}
+#supervisor-modal tr:has([data-initial]:not(:checked)) {
+    th span {
+        color: var(--pico-mod-color);
+        font-style: italic;
+        font-weight: bolder;
+
+        &::after {
+            content: '*';
+        }
+    }
+    summary {
+        --pico-form-element-active-border-color: var(--pico-mod-border-color);
+        --pico-form-element-focus-color: var(--pico-mod-focus-color);
+        select {
+            color: var(--pico-mod-color);
+            font-style: italic;
+            font-weight: bolder;
+        }
+        kbd {
+            background-color: var(--pico-mod-kbd-color);
+            color: var(--pico-contrast-inverse);
+        }
+    }
+}
+#supervisor-modal details label:has([data-initial]) {
+    color: var(--pico-form-element-placeholder-color);
+    kbd {
+        background-color: var(--pico-muted-color);
+    }
 }
 
 .notice {
@@ -99,6 +129,10 @@ body > header {
         color: var(--pico-color);
         font-weight: var(--pico-font-weight);
         font-style: normal;
+    }
+    select:not([aria-invalid]) {
+        --pico-form-element-active-border-color: var(--pico-mod-border-color);
+        --pico-form-element-focus-color: var(--pico-mod-focus-color);
     }
     .notice {
         color: var(--pico-muted-color);
@@ -128,6 +162,10 @@ body > header {
         color: var(--pico-color);
         font-weight: var(--pico-font-weight);
         font-style: normal;
+    }
+    select:not(tr[aria-invalid] select) {
+        --pico-form-element-active-border-color: var(--pico-form-element-valid-border-color);
+        --pico-form-element-focus-color: var(--pico-form-element-valid-focus-color);
     }
     .notice {
         color: var(--pico-ins-color);

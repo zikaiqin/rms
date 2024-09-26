@@ -3,25 +3,30 @@ import moment from 'moment';
 import { debounce } from 'lodash-es';
 import { Schedule } from '@scripts/common/requests';
 import { isInputTypeSupported, spamOnHold } from '@scripts/common/util';
+import { TagPicker } from '@scripts/common/components';
 
 $(() => {
-    rebuildPage()
+    buildPage()
 });
 
-const rebuildPage = () => {
-    buildDatePicker();
+const buildPage = (rebuild = false) => {
+    if (!rebuild) {
+        buildDatePicker();
+    }
     buildOptions().then((code) => {
         const [start, end] = getWeekAsInterval();
         Schedule.staff.between.get(code, start, end).then((data) => {
             buildTable(data, start);
-            attachListeners();
+            if (!rebuild) {
+                attachListeners();
+            }
         });
     });
 };
 
 const attachListeners = () => {
     const [min, max] = [-1, 1].map((offset) => `${moment().year() + offset}-W${moment().week()}`);
-    $('#entity-picker').on('change', onEntityChange);
+    $('#entity-picker').on('picker.change', reloadRows);
     [['#next-date', 1], ['#prev-date', -1]].forEach(([id, offset]) => {
         spamOnHold(id, onDateOffset(min, max).bind(null, offset));
     });
@@ -45,14 +50,14 @@ const buildDatePicker = () => {
 const buildOptions = async () => new Promise((resolve, reject) => {
     Schedule.staff.options.get().then((data) => {
         resolve(data[0][0]);
-        const options = data.map(([code, fname, lname]) =>
-            `<option value="${code}">${fname} ${lname}</option>`);
-        $('#entity-picker select').append(options);
-        $('#entity-picker').prop('hidden', false);
-        const listItems = data.map(([code, fname, lname]) =>
-            `<li><label class="tag-cell"><input type="radio" name="tag" value="${code}" hidden /><kbd>${code}</kbd> ${fname} ${lname}</label></li>`);
-        $('#entity-picker ul').append(listItems).find('input').first().prop('checked', true);
-        setSelection();
+        new TagPicker(
+            data.map(([code, fname, lname]) => [code, `${fname} ${lname}`]),
+            '#entity-picker',
+            {
+                title: `Sélectionnez un gardien`,
+                name: 'guard',
+            },
+        );
     }).catch((e) => reject(e))
 });
 
@@ -105,7 +110,9 @@ const reloadRows = async () => {
     return Schedule.staff.between.get(code, start, end).then((data) => {
         buildTable(data, start);
     }).catch(({status}) => {
-        if (status === 404) rebuildPage();
+        if (status === 404) {
+            buildPage(true);
+        };
     });
 };
 
@@ -152,19 +159,4 @@ const onDateChange = (min, max) => (e) => {
             el.removeAttr('aria-invalid');
         });
     }
-};
-
-const onEntityChange = () => {
-    setSelection();
-    reloadRows();
-};
-
-const setSelection = () => {
-    const picker = $('#entity-picker');
-    picker.removeAttr('open');
-    picker.find('li[hidden]').removeAttr('hidden');
-    picker.find('li:has(:checked)').attr('hidden', '');
-    const code = picker.find('input:checked').val();
-    picker.find('select').val(code);
-    picker.find('summary kbd').empty().text(code);
 };
