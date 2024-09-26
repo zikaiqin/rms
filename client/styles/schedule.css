@@ -27,3 +27,10 @@ div[role="heading"] > div {
         --pico-box-shadow: none;
     }
 }
+
+.refresh-button {
+    text-align: center;
+    margin-bottom: var(--pico-spacing);
+    background-color: var(--pico-form-element-background-color);
+    border: var(--pico-border-width) solid var(--pico-form-element-border-color);
+}

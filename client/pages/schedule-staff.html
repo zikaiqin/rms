@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Surveillances Gardien</title>
+        <title>Surveillances</title>
         <link rel="stylesheet" href="@styles/main.css"/>
         <link rel="stylesheet" href="@styles/schedule.css"/>
     </head>
@@ -12,7 +12,7 @@
             <nav>
                 <ul>
                     <!-- Page title -->
-                    <li><h1>Surveillances Gardien</h1></li>
+                    <li><h1>Surveillances</h1></li>
                 </ul>
                 <ul>
                     <!-- Navigation to other pages -->
@@ -22,8 +22,8 @@
                                 Surveillances
                             </summary>
                             <ul dir="rtl">
-                                <li><a role="link" class="secondary current-page" aria-current="page">Gardien</a></li>
-                                <li><a href="/schedule/sector">Secteur</a></li>
+                                <li><a role="link" class="secondary current-page" aria-current="page">Par Gardien</a></li>
+                                <li><a href="/schedule/sector">Par Secteur</a></li>
                             </ul>
                         </details>
                     </li>
@@ -50,19 +50,22 @@
                             <button
                                 id="prev-date"
                                 class="icon-button outline secondary material-symbols-outlined"
-                                title="Semaine précédente"
-                            >
+                                title="Semaine précédente">
                                 keyboard_arrow_left
                             </button>
                             <input id="date-picker" type="week" required />
                             <button
                                 id="next-date"
                                 class="icon-button outline secondary material-symbols-outlined"
-                                title="Semaine prochaine"
-                            >
+                                title="Semaine prochaine">
                                 keyboard_arrow_right
                             </button>
                         </div>
+                        <button
+                            id="refresh"
+                            class="refresh-button outline secondary material-symbols-outlined">
+                            refresh
+                        </button>
                     </div>
                 </div>
                 <div class="stretch vert-flex overflow-auto">

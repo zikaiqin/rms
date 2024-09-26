@@ -31,8 +31,9 @@ const attachListeners = () => {
         spamOnHold(id, onDateOffset(min, max).bind(null, offset));
     });
     $('#date-picker').on('input', () => {
-        $('#next-date, #prev-date').prop('disabled', true);
+        $('#next-date, #prev-date').css('pointer-events', 'none');
     }).on('change', debounce(onDateChange(min, max), 200));
+    $('#refresh').on('click', reloadRows);
 }
 
 const buildDatePicker = () => {
@@ -105,6 +106,7 @@ const buildParcel = (parcel) => {
 }
 
 const reloadRows = async () => {
+    $('#prev-date, #next-date, #date-picker, #refresh', '#entity-picker').css('pointer-events', 'none');
     const code = $('#entity-picker input:checked').val();
     const [start, end] = getWeekAsInterval();
     return Schedule.staff.between.get(code, start, end).then((data) => {
@@ -113,6 +115,8 @@ const reloadRows = async () => {
         if (status === 404) {
             buildPage(true);
         };
+    }).finally(() => {
+        $('#prev-date, #next-date, #date-picker, #refresh, #entity-picker').css('pointer-events', '');
     });
 };
 

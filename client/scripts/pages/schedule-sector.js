@@ -20,15 +20,19 @@ const rebuildPage = () => {
 const attachListeners = () => {
     $('#entity-picker').on('change', reloadRows);
     $('#date-picker').on('change', debounce(onDateChange.bind({ prev: $('#date-picker').val() }), 200));
+    $('#refresh').on('click', reloadRows);
 }
 
 const reloadRows = async () => {
+    $('#entity-picker, #date-picker, #refresh').css('pointer-events', 'none');
     const sector = $('#entity-picker').val();
     const date = $('#date-picker').val();
     return Schedule.sector.one.get(date, sector).then(({header, data}) => {
         buildTable(header, data);
     }).catch(({status}) => {
         if (status === 404) rebuildPage();
+    }).finally(() => {
+        $('#entity-picker, #date-picker, #refresh').css('pointer-events', '');
     });
 }
 
