@@ -4,8 +4,8 @@
 :root {
     --pico-mod-color: #d9c26a;
     --pico-mod-kbd-color: #c0ac52;
-    --pico-mod-border-color: #caaa29;
-    --pico-mod-focus-color: #ebc326;
+    --pico-mod-border-color: #c0a401;
+    --pico-mod: #e6c300;
 }
 
 .danger {

@@ -189,7 +189,7 @@ const buildParcelTable = (data, currentSector) => {
 };
 
 const buildParcelRow = (parcel, sector, options) => {
-    const select = `<select>${options.map(
+    const select = `<select title="${sector}">${options.map(
         (name) => `<option value="${name}" ${name === sector ? 'selected data-initial' : ''}>${name}</option>`,
     )}</select>`;
     const buttons = [['delete'], ['reset', true]].map((args) => buildButton(...args)).join('');
@@ -267,6 +267,7 @@ const onResetParcel = function() {
 
 const onChangeParcel = function() {
     const target = $(this);
+    target.attr('title', target.val());
     const row = target.closest('tr');
     row.find('.notice, .indicator').empty();
     const resetButton = row.find('span[data-action="reset"]');
@@ -312,6 +313,7 @@ const onResetInsert = function() {
 
 const onChangeInsertSelect = function() {
     const select = $(this);
+    select.attr('title', select.val());
     const row = select.closest('tr');
     const input = row.find('.index input');
     const resetButton = row.find('span[data-action="reset"]');
@@ -379,7 +381,7 @@ const onAddParcel = () => {
         $(`<input type="number" min="1" max="${magic}" placeholder="${parcel}" value="${parcel}" data-prev="${parcel}" aria-invalid="false" required />`);
     input.on('input', onChangeInsertInput);
 
-    const select = $(`<select>${options.map(
+    const select = $(`<select title="${sector}">${options.map(
         (name) => `<option value="${name}" ${name === sector ? 'selected data-initial' : ''}>${name}</option>`,
     )}</select>`);
     select.on('change', onChangeInsertSelect);

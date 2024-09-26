@@ -50,7 +50,7 @@ body > header {
         margin: 0;
 
         &:checked:not(&[data-initial]) {
-            --pico-border-color: var(--pico-mod-focus-color);
+            --pico-border-color: var(--pico-mod);
             --pico-primary-focus: color-mix(in hsl, var(--pico-border-color), transparent 37.5%);
         }
 
@@ -94,7 +94,7 @@ body > header {
     }
     summary {
         --pico-form-element-active-border-color: var(--pico-mod-border-color);
-        --pico-form-element-focus-color: var(--pico-mod-focus-color);
+        --pico-form-element-focus-color: var(--pico-mod-border-color);
         select {
             color: var(--pico-mod-color);
             font-style: italic;
@@ -132,7 +132,7 @@ body > header {
     }
     select:not([aria-invalid]) {
         --pico-form-element-active-border-color: var(--pico-mod-border-color);
-        --pico-form-element-focus-color: var(--pico-mod-focus-color);
+        --pico-form-element-focus-color: var(--pico-mod-border-color);
     }
     .notice {
         color: var(--pico-muted-color);
