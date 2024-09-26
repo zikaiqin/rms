@@ -61,7 +61,7 @@ def staff():
     """
     ROLE = request.args['role'] if 'role' in request.args else None
     sql = (
-        'SELECT code_mnemotechnique, prenom, COALESCE(nom_marital, nom) AS nom' +
+        'SELECT code_mnemotechnique, prenom, nom' +
         (' ' if ROLE else ', fonction, service ') +
         'FROM Employe ' +
         ('WHERE fonction=?' if ROLE else '')
@@ -170,12 +170,12 @@ def staff_add():
         - 400 if missing properties or fails unique check
     """
     # request form data must contain all of these properties
-    KEYS = ['code_mnemotechnique', 'numero_avs', 'prenom', 'nom', 'nom_marital', 'date_naissance',
+    KEYS = ['code_mnemotechnique', 'numero_avs', 'prenom', 'nom', 'date_naissance',
             'lieu_naissance', 'adresse', 'fonction', 'service', 'grade', 'taux_occupation']
     if 'fonction' not in request.form or request.form['fonction'] != 'Gardien':
         KEYS = KEYS[:-2]
     values = tuple(val if key in request.form and (val := request.form[key]) != '' else None for key in KEYS)
-    missing = {k for (k, v) in zip(KEYS, values) if v == None and k != 'nom_marital'}
+    missing = {k for (k, v) in zip(KEYS, values) if v == None}
     if len(missing) > 0:
         error_msg = 'Attributs manquants:\n' + '\n'.join(('- ' + k) for k in missing)
         abort(make_response(jsonify(message=error_msg), 400))
@@ -210,7 +210,7 @@ def staff_add():
 def sector():
     sql_parcels = 'SELECT * FROM Parcelle; '
     sql_temp = (
-        'SELECT nom_secteur, {key}, prenom, COALESCE(nom_marital, nom) AS nom {cols} '
+        'SELECT nom_secteur, {key}, prenom, nom {cols} '
         'FROM {table} JOIN Employe ON {key} = code_mnemotechnique; '
     )
     sql_sectors = sql_temp.format(key='code_chef_secteur', table='Secteur', cols='')
@@ -238,7 +238,7 @@ def sector():
 @app.route('/sector/supervisor', methods=['GET'])
 def supervisor():
     sql = (
-        "WITH T AS (SELECT code_mnemotechnique, prenom, COALESCE(nom_marital, nom) AS nom FROM Employe WHERE fonction='Chef de secteur') "
+        "WITH T AS (SELECT code_mnemotechnique, prenom, nom FROM Employe WHERE fonction='Chef de secteur') "
         "SELECT code_mnemotechnique, prenom, nom, nom_secteur "
         "FROM T LEFT JOIN Secteur ON code_mnemotechnique = code_chef_secteur"
     )
@@ -313,7 +313,7 @@ def preferences():
 
     sql_check = "SELECT COUNT(*) AS count FROM Secteur WHERE nom_secteur=?; "
     sql = (
-        "WITH T AS (SELECT code_mnemotechnique, prenom, COALESCE(nom_marital, nom) AS nom FROM Employe WHERE fonction='Gardien'), "
+        "WITH T AS (SELECT code_mnemotechnique, prenom, nom FROM Employe WHERE fonction='Gardien'), "
         "S AS (SELECT * FROM Preference WHERE nom_secteur=?) "
         "SELECT code_mnemotechnique, prenom, nom, prefere "
         "FROM T LEFT JOIN S ON code_mnemotechnique = code_gardien"
@@ -525,7 +525,7 @@ def salary_options():
     if 'date' not in request.args or not (DATE := datetime.strptime(request.args['date'], '%Y-%m')):
         abort(make_response(jsonify(message='Date mal formatée'), 400))
     sql = (
-        'SELECT code_mnemotechnique, prenom, COALESCE(nom_marital, nom), numero_avs, fonction, taux_occupation '
+        'SELECT code_mnemotechnique, prenom, nom, numero_avs, fonction, taux_occupation '
         'FROM Employe LEFT JOIN Gardien '
         'ON code_mnemotechnique = code_employe '
         'WHERE code_mnemotechnique NOT IN ('
@@ -570,7 +570,7 @@ def schedule_options(view):
         case 'sector':
             sql ='SELECT DISTINCT nom_secteur FROM Parcelle'
         case 'staff':
-            sql = "SELECT code_mnemotechnique, prenom, COALESCE(nom_marital, nom) FROM Employe WHERE fonction='Gardien'"
+            sql = "SELECT code_mnemotechnique, prenom, nom FROM Employe WHERE fonction='Gardien'"
         case _:
             abort(404)
     with get_connection() as connection:
@@ -597,7 +597,7 @@ def schedule_sector():
         "ON Surveillance.num_parcelle = Parcelle.num_parcelle "
         "WHERE CONVERT(DATE, dt_debut) = ? "
         "AND nom_secteur=?) "
-        "SELECT time, num_parcelle, code_gardien, prenom, COALESCE(nom_marital, nom) "
+        "SELECT time, num_parcelle, code_gardien, prenom, nom "
         "FROM T JOIN Employe "
         "ON T.code_gardien = Employe.code_mnemotechnique"
     )

@@ -204,7 +204,6 @@ CREATE OR ALTER PROCEDURE insertionEmploye (
     @numero_avs INT,
     @prenom VARCHAR(50),
     @nom VARCHAR(50),
-    @nom_marital VARCHAR(50) = NULL,
     @date_naissance DATE,
     @lieu_naissance VARCHAR(50),
     @adresse VARCHAR(255),
@@ -218,7 +217,7 @@ BEGIN
     BEGIN TRY
         BEGIN TRAN;
         INSERT INTO Employe VALUES (
-            @code_mnemotechnique, @numero_avs, @prenom, @nom, @nom_marital,
+            @code_mnemotechnique, @numero_avs, @prenom, @nom,
             @date_naissance, @lieu_naissance, @adresse, @fonction, @service
         );
         IF (@fonction LIKE 'Chef de secteur')
@@ -246,7 +245,7 @@ RETURNS TABLE
 AS
 RETURN
     WITH T AS (
-        SELECT code_mnemotechnique, prenom, COALESCE(nom_marital, nom) AS nom, numero_avs, fonction, taux_occupation
+        SELECT code_mnemotechnique, prenom, nom, numero_avs, fonction, taux_occupation
         FROM Employe LEFT JOIN Gardien
         ON code_mnemotechnique = code_employe)
     SELECT code_mnemotechnique, prenom, nom, numero_avs, fonction, taux_occupation, montant AS salaire

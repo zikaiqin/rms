@@ -12,7 +12,6 @@ CREATE TABLE Employe (
     numero_avs INT NOT NULL UNIQUE,
     prenom VARCHAR(50) NOT NULL,
     nom VARCHAR(50) NOT NULL,
-    nom_marital VARCHAR(50),
     date_naissance DATE NOT NULL,
     lieu_naissance VARCHAR(50) NOT NULL,
     adresse VARCHAR(255) NOT NULL,

@@ -28,7 +28,6 @@ const deptMap = Object.fromEntries(
 
 const staffFieldLabels = {
     prenom: 'Prénom',
-    nom_marital: 'Nom marital',
     nom: 'Nom',
     code_mnemotechnique: 'Code mnémotechnique',
     service: 'Service',
@@ -185,7 +184,7 @@ const openDetailsModal = (code) => {
         $('#details-modal h3').append(
             `<span class="tag-cell">\
                 <kbd>${data.code_mnemotechnique}</kbd>\
-                ${data.prenom} ${data.nom_marital ? data.nom_marital + ` (${data.nom})` : data.nom}\
+                ${data.prenom} ${data.nom}\
             <span>`,
         );
         Modal.get('#details-modal').open(fillModalFields(data));
