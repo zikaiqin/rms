@@ -40,6 +40,15 @@ def fetch_while_next(cursor):
     while cursor.nextset():
         yield cursor.fetchall()
 
+def sql_test_str(values_len, table_name, column_name):
+    SQL = (
+        'SELECT Test.val AS invalid '
+        'FROM (VALUES {values}) AS Test(val) '
+        'LEFT JOIN {table} AS T ON Test.val = T.{column} '
+        'WHERE T.{column} IS NULL; '
+    )
+    return SQL.format(values=', '.join(repeat('(?)', values_len)), table=table_name, column=column_name)
+
 app = Flask(__name__)
 CORS(app)
 
@@ -260,19 +269,23 @@ def supervisor_edit():
     supervisors = set()
     sectors = set()
     for row in DATA:
-        if row['sector'] in sectors:
+        if (
+            'sector' not in row or
+            'supervisor' not in row or
+            not (sector := row['sector']) or
+            not isinstance(sector, str) or
+            not isinstance(supervisor := row['supervisor'], str) or
+            len(supervisor) != 3
+        ):
+            abort(make_response(jsonify(message='Arguments manquants ou mal formatés'), 400))
+        if sector in sectors:
             abort(make_response(jsonify(message='Un seul superviseur par secteur'), 400))
         else:
-            sectors.add(row['sector'])
-            supervisors.add(row['supervisor'])
-    sql_temp = (
-        'SELECT Test.val AS invalid '
-        'FROM (VALUES {values}) AS Test(val) '
-        'LEFT JOIN {table} AS T ON Test.val = T.{column} '
-        'WHERE T.{column} IS NULL; '
-    )
-    format_sql = lambda values, table, column: sql_temp.format(values=', '.join(repeat('(?)', len(values))), table=table, column=column)
-    sql_check = format_sql(supervisors, 'ChefDeSecteur', 'code_employe') + format_sql(sectors, 'Secteur', 'nom_secteur')
+            sectors.add(sector)
+            supervisors.add(supervisor)
+
+    sql_check = sql_test_str(len(supervisors), 'ChefDeSecteur', 'code_employe') + sql_test_str(len(sectors), 'Secteur', 'nom_secteur')
+
     with get_connection() as connection:
         cur = connection.cursor()
         cur.execute(sql_check, tuple(chain(supervisors, sectors)))
@@ -281,9 +294,9 @@ def supervisor_edit():
 
         if len(invalid_super) > 0 or len(invalid_sector) > 0:
             error_msg = 'Les arguments suivants sont invalides:\n\n'
-            super_msg = ('Chefs: ' + ', '.join(str(v[0]) for v in invalid_super)) if len(invalid_super) > 0 else ''
-            sector_msg = ('Secteurs: ' + ', '.join(str(v[0]) for v in invalid_sector)) if len(invalid_sector) > 0 else ''
-            abort(make_response(jsonify(message=(error_msg + '\n'.join(tuple(super_msg, sector_msg)))), 400))
+            super_msg = ('Chefs:\n' + '\n'.join(('- ' + v[0]) for v in invalid_super)) if len(invalid_super) > 0 else ''
+            sector_msg = ('Secteurs:\n' + '\n'.join(('- ' + v[0]) for v in invalid_sector)) if len(invalid_sector) > 0 else ''
+            abort(make_response(jsonify(message=(error_msg + '\n'.join((super_msg, sector_msg)))), 400))
 
         sql = 'UPDATE Secteur SET code_chef_secteur=? WHERE nom_secteur=?'
         cur = connection.cursor()
@@ -349,12 +362,7 @@ def preferences_edit():
             guards.add(row['code'])
 
     sql_check_sector = "SELECT COUNT(*) AS count FROM Secteur WHERE nom_secteur=?; "
-    sql_check_guards = (
-        'SELECT Test.val AS invalid '
-        'FROM (VALUES {values}) AS Test(val) '
-        'LEFT JOIN Gardien ON Test.val = Gardien.code_employe '
-        'WHERE Gardien.code_employe IS NULL; '
-    ).format(values=', '.join(repeat('(?)', len(guards))))
+    sql_check_guards = sql_test_str(len(guards), 'Gardien', 'code_employe')
 
     with get_connection() as connection:
         cur = connection.cursor()
@@ -402,6 +410,63 @@ def parcel():
                 s.append(parcel)
 
         return res
+
+
+@app.route('/parcel', methods=['POST'])
+def parcel_edit():
+    try:
+        DATA = request.get_json()
+        if not DATA or not isinstance(DATA, list) or len(DATA) <= 0:
+            raise Exception()
+    except:
+        abort(make_response(jsonify(message='Arguments manquants ou mal formatés'), 400))
+
+    parcels = set()
+    sectors = set()
+    for row in DATA:
+        if (
+            'parcel' not in row or
+            'sector' not in row or
+            not ((sector := row['sector']) is None or (isinstance(sector, str) and sector != '')) or
+            not isinstance(parcel := row['parcel'], int) or
+            not (0 < parcel and parcel < 100)
+        ):
+            abort(make_response(jsonify(message='Arguments manquants ou mal formatés'), 400))
+        if parcel in parcels:
+            abort(make_response(jsonify(message='Une seule modification par secteur'), 400))
+        else:
+            parcels.add(parcel)
+            if sector is not None:
+                sectors.add(sector)
+
+    with get_connection() as connection:
+        cur = connection.cursor()
+
+        if len(sectors) > 0:
+            sql_check = sql_test_str(len(sectors), 'Secteur', 'nom_secteur')
+            cur.execute(sql_check, tuple(sectors))
+            invalid_sectors = cur.fetchall()
+
+            if len(invalid_sectors) > 0:
+                error_msg = "Les secteurs suivants n'existent pas:\n" + '\n'.join(('- ' + row[0]) for row in invalid_sectors)
+                abort(make_response(jsonify(message=error_msg), 400))
+            else:
+                cur = connection.cursor()
+
+        sql = (
+            'BEGIN TRAN; '
+            'IF (? IS NULL) BEGIN '
+            'DELETE FROM Parcelle WHERE num_parcelle=?; END; '
+            'ELSE BEGIN '
+            'UPDATE Parcelle SET nom_secteur=? WHERE num_parcelle=?; '
+            'IF (@@ROWCOUNT = 0) BEGIN '
+            'INSERT INTO Parcelle(nom_secteur, num_parcelle) VALUES (?, ?); END; '
+            'END; '
+            'COMMIT TRAN;'
+        )
+        cur.executemany(sql, [(p['sector'], p['parcel']) * 3 for p in DATA])
+
+        return jsonify(success=True)
 
 
 @app.route('/salary', methods=['GET'])

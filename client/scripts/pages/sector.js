@@ -58,49 +58,11 @@ const attachListeners = () => {
     // Enable/disable submit for pref, super modal
     ['preference', 'supervisor'].forEach((name) => {
         const evName = name === 'preference' ? 'change' : 'picker.change';
-        $(`#${name}-modal table`).on(evName, function() {
-            if ($(this).find('input[data-initial]:not(:checked)').length > 0) {
-                $(`#submit-${name}`).prop('disabled', false);
-            } else {
-                $(`#submit-${name}`).prop('disabled', true);
-            }
-        });
+        $(`#${name}-modal table`).on(evName, function() { onModalChange.call(this, name) });
     });
-    $('#submit-preference').on('click', () => {
-        const modal = $('#preference-modal');
-        const sector = modal.data('sector');
-        const changes = [];
-        modal.find('input:checked:not(input[data-initial])').each(function() {
-            const input = $(this);
-            const prefers = JSON.parse(input.val());
-            const code = input.attr('name');
-            changes.push({ code, prefers });
-        });
-        if (changes.length <= 0) {
-            return;
-        }
-        Sector.preferences.post(sector, changes).then(() => {
-            Modal.get('#preference-modal').close();
-            reloadSectors();
-        });
-    });
-    $('#submit-supervisor').on('click', () => {
-        const modal = $('#supervisor-modal');
-        const changes = [];
-        modal.find('input:checked:not(input[data-initial])').each(function() {
-            const input = $(this);
-            const supervisor = input.val();
-            const sector = input.attr('name');
-            changes.push({ sector, supervisor });
-        });
-        if (changes.length <= 0) {
-            return;
-        }
-        Sector.supervisor.post(changes).then(() => {
-            Modal.get('#supervisor-modal').close();
-            reloadSectors();
-        });
-    });
+    $('#submit-preference').on('click', onSubmitPreference);
+    $('#submit-supervisor').on('click', onSubmitSupervisor);
+    $('#submit-parcel').on('click', onSubmitParcel);
     $('#add-parcel').on('click', onAddParcel);
 }
 
@@ -133,7 +95,7 @@ const attachEditButtons = (jq, name) => {
         switch (data) {
             case sectionData.preferences:
                 btn.on('click', () => {
-                    Sector.preferences.get(name).then((data) => {
+                    Sector.preference.get(name).then((data) => {
                         buildPrefTable(data, name);
                         Modal.get('#preference-modal').open();
                     });
@@ -149,7 +111,7 @@ const attachEditButtons = (jq, name) => {
                 break;
             case sectionData.parcels:
                 btn.on('click', () => {
-                    Sector.parcels.get().then((data) => {
+                    Sector.parcel.get().then((data) => {
                         buildParcelTable(data, name);
                         Modal.get('#parcel-modal').open();
                     });
@@ -233,7 +195,7 @@ const buildParcelRow = (parcel, sector, options) => {
     const buttons = [['delete'], ['reset', true]].map((args) => buildButton(...args)).join('');
     const row =
         `<tr>\
-            <td class="index"><span data-placement="right">${parcel}</span></td>\
+            <td class="index" data-index="${parcel}"><span data-placement="right">${parcel}</span></td>\
             <td class="notice"></td>\
             <td class="indicator"></td>\
             <td>${select}</td>\
@@ -479,4 +441,77 @@ const onParcelFormChange = () => {
             `<span class="material-symbols-outlined warning" data-tooltip="${message}" data-placement="right">warning</span>`;
         $('#parcel-col .icon-row').append(symbol);
     }
+};
+
+const onModalChange = function(name) {
+    if ($(this).find('input[data-initial]:not(:checked)').length > 0) {
+        $(`#submit-${name}`).prop('disabled', false);
+    } else {
+        $(`#submit-${name}`).prop('disabled', true);
+    }
+}
+
+const onSubmitPreference = () => {
+    const modal = $('#preference-modal');
+    const sector = modal.data('sector');
+    const changes = [];
+    modal.find('input:checked:not(input[data-initial])').each(function() {
+        const input = $(this);
+        const prefers = JSON.parse(input.val());
+        const code = input.attr('name');
+        changes.push({ code, prefers });
+    });
+    if (changes.length <= 0) {
+        return;
+    }
+    Sector.preference.post(sector, changes).then(() => {
+        Modal.get('#preference-modal').close();
+        reloadSectors();
+    });
+}
+
+const onSubmitSupervisor = () => {
+    const modal = $('#supervisor-modal');
+    const changes = [];
+    modal.find('input:checked:not(input[data-initial])').each(function() {
+        const input = $(this);
+        const supervisor = input.val();
+        const sector = input.attr('name');
+        changes.push({ sector, supervisor });
+    });
+    if (changes.length <= 0) {
+        return;
+    }
+    Sector.supervisor.post(changes).then(() => {
+        Modal.get('#supervisor-modal').close();
+        reloadSectors();
+    });
+};
+
+const onSubmitParcel = () => {
+    const modal = $('#parcel-modal');
+    const changes = [];
+    modal.find('.deleted .index').each(function() {
+        const parcel = Number($(this).attr('data-index'));
+        changes.push({ parcel, sector: null });
+    });
+    modal.find('.modified').each(function() {
+        const row = $(this);
+        const parcel = Number(row.find('.index').attr('data-index'));
+        const sector = row.find('select').val();
+        changes.push({ parcel, sector });
+    });
+    modal.find('.inserted').each(function() {
+        const row = $(this);
+        const parcel = Number(row.find('input').val());
+        const sector = row.find('select').val();
+        changes.push({ parcel, sector });
+    });
+    if (changes.length <= 0) {
+        return;
+    }
+    Sector.parcel.post(changes).then(() => {
+        Modal.get('#parcel-modal').close();
+        reloadSectors();
+    });
 };

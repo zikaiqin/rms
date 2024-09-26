@@ -36,7 +36,7 @@ const Sector = {
     all: {
         get: () => withAlert($.get(apiRoot.concat('/sector'))),
     },
-    preferences: {
+    preference: {
         get: (sector) => withAlert($.get(apiRoot.concat('/sector/preference'), {sector})),
         post: (sector, preferences) => withAlert($.post({
             url: apiRoot.concat('/sector/preference'),
@@ -47,13 +47,18 @@ const Sector = {
     supervisor: {
         get: () => withAlert($.get(apiRoot.concat('/sector/supervisor'))),
         post: (sectors) => withAlert($.post({
-            url:apiRoot.concat('/sector/supervisor'),
+            url: apiRoot.concat('/sector/supervisor'),
             contentType: 'application/json',
             data: JSON.stringify(sectors),
         })),
     },
-    parcels: {
+    parcel: {
         get: () => withAlert($.get(apiRoot.concat('/parcel'))),
+        post: (parcels) => withAlert($.post({
+            url: apiRoot.concat('/parcel'),
+            contentType: 'application/json',
+            data: JSON.stringify(parcels),
+        })),
     },
 };
 
