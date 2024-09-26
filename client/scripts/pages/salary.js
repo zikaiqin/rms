@@ -79,7 +79,7 @@ const fillRows = (data) => {
         return;
     }
     const rows = data.map((row) => {
-        const editBtn = `<td><span role="button" class="icon-button secondary outline material-symbols-outlined" title="Modifier">edit</span></td>`
+        const editBtn = `<span role="button" class="icon-button secondary outline material-symbols-outlined" title="Modifier">edit</span>`
         const cells = row.map((val, idx) => {
             switch (idx) {
                 case 5:
@@ -90,7 +90,7 @@ const fillRows = (data) => {
                     return `<td>${val}</td>`
             }
         });
-        return `<tr>${cells.join('')}${editBtn}</tr>`;
+        return `<tr>${cells.join('')}<td><div class="icon-button-container">${editBtn}</td></div></tr>`;
     });
     $('table').removeClass('stretch');
     $('tbody').empty().append(rows);
@@ -109,7 +109,7 @@ const onClickEdit = (e) => {
     const btn = $(e.target);
     btn.prop('hidden', true);
     $('table span').not(btn).attr('disabled', true);
-    const parentCell = btn.parent();
+    const parentCell = btn.closest('td');
     const salaryCell = parentCell.siblings().eq(-1);
     const text = salaryCell.text();
     const val = text.slice(1);
@@ -208,7 +208,7 @@ const onClickAdd = () => {
             $('<td></td>').append(select),
             ...cells,
             $('<td></td>').append(form),
-            $('<td></td>').append(cancel, confirm),
+            $('<td><div class="icon-button-container"></div></td>').find('div').append(cancel, confirm).parent(),
         );
         if ($('tbody').find('.no-data').length > 0) {
             $('tbody').empty();
@@ -219,5 +219,5 @@ const onClickAdd = () => {
     });
 }
 
-const confirmIcon = '<span role="button" class="icon-button secondary outline material-symbols-outlined" title="Confirmer">check_circle</span>'
-const cancelIcon = '<span role="button" class="icon-button secondary outline material-symbols-outlined" title="Annuler">cancel</span>'
+const confirmIcon = '<span role="button" class="icon-button secondary outline material-symbols-outlined" title="Confirmer">check</span>'
+const cancelIcon = '<span role="button" class="icon-button secondary outline material-symbols-outlined" title="Annuler">close</span>'

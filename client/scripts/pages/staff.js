@@ -91,7 +91,11 @@ const reloadRows = () => {
         }
         const rows = data.map((row) => {
             const moreButton =
-                `<span role="button" class="icon-button secondary outline material-symbols-outlined" value="${row[0]}" title="Voir détails">more_horiz</span>`;
+                `<div class="icon-button-container">\
+                    <span role="button" class="icon-button secondary outline material-symbols-outlined" value="${row[0]}" title="Voir détails">\
+                        more_horiz\
+                    </span>\
+                </div>`;
             const cells = [...row, moreButton].map((val) => `<td>${val}</td>`);
             return $(`<tr>${cells.join('')}</tr>`);
         });
