@@ -1,11 +1,14 @@
 from pyodbc import IntegrityError
 from flask import Flask, request, abort, make_response, jsonify
 from flask_cors import CORS
+from collections import Counter
 from contextlib import contextmanager
 from itertools import chain, repeat
 from datetime import datetime
+from math import inf, floor, isnan
+from random import random
 import re
-import math
+import heapq
 from database import DataBase
 
 DRIVER = 'ODBC Driver 18 for SQL Server'
@@ -129,7 +132,7 @@ def staff_delete():
         - 409 if the employee supervises one or more sectors
     """
     # get code from form data
-    if 'code' not in request.args or len(CODE := request.args['code']) != 3:
+    if 'code' not in request.form or len(CODE := request.form['code']) != 3:
         abort(make_response(jsonify(message='Code mnémotechnique manquant ou mal formaté'), 400))
 
     sql = 'DELETE FROM Employe WHERE code_mnemotechnique=?'
@@ -147,8 +150,8 @@ def staff_delete():
             if '"est_chef"' in sql_err:
                 msg = f'L\'employé associé au code "{CODE}" ne peut pas être supprimé, car il supervise un ou plusieurs secteurs'
                 abort(make_response(jsonify(message=msg), 409))
-            else:
-                abort(make_response(jsonify(message=err.args[1]), 500))
+
+            raise err
 
         else:
             # if the query did not change any rows (code belongs to no one), send 404
@@ -174,6 +177,7 @@ def staff_add():
             'lieu_naissance', 'adresse', 'fonction', 'service', 'grade', 'taux_occupation']
     if 'fonction' not in request.form or request.form['fonction'] != 'Gardien':
         KEYS = KEYS[:-2]
+
     values = tuple(val if key in request.form and (val := request.form[key]) != '' else None for key in KEYS)
     missing = {k for (k, v) in zip(KEYS, values) if v == None}
     if len(missing) > 0:
@@ -199,9 +203,14 @@ def staff_add():
             if sql_err := matches and matches.group(0):
                 msg = f'Le {'code mnémotechnique' if 'PRIMARY' in sql_err else 'numéro AVS'} doit être unique'
                 abort(make_response(jsonify(message=msg), 400))
-            else:
-                abort(make_response(jsonify(message=err.args[1]), 500))
-        
+            
+            matches = re.search(r'CHECK constraint "pourcentage"', err.args[1])
+            if sql_err := matches and matches.group(0):
+                msg = "Le taux d'occupation doit être entre 10% et 100%"
+                abort(make_response(jsonify(message=msg), 400))
+
+            raise err
+
         else:
             return jsonify(success=True)
 
@@ -493,7 +502,7 @@ def assert_salary_keys():
             raise Exception('Code mnémotechnique manquant ou mal formaté')
         if not datestr or not (DATE := datetime.strptime(datestr, '%Y-%m')):
             raise Exception('Date manquante ou mal formatée')
-        if not SALARY or math.isnan(nbr := float(SALARY)) or nbr < 0:
+        if not SALARY or isnan(nbr := float(SALARY)) or nbr < 0:
             raise Exception('Salaire manquant ou mal formaté')
     except ValueError:
         abort(make_response(jsonify(message='Salaire mal formaté'), 400))
@@ -643,3 +652,97 @@ def schedule_staff():
             abort(make_response(jsonify(message=f'Aucun gardien associé au code {code}'), 404))
         
         return [list(row) for row in next(gen)]
+
+
+@app.route('/schedule/generate/week', methods=['POST'])
+def schedule_generate_week():
+    try:
+        MONDAY = datetime.strptime(request.form['week'] + '-1', '%Y-W%W-%w') if 'week' in request.form else None
+        if not MONDAY:
+            raise Exception()
+    except:
+        abort(make_response(jsonify(message='Arguments manquants ou mal formatés'), 400))
+
+    sql_rates = "SELECT code_employe, taux_occupation FROM Gardien JOIN Employe on code_employe=code_mnemotechnique; "
+    sql_parcels = "SELECT num_parcelle, nom_secteur FROM Parcelle; "
+    sql_prefs = "SELECT nom_secteur, code_gardien, prefere FROM Preference; "
+
+    WORK_DAY = 8
+    WORK_WEEK = 40
+
+    with get_connection() as connection:
+        cur = connection.cursor()
+        cur.execute(sql_rates + sql_parcels + sql_prefs)
+
+        (rates, parcels, prefs) = fetch_while_next(cur)
+
+    # unhinged
+    prefs_map = {}
+    for (sector, guard, prefers) in prefs:
+        s: dict[str, set] = prefs_map.setdefault(sector, {'likes': set(), 'dislikes': set()})
+        if prefers:
+            s['likes'].add(guard)
+        else:
+            s['dislikes'].add(guard)
+
+    sectors = Counter()
+    for (_, sector) in parcels:
+        sectors[sector] += WORK_DAY
+
+    guards = [(-inf, -floor(WORK_WEEK * float(rate) / 100), 0, random(), code) for (code, rate) in rates]
+    heapq.heapify(guards)
+
+    days = [None] * 7
+
+    for i in range(len(days)):
+        day_data = dict((k, Counter()) for k in sectors)
+        to_fill = set(prefs_map.keys())
+        sector_hours = Counter()
+        guard_hours = Counter()
+        discard = []
+
+        while len(guards) > 0 and len(to_fill) > 0:
+            (_, target, actual, _, code) = heapq.heappop(guards)
+            if target + actual == 0:
+                continue
+
+            comp = []
+            for s in to_fill:
+                pref = prefs_map[s]
+                multiplier = len(pref['dislikes']) / likes if (likes := len(pref['likes'])) > 0 else inf
+                if code in pref['likes']:
+                    multiplier = 1 / multiplier if multiplier > 0 else inf
+                comp.append((-multiplier * (sectors[s] / cur_count) if (cur_count := sector_hours[s]) > 0 else -inf, -sectors[s], s))
+
+            (_, _, sector) = min(comp)
+            hours = min(WORK_DAY, -(actual + target), sectors[sector] - sector_hours[sector])
+
+            day_data[sector][code] += hours
+            sector_hours[sector] += hours
+
+            if sector_hours[sector] >= sectors[sector]:
+                to_fill.remove(sector)
+
+            guard_hours[code] += hours
+            new_actual = actual + hours
+            new_ratio = target / new_actual if new_actual > 0 else inf
+
+            if guard_hours[code] >= WORK_DAY:
+                discard.append((new_ratio, target, new_actual, random(), code))
+            else:
+                heapq.heappush(guards, (new_ratio, target, new_actual, random(), code))
+
+        guards.extend(discard)
+        heapq.heapify(guards)
+        days[i] = day_data
+
+    count = Counter()
+    for d in days:
+        for di in d.values():
+            for code, hours in di.items():
+                count[code] += hours
+
+    return {
+        'res': days,
+        'test': [{'code': code, 'expected': floor(WORK_WEEK * float(rate) / 100), 'actual': count[code]} for (code, rate) in rates],
+    }
