@@ -1,12 +1,12 @@
 import $ from 'jquery';
-import moment from 'moment';
+import { addDays, addYears, constructNow, endOfISOWeek, format, parseISO } from 'date-fns'
 import { debounce } from 'lodash-es';
 import { Schedule } from '@scripts/common/requests';
 import { isInputTypeSupported, spamOnHold } from '@scripts/common/util';
 import { TagPicker } from '@scripts/common/components';
 
 $(() => {
-    buildPage()
+    buildPage();
 });
 
 const buildPage = (rebuild = false) => {
@@ -25,7 +25,8 @@ const buildPage = (rebuild = false) => {
 };
 
 const attachListeners = () => {
-    const [min, max] = [-1, 1].map((offset) => `${moment().year() + offset}-W${moment().week()}`);
+    const now = constructNow();
+    const [min, max] = [-1, 1].map((offset) => format(addYears(now, offset), "yyyy-'W'II"));
     $('#entity-picker').on('picker.change', reloadRows);
     [['#next-date', 1], ['#prev-date', -1]].forEach(([id, offset]) => {
         spamOnHold(id, onDateOffset(min, max).bind(null, offset));
@@ -37,10 +38,9 @@ const attachListeners = () => {
 }
 
 const buildDatePicker = () => {
-    const week = `${moment().year()}-W${moment().week()}`;
-    const year = Number(week.split('-')[0]);
-    const [min, max] = [-1, 1].map((offset) => week.split('-').with(0, year + offset).join('-'));
-    const el = $('#date-picker').val(week);
+    const now = constructNow();
+    const [min, max] = [-1, 1].map((offset) => format(addYears(now, offset), "yyyy-'W'II"));
+    const el = $('#date-picker').val(format(now, "yyyy-'W'II"));
     if (!isInputTypeSupported('week', 'nonce')) {
         el.prop('readonly', true).attr('title', 'Switch to a newer browser for full feature support');
     } else {
@@ -64,16 +64,15 @@ const buildOptions = async () => new Promise((resolve, reject) => {
 
 const getWeekAsInterval = () => {
     const weekVal = $('#date-picker').val();
-    const mo = moment(weekVal);
-    const start = mo.format('yyyy-MM-DD');
-    const end = mo.endOf('isoWeek').format('yyyy-MM-DD');
+    const monday = parseISO(weekVal);
+    const start = format(monday, 'yyyy-MM-dd');
+    const end = format(endOfISOWeek(monday) ,'yyyy-MM-dd');
     return [start, end];
 };
 
 const buildTable = (data, start) => {
     const days = Array.from({length: 7}, (_, i) => {
-        const mo = moment(start).add(i, 'days').locale('fr');
-        return mo.format('yyyy-MM-DD');
+        return format(addDays(parseISO(start), i), 'yyyy-MM-dd');
     });
     const schedule = Object.fromEntries(days.map((day) => [day, {}]));
     let min = 9, max = 16;
