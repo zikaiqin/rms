@@ -1,4 +1,5 @@
 import $ from 'jquery';
+import { addYears, constructNow, format, parseISO } from 'date-fns'
 import { debounce } from 'lodash-es';
 import { Schedule } from '@scripts/common/requests';
 
@@ -21,6 +22,7 @@ const attachListeners = () => {
     $('#entity-picker').on('change', reloadRows);
     $('#date-picker').on('change', debounce(onDateChange.bind({ prev: $('#date-picker').val() }), 200));
     $('#refresh').on('click', reloadRows);
+    $('#edit').on('click', onEdit);
 }
 
 const reloadRows = async () => {
@@ -37,18 +39,19 @@ const reloadRows = async () => {
 }
 
 const buildDatePicker = () => {
-    const date = new Date().toISOString().split('T')[0];
-    const year = Number(date.split('-')[0]);
-    const [min, max] = [-1, 1].map((offset) => date.split('-').with(0, year + offset).join('-'));
-    $('#date-picker').val(date).attr({min, max});
+    const now = constructNow();
+    const date = format(now, 'yyyy-MM-dd');
+    const [min, max] = [-1, 1].map((offset) => format(addYears(now, offset), 'yyyy-MM-dd'));
+    $('#date-picker').val(date).attr({min, max}).data('current', date);
 }
 
 const onDateChange = (e) => {
     const el = $(e.target);
     const valid = e.target.validity.valid;
     if (!valid) {
-        el.attr('aria-invalid', !valid);
+        el.attr('aria-invalid', true);
     } else {
+        el.data('current', el.val());
         if (el.attr('aria-invalid')) {
             el.attr('aria-invalid', false);
         }
@@ -94,4 +97,12 @@ const buildEmployee = (employee) => {
     }
     const [code, fname, lname] = employee;
     return `<kbd>${code}</kbd>${fname} ${lname}`
+}
+
+const onEdit = (e) => {
+    const target = $(e.target);
+    const url = target.attr('href')
+    const date = $('#date-picker').data('current');
+    const hash = format(parseISO(date), "yyyy-'W'II");
+    target.attr('href', `${url}#${hash}`);
 }

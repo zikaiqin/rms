@@ -25,6 +25,7 @@ export default defineConfig({
         salary: '/salary.html',
         'schedule/sector': '/schedule-sector.html',
         'schedule/staff': '/schedule-staff.html',
+        'schedule/planner': '/schedule-planner.html',
       },
       output: {
         dir: resolve(staticDir, 'dist'),
@@ -60,6 +61,7 @@ export default defineConfig({
           '/salary': '/salary.html',
           '/schedule/sector': '/schedule-sector.html',
           '/schedule/staff': '/schedule-staff.html',
+          '/schedule/planner': '/schedule-planner.html',
         };
         server.middlewares.use((req, res, next) => {
           if (req.url === '/') {
@@ -80,6 +82,7 @@ export default defineConfig({
           '/salary': '/salary',
           '/schedule/sector': '/schedule-sector',
           '/schedule/staff': '/schedule-staff',
+          '/schedule/planner': '/schedule-planner.html',
         };
         server.middlewares.use((req, res, next) => {
           if (req.url === '/') {

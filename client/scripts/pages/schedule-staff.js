@@ -35,12 +35,14 @@ const attachListeners = () => {
         $('#next-date, #prev-date').css('pointer-events', 'none');
     }).on('change', debounce(onDateChange(min, max), 200));
     $('#refresh').on('click', reloadRows);
+    $('#edit').on('click', onEdit);
 }
 
 const buildDatePicker = () => {
     const now = constructNow();
+    const date = format(now, "yyyy-'W'II");
     const [min, max] = [-1, 1].map((offset) => format(addYears(now, offset), "yyyy-'W'II"));
-    const el = $('#date-picker').val(format(now, "yyyy-'W'II"));
+    const el = $('#date-picker').val(date).data('prev', date);
     if (!isInputTypeSupported('week', 'nonce')) {
         el.prop('readonly', true).attr('title', 'Switch to a newer browser for full feature support');
     } else {
@@ -163,3 +165,10 @@ const onDateChange = (min, max) => (e) => {
         });
     }
 };
+
+const onEdit = (e) => {
+    const target = $(e.target);
+    const url = target.attr('href')
+    const date = $('#date-picker').data('prev');
+    target.attr('href', `${url}#${date}`);
+}
