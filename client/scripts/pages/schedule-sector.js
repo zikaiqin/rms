@@ -70,7 +70,7 @@ const buildOptions = async () => new Promise((resolve, reject) => {
 });
 
 const buildTable = (header, data) => {
-    const head = `<tr><th>Début</th>${
+    const head = `<tr><th scope="row">Début</th>${
         header.map((pnum) => `<th>Parcelle #${pnum}</th>`)
     }</tr>`;
     const schedule = Object.fromEntries(header.map((pnum) => [pnum, {}]));

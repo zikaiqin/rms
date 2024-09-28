@@ -131,9 +131,21 @@ kbd.secondary {
     background: none;
 }
 
+table.two-tone {
+    tbody td {
+        background-color: var(--pico-table-row-stripped-background-color);
+    }
+    th[scope="row"] {
+        position: sticky;
+        left: 0;
+        background-color: var(--pico-background-color);
+    }
+}
+
 table {
     thead, tfoot {
         position: sticky;
+        z-index: 1;
     }
     thead {
         inset-block-start: 0; /* "top" */

@@ -37,3 +37,7 @@ div[role="heading"] > div {
     background-color: var(--pico-form-element-background-color);
     border: var(--pico-border-width) solid var(--pico-form-element-border-color);
 }
+
+table {
+    margin-bottom: 0;
+}
