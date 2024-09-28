@@ -1,10 +1,7 @@
 import $ from 'jquery';
 
-// Set port to match that of back-end server
-const port = 5000;
-
-const {protocol, hostname} = window.location
-const apiRoot = `${protocol}//${hostname}:${port}`
+const {protocol, hostname} = window.location;
+const apiURL = `${protocol}//${hostname}${__API_ROOT__}`;
 
 const withAlert = async (jqXHR) => {
     return new Promise((resolve, reject) => {
@@ -17,81 +14,94 @@ const withAlert = async (jqXHR) => {
     });
 };
 
+const API = new Proxy($, {
+    get(target, prop) {
+        return (first, ...rest) => {
+            if (typeof first === 'string') {
+                first = apiURL.concat(first);
+            } else if ('url' in first) {
+                first.url = apiURL.concat(first.url);
+            }
+            return withAlert(target[prop](first, ...rest));
+        };
+    },
+});
+
 const Staff = {
     all: {
-        get: (role) => withAlert($.get(apiRoot.concat('/staff'), {role})),
+        get: (role) => API.get('/staff', {role}),
     },
     details: {
-        get: (code) => withAlert($.get(apiRoot.concat('/staff/details'), {code})),
+        get: (code) => API.get('/staff/details', {code}),
     },
     delete: {
-        post: (code) => withAlert($.post(apiRoot.concat('/staff/delete'), {code})),
+        post: (code) => API.post('/staff/delete', {code}),
     },
     add: {
-        post: (data) => withAlert($.post(apiRoot.concat('/staff/add'), data)),
+        post: (data) => API.post('/staff/add', data),
     },
 };
 
 const Sector = {
     all: {
-        get: () => withAlert($.get(apiRoot.concat('/sector'))),
+        get: () => API.get('/sector'),
     },
     preference: {
-        get: (sector) => withAlert($.get(apiRoot.concat('/sector/preference'), {sector})),
-        post: (sector, preferences) => withAlert($.post({
-            url: apiRoot.concat('/sector/preference'),
+        get: (sector) => API.get('/sector/preference', {sector}),
+        post: (sector, preferences) => API.post({
+            url: '/sector/preference',
             contentType: 'application/json',
             data: JSON.stringify({sector, preferences}),
-        })),
+        }),
     },
     supervisor: {
-        get: () => withAlert($.get(apiRoot.concat('/sector/supervisor'))),
-        post: (sectors) => withAlert($.post({
-            url: apiRoot.concat('/sector/supervisor'),
+        get: () => API.get('/sector/supervisor'),
+        post: (sectors) => API.post({
+            url: '/sector/supervisor',
             contentType: 'application/json',
             data: JSON.stringify(sectors),
-        })),
+        }),
     },
     parcel: {
-        get: () => withAlert($.get(apiRoot.concat('/parcel'))),
-        post: (parcels) => withAlert($.post({
-            url: apiRoot.concat('/parcel'),
+        get: () => API.get('/parcel'),
+        post: (parcels) => API.post({
+            url: '/parcel',
             contentType: 'application/json',
             data: JSON.stringify(parcels),
-        })),
+        }),
     },
 };
 
 const Salary = {
     all: {
-        get: (date) => withAlert($.get(apiRoot.concat('/salary'), {date})),
+        get: (date) => API.get('/salary', {date}),
     },
     edit: {
-        post: (code, date, salary) => withAlert($.post(apiRoot.concat('/salary/edit'), {code, date, salary})),
+        post: (code, date, salary) => API.post('/salary/edit', {code, date, salary}),
     },
     options: {
-        get: (date) => withAlert($.get(apiRoot.concat('/salary/options'), {date})),
+        get: (date) => API.get('/salary/options', {date}),
     },
     add: {
-        post: (code, date, salary) => withAlert($.post(apiRoot.concat('/salary/add'), {code, date, salary})),
+        post: (code, date, salary) => API.post('/salary/add', {code, date, salary}),
     },
 };
 
 const Schedule = {
     staff: {
         options: {
-            get: () => withAlert($.get(apiRoot.concat('/staff'), {role: 'Gardien'})),
+            get: () => API.get('/staff', {role: 'Gardien'}),
         },
         between: {
-            get: (code, start, end) => withAlert($.get(apiRoot.concat('/schedule/staff'), {code, start, end})),
+            get: (code, start, end) => API.get('/schedule/staff', {code, start, end}),
         },
     },
     sector: {
         options: {
-            get: () => withAlert($.get(apiRoot.concat('/schedule/sector/options'))),
+            get: () => API.get('/schedule/sector/options'),
         },
         one: {
-            get: (date, sector) => withAlert($.get(apiRoot.concat('/schedule/sector'), {date, sector})),
+            get: (date, sector) => API.get('/schedule/sector', {date, sector}),
         },
     },
 };

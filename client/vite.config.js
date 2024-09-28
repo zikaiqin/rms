@@ -31,6 +31,9 @@ export default defineConfig({
       },
     },
   },
+  define: {
+    __API_ROOT__: process.env.NODE_ENV === 'production' ? "'/api'" : "':5000'",
+  },
   css: (process.env.NODE_ENV === 'production' ? {
     postcss: {
       plugins: [
