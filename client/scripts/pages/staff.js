@@ -32,7 +32,6 @@ const staffFieldLabels = {
     code_mnemotechnique: 'Code mnémotechnique',
     service: 'Service',
     fonction: 'Fonction',
-    grade: 'Grade',
     taux_occupation: 'Taux d\'occupation',
     adresse: 'Adresse',
     date_naissance: 'Date de naissance',

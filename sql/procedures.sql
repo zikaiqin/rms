@@ -1,4 +1,4 @@
--- Insère un nouveau employé, avec grade et taux requis si l'employé est un gardien
+-- Insère un nouveau employé, avec taux requis si l'employé est un gardien
 CREATE OR ALTER PROCEDURE insertionEmploye (
     @code_mnemotechnique CHAR(3),
     @numero_avs INT,
@@ -9,7 +9,6 @@ CREATE OR ALTER PROCEDURE insertionEmploye (
     @adresse VARCHAR(255),
     @fonction VARCHAR(50),
     @service VARCHAR(50),
-    @grade VARCHAR(255) = NULL,
     @taux_occupation DECIMAL(5, 2) = NULL
 )
 AS
@@ -28,7 +27,7 @@ BEGIN
         ELSE IF (@fonction LIKE 'Gardien')
         BEGIN
             INSERT INTO Gardien VALUES
-            (@code_mnemotechnique, @grade, @taux_occupation);
+            (@code_mnemotechnique, @taux_occupation);
         END
         COMMIT TRAN;
     END TRY

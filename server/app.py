@@ -174,9 +174,9 @@ def staff_add():
     """
     # request form data must contain all of these properties
     KEYS = ['code_mnemotechnique', 'numero_avs', 'prenom', 'nom', 'date_naissance',
-            'lieu_naissance', 'adresse', 'fonction', 'service', 'grade', 'taux_occupation']
+            'lieu_naissance', 'adresse', 'fonction', 'service', 'taux_occupation']
     if 'fonction' not in request.form or request.form['fonction'] != 'Gardien':
-        KEYS = KEYS[:-2]
+        KEYS = KEYS[:-1]
 
     values = tuple(val if key in request.form and (val := request.form[key]) != '' else None for key in KEYS)
     missing = {k for (k, v) in zip(KEYS, values) if v == None}

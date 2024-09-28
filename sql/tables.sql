@@ -27,7 +27,6 @@ GO
 
 CREATE TABLE Gardien(
     code_employe CHAR(3) PRIMARY KEY,
-    grade VARCHAR(255) NOT NULL,
     taux_occupation DECIMAL(5, 2) NOT NULL,
     CONSTRAINT pourcentage CHECK (taux_occupation BETWEEN 10 AND 100),
     FOREIGN KEY(code_employe) REFERENCES Employe(code_mnemotechnique)
