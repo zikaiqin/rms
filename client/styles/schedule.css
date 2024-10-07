@@ -28,16 +28,6 @@ div[role="heading"] > div {
     }
 }
 
-.action-row .icon-button {
-    &:is(a) {
-        vertical-align: middle;
-        line-height: calc(4 / 3);
-    }
-    padding: var(--pico-form-element-spacing-vertical) 0.95rem;
-    background-color: var(--pico-form-element-background-color);
-    border: var(--pico-border-width) solid var(--pico-form-element-border-color);
-}
-
 table {
     margin-bottom: 0;
 }
