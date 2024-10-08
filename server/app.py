@@ -1,14 +1,11 @@
 from pyodbc import IntegrityError
 from flask import Flask, request, abort, make_response, jsonify
 from flask_cors import CORS
-from collections import Counter
 from contextlib import contextmanager
 from itertools import chain, repeat
 from datetime import datetime
-from math import inf, floor, isnan
-from random import random
+from math import isnan
 import re
-import heapq
 from database import DataBase
 
 DRIVER = 'ODBC Driver 18 for SQL Server'
@@ -217,6 +214,15 @@ def staff_add():
 
 @app.route('/sector', methods=['GET'])
 def sector():
+    with get_connection() as connection:
+        cur = connection.cursor()
+        cur.execute('SELECT nom_secteur FROM Secteur')
+
+        return [row[0] for row in cur.fetchall()]
+
+
+@app.route('/sector/details', methods=['GET'])
+def sector_details():
     sql_parcels = 'SELECT * FROM Parcelle; '
     sql_temp = (
         'SELECT nom_secteur, {key}, prenom, nom {cols} '
@@ -553,7 +559,7 @@ def salary_options():
 @app.route('/salary/add', methods=['POST'])
 def salary_add():
     CODE, DATE, SALARY, nbr, _ = assert_salary_keys()
-    if nbr == 0:
+    if nbr <= 0:
         abort(make_response(jsonify(message='Salaire doit être plus grand que zéro'), 400))
     sql = (
         'BEGIN TRAN; '
@@ -571,22 +577,6 @@ def salary_add():
             abort(500)
 
         return jsonify(success=True)
-
-
-@app.route('/schedule/<view>/options', methods=['GET'])
-def schedule_options(view):
-    match view:
-        case 'sector':
-            sql ='SELECT DISTINCT nom_secteur FROM Parcelle'
-        case 'staff':
-            sql = "SELECT code_mnemotechnique, prenom, nom FROM Employe WHERE fonction='Gardien'"
-        case _:
-            abort(404)
-    with get_connection() as connection:
-        cur = connection.cursor()
-        cur.execute(sql)
-
-        return [(row[0] if view == 'sector' else list(row)) for row in cur.fetchall()]
 
 
 @app.route('/schedule/sector', methods=['GET'])
@@ -652,97 +642,3 @@ def schedule_staff():
             abort(make_response(jsonify(message=f'Aucun gardien associé au code {code}'), 404))
         
         return [list(row) for row in next(gen)]
-
-
-@app.route('/schedule/generate/week', methods=['POST'])
-def schedule_generate_week():
-    try:
-        MONDAY = datetime.strptime(request.form['week'] + '-1', '%Y-W%W-%w') if 'week' in request.form else None
-        if not MONDAY:
-            raise Exception()
-    except:
-        abort(make_response(jsonify(message='Arguments manquants ou mal formatés'), 400))
-
-    sql_rates = "SELECT code_employe, taux_occupation FROM Gardien JOIN Employe on code_employe=code_mnemotechnique; "
-    sql_parcels = "SELECT num_parcelle, nom_secteur FROM Parcelle; "
-    sql_prefs = "SELECT nom_secteur, code_gardien, prefere FROM Preference; "
-
-    WORK_DAY = 8
-    WORK_WEEK = 40
-
-    with get_connection() as connection:
-        cur = connection.cursor()
-        cur.execute(sql_rates + sql_parcels + sql_prefs)
-
-        (rates, parcels, prefs) = fetch_while_next(cur)
-
-    # unhinged
-    prefs_map = {}
-    for (sector, guard, prefers) in prefs:
-        s: dict[str, set] = prefs_map.setdefault(sector, {'likes': set(), 'dislikes': set()})
-        if prefers:
-            s['likes'].add(guard)
-        else:
-            s['dislikes'].add(guard)
-
-    sectors = Counter()
-    for (_, sector) in parcels:
-        sectors[sector] += WORK_DAY
-
-    guards = [(-inf, -floor(WORK_WEEK * float(rate) / 100), 0, random(), code) for (code, rate) in rates]
-    heapq.heapify(guards)
-
-    days = [None] * 7
-
-    for i in range(len(days)):
-        day_data = dict((k, Counter()) for k in sectors)
-        to_fill = set(prefs_map.keys())
-        sector_hours = Counter()
-        guard_hours = Counter()
-        discard = []
-
-        while len(guards) > 0 and len(to_fill) > 0:
-            (_, target, actual, _, code) = heapq.heappop(guards)
-            if target + actual == 0:
-                continue
-
-            comp = []
-            for s in to_fill:
-                pref = prefs_map[s]
-                multiplier = len(pref['dislikes']) / likes if (likes := len(pref['likes'])) > 0 else inf
-                if code in pref['likes']:
-                    multiplier = 1 / multiplier if multiplier > 0 else inf
-                comp.append((-multiplier * (sectors[s] / cur_count) if (cur_count := sector_hours[s]) > 0 else -inf, -sectors[s], s))
-
-            (_, _, sector) = min(comp)
-            hours = min(WORK_DAY, -(actual + target), sectors[sector] - sector_hours[sector])
-
-            day_data[sector][code] += hours
-            sector_hours[sector] += hours
-
-            if sector_hours[sector] >= sectors[sector]:
-                to_fill.remove(sector)
-
-            guard_hours[code] += hours
-            new_actual = actual + hours
-            new_ratio = target / new_actual if new_actual > 0 else inf
-
-            if guard_hours[code] >= WORK_DAY:
-                discard.append((new_ratio, target, new_actual, random(), code))
-            else:
-                heapq.heappush(guards, (new_ratio, target, new_actual, random(), code))
-
-        guards.extend(discard)
-        heapq.heapify(guards)
-        days[i] = day_data
-
-    count = Counter()
-    for d in days:
-        for di in d.values():
-            for code, hours in di.items():
-                count[code] += hours
-
-    return {
-        'res': days,
-        'test': [{'code': code, 'expected': floor(WORK_WEEK * float(rate) / 100), 'actual': count[code]} for (code, rate) in rates],
-    }

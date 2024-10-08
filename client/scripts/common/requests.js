@@ -3,18 +3,16 @@ import $ from 'jquery';
 const {protocol, hostname} = window.location;
 const apiURL = `${protocol}//${hostname}${__API_ROOT__}`;
 
-const withAlert = async (jqXHR) => {
-    return new Promise((resolve, reject) => {
-        jqXHR.then((res) => {resolve(res)})
-            .catch((err) => {
-                const msg = err?.responseJSON?.message;
-                window.alert(msg ?? 'Une erreur s\'est produite');
-                reject(err);
-            });
-    });
-};
+const withAlert = async (jqXHR) => new Promise((resolve, reject) => {
+    jqXHR.then((res) => {resolve(res)})
+        .catch((err) => {
+            const msg = err?.responseJSON?.message;
+            window.alert(msg ?? 'Une erreur s\'est produite');
+            reject(err);
+        });
+}); 
 
-const API = new Proxy($, {
+const API = new Proxy((({get, post}) => ({get, post}))($), {
     get(target, prop) {
         return (first, ...rest) => {
             if (typeof first === 'string') {
@@ -44,7 +42,7 @@ const Staff = {
 
 const Sector = {
     all: {
-        get: () => API.get('/sector'),
+        get: () => API.get('/sector/details'),
     },
     preference: {
         get: (sector) => API.get('/sector/preference', {sector}),
@@ -98,7 +96,7 @@ const Schedule = {
     },
     sector: {
         options: {
-            get: () => API.get('/schedule/sector/options'),
+            get: () => API.get('/sector'),
         },
         one: {
             get: (date, sector) => API.get('/schedule/sector', {date, sector}),
