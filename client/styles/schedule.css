@@ -21,13 +21,6 @@ div[role="heading"] > div {
     }
 }
 
-#date-picker:read-only {
-    width: calc(2rem + 9ch);
-    & + button, button:has(+ &) {
-        --pico-box-shadow: none;
-    }
-}
-
 table {
     margin-bottom: 0;
 }

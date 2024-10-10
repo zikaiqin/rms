@@ -1,9 +1,18 @@
 import $ from 'jquery';
-import { addDays, addYears, constructNow, endOfISOWeek, format, parseISO } from 'date-fns'
+import { addDays, addYears, constructNow, differenceInCalendarWeeks, endOfISOWeek, format, parseISO } from 'date-fns'
 import { debounce } from 'lodash-es';
+import { dateFormatStrings } from '@scripts/common/constants';
 import { Schedule } from '@scripts/common/requests';
-import { isInputTypeSupported, spamOnHold } from '@scripts/common/util';
-import { TagPicker } from '@scripts/common/components';
+import { DatePicker, TagPicker } from '@scripts/common/components';
+
+const pickerType = 'week';
+const pickerSettings = {
+    title: {
+        prev: 'Semaine précédente',
+        next: 'Semaine prochaine',
+    },
+    required: true,
+};
 
 $(() => {
     buildPage();
@@ -25,29 +34,21 @@ const buildPage = (rebuild = false) => {
 };
 
 const attachListeners = () => {
-    const now = constructNow();
-    const [min, max] = [-1, 1].map((offset) => format(addYears(now, offset), "yyyy-'W'II"));
-    $('#entity-picker').on('picker.change', reloadRows);
-    [['#next-date', 1], ['#prev-date', -1]].forEach(([id, offset]) => {
-        spamOnHold(id, onDateOffset(min, max).bind(null, offset));
-    });
-    $('#date-picker').on('input', () => {
-        $('#next-date, #prev-date').css('pointer-events', 'none');
-    }).on('change', debounce(onDateChange(min, max), 200));
     $('#refresh').on('click', reloadRows);
-    $('#edit').on('click', onEdit);
+    $('#entity-picker').on('picker.change', reloadRows);
+    $('#date-picker').on('picker.input', onDateInput).on('picker.change', onDateChange);
 }
 
 const buildDatePicker = () => {
     const now = constructNow();
-    const date = format(now, "yyyy-'W'II");
-    const [min, max] = [-1, 1].map((offset) => format(addYears(now, offset), "yyyy-'W'II"));
-    const el = $('#date-picker').val(date).data('prev', date);
-    if (!isInputTypeSupported('week', 'nonce')) {
-        el.prop('readonly', true).attr('title', 'Switch to a newer browser for full feature support');
-    } else {
-        el.attr({min, max});
-    }
+    const val = format(now, dateFormatStrings.ISOWeek)
+    const values = {
+        min: format(addYears(now, -1), dateFormatStrings.ISOWeek),
+        max: format(addYears(now, 1), dateFormatStrings.ISOWeek),
+        init: val,
+    };
+    const picker = new DatePicker('#date-picker', pickerType, { values, ...pickerSettings });
+    $('#date-picker').data('picker', picker).data('oldval', val);
 };
 
 const buildOptions = async () => new Promise((resolve, reject) => {
@@ -65,16 +66,16 @@ const buildOptions = async () => new Promise((resolve, reject) => {
 });
 
 const getWeekAsInterval = () => {
-    const weekVal = $('#date-picker').val();
-    const monday = parseISO(weekVal);
-    const start = format(monday, 'yyyy-MM-dd');
-    const end = format(endOfISOWeek(monday) ,'yyyy-MM-dd');
-    return [start, end];
+    const val = $('#date-picker').data('oldval');
+    const monday = parseISO(val);
+    const start = format(monday, dateFormatStrings.ISO);
+    const end = format(endOfISOWeek(monday), dateFormatStrings.ISO);
+    return [start, end, val];
 };
 
 const buildTable = (data, start) => {
     const days = Array.from({length: 7}, (_, i) => {
-        return format(addDays(parseISO(start), i), 'yyyy-MM-dd');
+        return format(addDays(parseISO(start), i), dateFormatStrings.ISO);
     });
     const schedule = Object.fromEntries(days.map((day) => [day, {}]));
     let min = 9, max = 16;
@@ -107,9 +108,10 @@ const buildParcel = (parcel) => {
 }
 
 const reloadRows = async () => {
-    $('#prev-date, #next-date, #date-picker, #refresh', '#entity-picker').css('pointer-events', 'none');
+    $('#date-picker, #refresh, #entity-picker').prop('inert', true);
     const code = $('#entity-picker input:checked').val();
-    const [start, end] = getWeekAsInterval();
+    const [start, end, val] = getWeekAsInterval();
+    setEditLink(val);
     return Schedule.staff.between.get(code, start, end).then((data) => {
         buildTable(data, start);
     }).catch(({status}) => {
@@ -117,58 +119,42 @@ const reloadRows = async () => {
             buildPage(true);
         };
     }).finally(() => {
-        $('#prev-date, #next-date, #date-picker, #refresh, #entity-picker').css('pointer-events', '');
+        $('#date-picker, #refresh, #entity-picker').prop('inert', false);
     });
 };
 
-const onDateOffset = (min, max) => {
-    const [minDate, maxDate] = [min, max].map((date) => {
-        const arr = date.split('-W');
-        return { year: Number(arr[0]), week: Number(arr[1]) }
-    });
-    return (offset) => {
-        const el = $('#date-picker');
-        const val = el.get(0).validity.valid ? el.val() : el.data('prev');
-        const [year, week] = val.split('-W').map((x) => Number(x));
-        const newWeek = (week + offset - 1 + 52) % 52 + 1;
-        const newYear = year + (offset < 0 ? -Number(week + offset <= 0) : Number(week + offset > 52));
-        if (newYear <= minDate.year && newWeek <= minDate.week) {
-            $('#prev-date').prop('disabled', true);
-        } else if (newYear >= maxDate.year && newWeek >= maxDate.week) {
-            $('#next-date').prop('disabled', true);
-        }
-        const newVal = `${newYear}-W${newWeek.toString().padStart(2, '0')}`;
-        el.val(newVal).trigger('change');
-    };
-};
-
-const onDateChange = (min, max) => (e) => {
-    const el = $(e.target);
-    const valid = e.target.validity.valid;
-    if (!valid) {
-        el.attr('aria-invalid', !valid);
-    }
-    else {
-        const val = el.val();
-        $('#next-date').prop('disabled', val === max);
-        $('#prev-date').prop('disabled', val === min);
-        if (val === el.data('prev')) {
-            el.removeAttr('aria-invalid');
-            return;
-        }
-        if (el.attr('aria-invalid')) {
-            el.attr('aria-invalid', false);
-        }
-        el.data('prev', val);
-        reloadRows().finally(() => {
-            el.removeAttr('aria-invalid');
-        });
-    }
-};
-
-const onEdit = (e) => {
-    const target = $(e.target);
-    const url = target.attr('href')
-    const date = $('#date-picker').data('prev');
-    target.attr('href', `${url}#${date}`);
+const setEditLink = (val) => {
+    const edit = $('#edit');
+    const noHash = (differenceInCalendarWeeks(parseISO(val), constructNow(), {weekStartsOn: 1}) <= 0);
+    const url = edit.attr('data-href');
+    edit.attr('href', noHash ? url : `${url}#${val}`);
 }
+
+const onDateInput = debounce(() => {
+    onDateChange.cancel();
+    const container = $('#date-picker');
+    const picker = container.data('picker');
+    if (!picker.valid) {
+        picker.showValidity(false);
+        return;
+    }
+    if (picker.val === container.data('oldval')) {
+        picker.hideValidity();
+        return;
+    }
+    if (container.find('[aria-invalid]').length > 0) {
+        picker.showValidity(true);
+    }
+    container.data('oldval', picker.val);
+    reloadRows().finally(() => {
+        picker.hideValidity();
+    });
+}, 200);
+
+const onDateChange = debounce(() => {
+    onDateInput.cancel();
+    const container = $('#date-picker');
+    const picker = container.data('picker').hideValidity();
+    container.data('oldval', picker.val);
+    reloadRows();
+}, 200);

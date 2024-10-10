@@ -61,6 +61,9 @@
     border: none;
 }
 
+.icon-button-group {
+    width: min-content;
+}
 .icon-button-group .icon-button {
     &:is(a) {
         vertical-align: middle;
@@ -69,14 +72,6 @@
     padding: var(--pico-form-element-spacing-vertical) 0.95rem;
     background-color: var(--pico-form-element-background-color);
     border: var(--pico-border-width) solid var(--pico-form-element-border-color);
-}
-
-.date-picker .icon-button {
-    input + &, &:has(+ input) {
-        padding: var(--pico-form-element-spacing-vertical) 0.5rem;
-        background-color: var(--pico-form-element-background-color);
-        border: var(--pico-border-width) solid var(--pico-form-element-border-color);
-    }
 }
 
 :is(td, th) > .icon-button-container {
@@ -118,7 +113,23 @@ kbd.secondary {
     font-style: italic;
 }
 
-/* Tag picker */
+/* Date Picker */
+.date-picker .icon-button {
+    padding: var(--pico-form-element-spacing-vertical) 0.5rem;
+    background-color: var(--pico-form-element-background-color);
+    border: var(--pico-border-width) solid var(--pico-form-element-border-color);
+
+    &:is(.date-picker:has(input:focus) .icon-button) {
+        --pico-box-shadow: none;
+    }
+}
+.date-picker input:read-only {
+    &:is([type="week"]) {
+        width: calc(2rem + 9ch);
+    }
+}
+
+/* Tag Picker */
 .dropdown.tag-picker li:has(.tag-cell) {
     padding: 0;
     margin: 0;
