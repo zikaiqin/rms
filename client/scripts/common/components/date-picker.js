@@ -1,7 +1,7 @@
 import $ from 'jquery';
 import { addMonths, addWeeks, constructNow, format, parseISO } from 'date-fns';
 import { memoize } from 'lodash-es';
-import { dateFormatStrings } from './constants';
+import { dateFormatStrings } from '@scripts/common/constants';
 import { isInputTypeSupported, spamOnHold } from '@scripts/common/util';
 
 const formatMap = {
