@@ -1,5 +1,5 @@
 import $ from 'jquery';
-import { addDays, addYears, constructNow, differenceInCalendarWeeks, endOfISOWeek, format, parseISO } from 'date-fns'
+import { addDays, addWeeks, addYears, constructNow, differenceInCalendarWeeks, format, parseISO } from 'date-fns'
 import { debounce } from 'lodash-es';
 import { dateFormatStrings } from '@scripts/common/constants';
 import { Schedule } from '@scripts/common/requests';
@@ -69,7 +69,7 @@ const getWeekAsInterval = () => {
     const val = $('#date-picker').data('oldval');
     const monday = parseISO(val);
     const start = format(monday, dateFormatStrings.ISO);
-    const end = format(endOfISOWeek(monday), dateFormatStrings.ISO);
+    const end = format(addWeeks(monday, 1), dateFormatStrings.ISO);
     return [start, end, val];
 };
 
