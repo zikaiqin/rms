@@ -3,39 +3,35 @@ import $ from 'jquery';
 class TagPicker {
     /**
      * @typedef {[tag: string, label: string][]} TagList 
-     * @typedef {JQuery | string} Anchor
+     * @typedef {JQuery | string} Target
      * @typedef {{callback?: (tag: string) => void, title?: string, name?: string, initial?: int}} Settings
      */
-
-    /** @type ((tag: string) => void)[] */
-    #listeners = [];
-
     /**
      * @param {TagList} tagList 
-     * @param {Anchor} element
-     * @param {Settings} [settings={}]
+     * @param {Target} target
+     * @param {Settings} settings
      */
-    constructor(tagList, element, settings = {}) {
+    constructor(tagList, target, settings = {}) {
         if (new Set(tagList.map(([tag]) => tag)).size < tagList.length) {
             throw new SyntaxError('All tags must be unique');
         }
-        const jq = this.#prepareRoot(element);
+        const jq = this.#prepareRoot(target);
         this.#buildDropdown(jq, tagList, settings);
-        this.#attachListeners(jq, settings);
+        this.#attachListeners(jq);
         jq.prop('hidden', false);
     }
 
     /**
-     * @param {Anchor} anchor
+     * @param {Target} target
      */
-    #prepareRoot(anchor) {
-        if (typeof anchor !== 'string' && !(anchor instanceof $)) {
-            throw new TypeError('Element must be a selector or a JQuery');
+    #prepareRoot(target) {
+        if (typeof target !== 'string' && !(target instanceof $)) {
+            throw new TypeError('Target must be a selector or a JQuery');
         }
         /** @type JQuery */
-        const jq = $(anchor);
+        const jq = $(target);
         if (!jq.is('details')) {
-            throw new TypeError('Root element must be <details>');
+            throw new TypeError('Root element must be a <details> node');
         }
         jq.prop('hidden', true).off('change').addClass('dropdown tag-picker').empty().data('picker', this);
         return jq;
@@ -100,21 +96,20 @@ class TagPicker {
         return list;
     }
 
-    #attachListeners(jq, settings) {
-        if (settings.callback) {
-            this.#listeners.push(settings.callback);
-        }
+    #attachListeners(jq) {
         jq.on('change', (e) => {
             e.stopImmediatePropagation();
+
             jq.prop('open', false);
             jq.removeAttr('open');
+
             jq.find('li[hidden]').removeAttr('hidden');
             jq.find('li:has(:checked)').attr('hidden', '');
+
             const tag = jq.find('input:checked').val();
             jq.find('select').val(tag);
             jq.find('summary kbd').empty().text(tag);
 
-            this.#listeners.forEach((cb) => cb(tag));
             jq.trigger('picker.change');
         });
     }
