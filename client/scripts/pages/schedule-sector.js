@@ -1,6 +1,7 @@
 import $ from 'jquery';
-import { addYears, constructNow, format, parseISO } from 'date-fns'
+import { addYears, constructNow, differenceInCalendarWeeks, format, parseISO } from 'date-fns'
 import { debounce } from 'lodash-es';
+import { dateFormatStrings } from '@scripts/common/constants';
 import { Schedule } from '@scripts/common/requests';
 
 $(() => {
@@ -20,28 +21,36 @@ const rebuildPage = () => {
 
 const attachListeners = () => {
     $('#entity-picker').on('change', reloadRows);
-    $('#date-picker').on('change', debounce(onDateChange.bind({ prev: $('#date-picker').val() }), 200));
+    $('#date-picker').on('change', debounce(onDateChange, 200));
     $('#refresh').on('click', reloadRows);
-    $('#edit').on('click', onEdit);
 }
 
 const reloadRows = async () => {
-    $('#entity-picker, #date-picker, #refresh').css('pointer-events', 'none');
+    $('#entity-picker, #date-picker, #refresh').prop('inert', true);
     const sector = $('#entity-picker').val();
-    const date = $('#date-picker').val();
+    const date = $('#date-picker').data('current');
+    setEditLink(date);
     return Schedule.sector.one.get(date, sector).then(({header, data}) => {
         buildTable(header, data);
     }).catch(({status}) => {
         if (status === 404) rebuildPage();
     }).finally(() => {
-        $('#entity-picker, #date-picker, #refresh').css('pointer-events', '');
+        $('#entity-picker, #date-picker, #refresh').prop('inert', false);
     });
+}
+
+const setEditLink = (val) => {
+    const edit = $('#edit');
+    const date = parseISO(val);
+    const noHash = (differenceInCalendarWeeks(date, constructNow(), {weekStartsOn: 1}) <= 0);
+    const url = edit.attr('data-href');
+    edit.attr('href', noHash ? url : `${url}#${format(date, dateFormatStrings.ISOWeek)}`);
 }
 
 const buildDatePicker = () => {
     const now = constructNow();
-    const date = format(now, 'yyyy-MM-dd');
-    const [min, max] = [-1, 1].map((offset) => format(addYears(now, offset), 'yyyy-MM-dd'));
+    const date = format(now, dateFormatStrings.ISO);
+    const [min, max] = [-1, 1].map((offset) => format(addYears(now, offset), dateFormatStrings.ISO));
     $('#date-picker').val(date).attr({min, max}).data('current', date);
 }
 
@@ -97,12 +106,4 @@ const buildEmployee = (employee) => {
     }
     const [code, fname, lname] = employee;
     return `<kbd>${code}</kbd>${fname} ${lname}`
-}
-
-const onEdit = (e) => {
-    const target = $(e.target);
-    const url = target.attr('href')
-    const date = $('#date-picker').data('current');
-    const hash = format(parseISO(date), "yyyy-'W'II");
-    target.attr('href', `${url}#${hash}`);
 }
