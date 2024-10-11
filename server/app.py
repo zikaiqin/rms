@@ -35,6 +35,14 @@ def get_connection():
     finally:
         connection.close()
 
+def is_valid_code(code):
+    return (
+        isinstance(code, str) and
+        len(code) == 3 and
+        code.isalnum() and
+        code.isupper()
+    )
+
 def fetch_while_next(cursor):
     yield cursor.fetchall()
     while cursor.nextset():
@@ -51,6 +59,7 @@ def sql_test_str(values_len, table_name, column_name):
 
 app = Flask(__name__)
 CORS(app)
+
 
 @app.route('/staff', methods=['GET'])
 def staff():
@@ -92,7 +101,7 @@ def staff_details():
     Returns data: a dict with all the attributes of the employee
     """
     # get '?code=...' from query string
-    if 'code' not in request.args or len(CODE := request.args['code']) != 3:
+    if not is_valid_code(CODE := request.args.get('code')):
         abort(make_response(jsonify(message='Code mnémotechnique manquant ou mal formaté'), 400))
 
     sql = 'SELECT * FROM Employe LEFT JOIN Gardien ON code_mnemotechnique=code_employe WHERE code_mnemotechnique=?'
@@ -129,7 +138,7 @@ def staff_delete():
         - 409 if the employee supervises one or more sectors
     """
     # get code from form data
-    if 'code' not in request.form or len(CODE := request.form['code']) != 3:
+    if not is_valid_code(CODE := request.form.get('code')):
         abort(make_response(jsonify(message='Code mnémotechnique manquant ou mal formaté'), 400))
 
     sql = 'DELETE FROM Employe WHERE code_mnemotechnique=?'
@@ -147,9 +156,7 @@ def staff_delete():
             if '"est_chef"' in sql_err:
                 msg = f'L\'employé associé au code "{CODE}" ne peut pas être supprimé, car il supervise un ou plusieurs secteurs'
                 abort(make_response(jsonify(message=msg), 409))
-
             raise err
-
         else:
             # if the query did not change any rows (code belongs to no one), send 404
             if cur.rowcount == 0:
@@ -157,7 +164,8 @@ def staff_delete():
 
             return jsonify(success=True)
 
-
+# TODO: change SIN type to CHAR(5)
+# TODO: limit name, address, birthplace length
 @app.route('/staff/add', methods=['POST'])
 def staff_add():
     """
@@ -170,16 +178,28 @@ def staff_add():
         - 400 if missing properties or fails unique check
     """
     # request form data must contain all of these properties
-    KEYS = ['code_mnemotechnique', 'numero_avs', 'prenom', 'nom', 'date_naissance',
-            'lieu_naissance', 'adresse', 'fonction', 'service', 'taux_occupation']
-    if 'fonction' not in request.form or request.form['fonction'] != 'Gardien':
-        KEYS = KEYS[:-1]
+    KEYS = ('code_mnemotechnique', 'numero_avs', 'prenom', 'nom', 'date_naissance',
+            'lieu_naissance', 'adresse', 'fonction', 'service')
+    if request.form.get('fonction') == 'Gardien':
+        KEYS += ('taux_occupation', )
 
-    values = tuple(val if key in request.form and (val := request.form[key]) != '' else None for key in KEYS)
-    missing = {k for (k, v) in zip(KEYS, values) if v == None}
+    values = tuple(request.form.get(key) for key in KEYS)
+    missing = tuple(k for (k, v) in zip(KEYS, values) if not v)
     if len(missing) > 0:
         error_msg = 'Attributs manquants:\n' + '\n'.join(('- ' + k) for k in missing)
         abort(make_response(jsonify(message=error_msg), 400))
+
+    if not is_valid_code(request.form['code_mnemotechnique']):
+        abort(make_response(jsonify(message='Code mnémotechnique mal formaté'), 400))
+    try:
+        if 'taux_occupation' in KEYS and isnan(float(request.form['taux_occupation'])):
+            raise Exception()
+    except:
+        abort(make_response(jsonify(message='Date mal formatée'), 400))
+    try:
+        datetime.strptime(request.form['date_naissance'], '%Y-%m-%d')
+    except:
+        abort(make_response(jsonify(message='Date mal formatée'), 400))
 
     param_fragment = ', '.join(f'@{key}=?' for key in KEYS)
 
@@ -189,20 +209,14 @@ def staff_add():
             cur = connection.cursor()
             cur.execute(sql, values)
         except IntegrityError as err:
-    
-            # check if missing values
-            matches = re.search(r'(?<=Cannot insert the value NULL into column \').*(?=\', table \'.*\')', err.args[1])
-            if col_name := matches and matches.group(0):
-                abort(make_response(jsonify(message=f'Attribut "{col_name}" manquant'), 400))
-
             # check if error was a key violation
             matches = re.search(r'Violation of (PRIMARY|UNIQUE) KEY constraint', err.args[1])
-            if sql_err := matches and matches.group(0):
+            if (sql_err := matches) and matches.group(0):
                 msg = f'Le {'code mnémotechnique' if 'PRIMARY' in sql_err else 'numéro AVS'} doit être unique'
                 abort(make_response(jsonify(message=msg), 400))
             
             matches = re.search(r'CHECK constraint "pourcentage"', err.args[1])
-            if sql_err := matches and matches.group(0):
+            if (sql_err := matches) and matches.group(0):
                 msg = "Le taux d'occupation doit être entre 10% et 100%"
                 abort(make_response(jsonify(message=msg), 400))
 
@@ -211,6 +225,7 @@ def staff_add():
         else:
             return jsonify(success=True)
 
+# TODO: implement /staff/edit
 
 @app.route('/sector', methods=['GET'])
 def sector():
@@ -271,26 +286,21 @@ def supervisor():
 
         return [[code, r['fname'], r['lname'], r['sectors']] for [code, r] in supervisors.items()]
 
-
+# TODO: get rid of sql_check? (low rowcount -> rollback, catch reference constraint error)
 @app.route('/sector/supervisor', methods=['POST'])
 def supervisor_edit():
-    try:
-        DATA = request.get_json()
-        if not DATA or not isinstance(DATA, list) or len(DATA) <= 0:
-            raise Exception()
-    except:
+    DATA = request.get_json(silent=True)
+    if not isinstance(DATA, list) or len(DATA) <= 0:
         abort(make_response(jsonify(message='Arguments manquants ou mal formatés'), 400))
 
     supervisors = set()
     sectors = set()
     for row in DATA:
         if (
-            'sector' not in row or
-            'supervisor' not in row or
-            not (sector := row['sector']) or
-            not isinstance(sector, str) or
-            not isinstance(supervisor := row['supervisor'], str) or
-            len(supervisor) != 3
+            not isinstance(row, dict) or
+            not (sector := row.get('sector')) or
+            not isinstance(sector , str) or
+            not is_valid_code(supervisor := row.get('supervisor'))
         ):
             abort(make_response(jsonify(message='Arguments manquants ou mal formatés'), 400))
         if sector in sectors:
@@ -317,13 +327,15 @@ def supervisor_edit():
         cur = connection.cursor()
         cur.executemany(sql, [(s['supervisor'], s['sector']) for s in DATA])
 
+        print(cur.rowcount)
+
         return jsonify(success=True)
 
 
 @app.route('/sector/preference', methods=['GET'])
 def preferences():
     # get '?code=...' from query string
-    if 'sector' not in request.args or not (SECTOR := request.args['sector']) or len(SECTOR) <= 0:
+    if not (SECTOR := request.args.get('sector')) or not isinstance(SECTOR, str):
         abort(make_response(jsonify(message='Nom de secteur manquant'), 400))
 
     sql_check = "SELECT COUNT(*) AS count FROM Secteur WHERE nom_secteur=?; "
@@ -343,32 +355,26 @@ def preferences():
 
         return [list(row) for row in next(gen)]
 
-
+# TODO: get rid of sql_check? (low rowcount -> rollback, catch reference constraint error)
 @app.route('/sector/preference', methods=['POST'])
 def preferences_edit():
-    try:
-        DATA = request.get_json()
-        if (
-            not DATA or
-            'sector' not in DATA or
-            'preferences' not in DATA or
-            not (SECTOR := DATA['sector']) or
-            not isinstance(SECTOR, str) or
-            not isinstance(preferences := DATA['preferences'], list) or
-            len(DATA['preferences']) <= 0
-        ):
-            raise Exception()
-    except:
+    DATA = request.get_json(silent=True)
+    if (
+        not isinstance(DATA, dict) or
+        not (SECTOR := DATA.get('sector')) or
+        not isinstance(SECTOR, str) or
+        not isinstance(preferences := DATA.get('preferences'), list) or
+        len(preferences) <= 0
+    ):
         abort(make_response(jsonify(message='Arguments manquants ou mal formatés'), 400))
 
     guards = set()
     for row in preferences:
         if (
-            'code' not in row or
+            not isinstance(row, dict) or
             'prefers' not in row or
-            not (isinstance(pref := row['prefers'], bool) or pref is None) or
-            not isinstance(code := row['code'], str) or
-            len(code) != 3
+            not ((pref := row['prefers']) is None or isinstance(pref, bool)) or
+            not is_valid_code(row.get('code'))
         ):
             abort(make_response(jsonify(message='Arguments manquants ou mal formatés'), 400))
         if row['code'] in guards:
@@ -426,24 +432,23 @@ def parcel():
 
         return res
 
-
+# TODO: Assert sector contains at least one parcel (rollback?)
+# TODO: Rollback on low rowcount?
+# TODO: get rid of sql_check?? (catch reference constraint error)
 @app.route('/parcel', methods=['POST'])
 def parcel_edit():
-    try:
-        DATA = request.get_json()
-        if not DATA or not isinstance(DATA, list) or len(DATA) <= 0:
-            raise Exception()
-    except:
+    DATA = request.get_json(silent=True)
+    if not isinstance(DATA, list) or len(DATA) <= 0:
         abort(make_response(jsonify(message='Arguments manquants ou mal formatés'), 400))
 
     parcels = set()
     sectors = set()
     for row in DATA:
         if (
-            'parcel' not in row or
-            'sector' not in row or
+            not isinstance(row, dict) or
+            not 'sector' in row or
             not ((sector := row['sector']) is None or (isinstance(sector, str) and sector != '')) or
-            not isinstance(parcel := row['parcel'], int) or
+            not isinstance(parcel := row.get('parcel'), int) or
             not (0 < parcel and parcel < 100)
         ):
             abort(make_response(jsonify(message='Arguments manquants ou mal formatés'), 400))
@@ -487,14 +492,17 @@ def parcel_edit():
 @app.route('/salary', methods=['GET'])
 def salary():
     # get '?date=...' from query string
-    if 'date' not in request.args or not (DATE := datetime.strptime(request.args['date'], '%Y-%m')):
+    if not (date := request.args.get('date')):
+        abort(make_response(jsonify(message='Arguments manquants'), 400))
+    try:
+        DATE_STR = str(datetime.strptime(date, '%Y-%m').date())
+    except:
         abort(make_response(jsonify(message='Date mal formatée'), 400))
 
     sql = 'SELECT * FROM salairesDuMois(?) ORDER BY code_mnemotechnique'
-
     with get_connection() as connection:
         cur = connection.cursor()
-        cur.execute(sql, str(DATE.date()))
+        cur.execute(sql, DATE_STR)
 
         return [list(row) for row in cur.fetchall()]
 
@@ -502,9 +510,8 @@ def salary():
 def assert_salary_keys():
     try:
         # get code, salary from form data
-        keys = ['code', 'date', 'salary']
-        CODE, datestr, SALARY = (request.form[key] for key in keys)
-        if not CODE or len(CODE) != 3:
+        CODE, datestr, SALARY = (request.form.get(key) for key in ('code', 'date', 'salary'))
+        if not is_valid_code(CODE):
             raise Exception('Code mnémotechnique manquant ou mal formaté')
         if not datestr or not (DATE := datetime.strptime(datestr, '%Y-%m')):
             raise Exception('Date manquante ou mal formatée')
@@ -537,7 +544,11 @@ def salary_edit():
 @app.route('/salary/options', methods=['GET'])
 def salary_options():
     # get '?date=...' from query string
-    if 'date' not in request.args or not (DATE := datetime.strptime(request.args['date'], '%Y-%m')):
+    if not (date := request.args.get('date')):
+        abort(make_response(jsonify(message='Arguments manquants'), 400))
+    try:
+        DATE_STR = str(datetime.strptime(date, '%Y-%m').date())
+    except:
         abort(make_response(jsonify(message='Date mal formatée'), 400))
     sql = (
         'SELECT code_mnemotechnique, prenom, nom, numero_avs, fonction, taux_occupation '
@@ -548,45 +559,74 @@ def salary_options():
         'WHERE DATEPART(year, date) = DATEPART(year, ?) '
         'AND DATEPART(month, date) = DATEPART(month, ?));'
     )
-    DATE_STR = str(DATE.date())
     with get_connection() as connection:
         cur = connection.cursor()
         cur.execute(sql, DATE_STR, DATE_STR)
 
         return [list(row) for row in cur.fetchall()]
 
-
+# TODO: get rid of sql_check (catch reference constraint error)
 @app.route('/salary/add', methods=['POST'])
 def salary_add():
     CODE, DATE, SALARY, nbr, _ = assert_salary_keys()
     if nbr <= 0:
         abort(make_response(jsonify(message='Salaire doit être plus grand que zéro'), 400))
+    sql_check = "SELECT COUNT(*) AS count FROM Employe WHERE code_mnemotechnique=?; "
     sql = (
         'BEGIN TRAN; '
         'IF EXISTS (SELECT * FROM Salaire WHERE code_employe=? AND date=?) BEGIN '
         'UPDATE Salaire SET montant=? WHERE code_employe=? AND date=?; END '
-        'ELSE BEGIN INSERT INTO Salaire(date, montant, code_employe) VALUES (?, ?, ?); END '
+        'ELSE BEGIN INSERT INTO Salaire(montant, code_employe, date) VALUES (?, ?, ?); END '
         'COMMIT TRAN;'
     )
     DATE_STR = str(DATE.date())
     with get_connection() as connection:
         cur = connection.cursor()
-        cur.execute(sql, CODE, DATE_STR, SALARY, CODE, DATE_STR, DATE_STR, SALARY, CODE)
+        cur.execute(sql_check, CODE)
 
-        if cur.rowcount == 0:
-            abort(500)
+        if cur.fetchone()[0] <= 0:
+            abort(make_response(jsonify(message=f'Aucun employé associé au code "{CODE}"'), 404))
+        else:
+            cur = connection.cursor()
 
+        cur.execute(sql, (CODE, DATE_STR) + tuple(chain.from_iterable(repeat((SALARY, CODE, DATE_STR), 2))))
         return jsonify(success=True)
+
+
+@app.route('/schedule', methods=['GET'])
+def schedule():
+    START, END = (request.args.get(key) for key in ('start', 'end'))
+    if not all((START, END, )):
+        abort(make_response(jsonify(message='Arguments manquants'), 400))
+    try:
+        start_date, end_date = (datetime.strptime(arg, '%Y-%m-%d') for arg in (START, END))
+    except:
+        abort(make_response(jsonify(message='Dates mal formatées'), 400))
+    if end_date <= start_date:
+        abort(make_response(jsonify(message='La date de début doit être après la date de fin'), 400))
+
+    sql = (
+        "SELECT CONVERT(VARCHAR(20), dt_debut, 120) AS dt_debut, code_gardien, num_parcelle "
+        "FROM Surveillance "
+        "WHERE dt_debut BETWEEN ? AND ? "
+        "ORDER BY dt_debut ASC"
+    )
+    with get_connection() as connection:
+        cur = connection.cursor()
+        cur.execute(sql, START, END)
+
+        return [list(row) for row in cur.fetchall()]
 
 
 @app.route('/schedule/sector', methods=['GET'])
 def schedule_sector():
-    try:
-        date, sector = request.args['date'], request.args['sector']
-        if not date or not sector:
-            raise Exception()
-    except:
+    DATE, SECTOR = (request.args.get(key) for key in ('date', 'sector'))
+    if not DATE or not SECTOR:
         abort(make_response(jsonify(message='Arguments manquants'), 400))
+    try:
+        datetime.strptime(DATE, '%Y-%m-%d')
+    except:
+        abort(make_response(jsonify(message='Date mal formatée'), 400))
 
     sql_header = 'SELECT num_parcelle FROM Parcelle WHERE nom_secteur=?; '
     sql = (
@@ -602,11 +642,11 @@ def schedule_sector():
     )
     with get_connection() as connection:
         cur = connection.cursor()
-        cur.execute(sql_header + sql, sector, date, sector)
+        cur.execute(sql_header + sql, SECTOR, DATE, SECTOR)
 
         header = next(gen := fetch_while_next(cur))
         if not header:
-            abort(make_response(jsonify(message='Ce secteur n\'a pas de parcelles'), 404))
+            abort(make_response(jsonify(message=f'Aucun secteur au nom "{SECTOR}"'), 404))
 
         res = {
             'header': [row[0] for row in header],
@@ -617,13 +657,17 @@ def schedule_sector():
 
 @app.route('/schedule/staff', methods=['GET'])
 def schedule_staff():
-    try:
-        keys = ['code', 'start', 'end']
-        code, start, end = (request.args[key] for key in keys)
-        if not code or not start or not end:
-            raise Exception()
-    except:
+    CODE, START, END = (request.args.get(key) for key in ('code', 'start', 'end'))
+    if not all((CODE, START, END, )):
         abort(make_response(jsonify(message='Arguments manquants'), 400))
+    if not is_valid_code(CODE):
+        abort(make_response(jsonify(message='Code mal formaté'), 400))
+    try:
+        start_date, end_date = (datetime.strptime(arg, '%Y-%m-%d') for arg in (START, END))
+    except:
+        abort(make_response(jsonify(message='Une ou plusieurs dates sont mal formatées'), 400))
+    if end_date <= start_date:
+        abort(make_response(jsonify(message='La date de début doit être après la date de fin'), 400))
 
     sql_check = "SELECT COUNT(*) AS count FROM Gardien WHERE code_employe=?; "
     sql = (
@@ -635,10 +679,10 @@ def schedule_staff():
     )
     with get_connection() as connection:
         cur = connection.cursor()
-        cur.execute(sql_check + sql, code, code, start, end)
+        cur.execute(sql_check + sql, CODE, CODE, START, END)
 
         count = next(gen := fetch_while_next(cur))
         if not count or count[0][0] < 1:
-            abort(make_response(jsonify(message=f'Aucun gardien associé au code {code}'), 404))
+            abort(make_response(jsonify(message=f'Aucun gardien associé au code {CODE}'), 404))
         
         return [list(row) for row in next(gen)]
