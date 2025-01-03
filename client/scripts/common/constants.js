@@ -1,7 +1,7 @@
-const dateFormatStrings = {
+const dateFormatStrings = Object.freeze({
     ISO: 'yyyy-MM-dd',
-    ISOWeek: "yyyy-'W'II",
+    ISOWeek: "RRRR-'W'II",
     ISOMonth: 'yyyy-MM',
-};
+});
 
 export { dateFormatStrings }

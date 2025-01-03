@@ -24,6 +24,9 @@ class DatePicker {
     /**@type {JQuery<HTMLButtonElement>}*/ #prev;
     /**@type {JQuery<HTMLButtonElement>}*/ #next;
 
+    get defaultValue() {
+        return this.#input.prop('defaultValue');
+    }
     get val() {
         return this.#input.val();
     }
@@ -146,12 +149,12 @@ class DatePicker {
         const {prev, next} = settings.title ?? {};
         const classStr = 'class="icon-button outline secondary material-symbols-outlined"';
         this.#prev = $(
-            `<button ${classStr} ${prev ? `title="${prev}"` : ''} data-action="prev" ${this.#input.val() === this.#input.attr('min') ? 'disabled' : ''}>\
+            `<button ${classStr} ${prev ? `title="${prev}"` : ''} data-action="prev" ${this.val === this.#input.attr('min') ? 'disabled' : ''}>\
                 keyboard_arrow_left\
             </button>`
         );
         this.#next = $(
-            `<button ${classStr} ${next ? `title="${next}"` : ''} data-action="next" ${this.#input.val() === this.#input.attr('max') ? 'disabled' : ''}>\
+            `<button ${classStr} ${next ? `title="${next}"` : ''} data-action="next" ${this.val === this.#input.attr('max') ? 'disabled' : ''}>\
                 keyboard_arrow_right\
             </button>`
         );

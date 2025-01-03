@@ -1,5 +1,5 @@
 import $ from 'jquery';
-import { addDays, addWeeks, addYears, constructNow, differenceInCalendarWeeks, format, parseISO } from 'date-fns'
+import { addDays, addWeeks, addYears, constructNow, format, parseISO } from 'date-fns'
 import { debounce } from 'lodash-es';
 import { dateFormatStrings } from '@scripts/common/constants';
 import { Schedule } from '@scripts/common/requests';
@@ -23,7 +23,7 @@ const buildPage = (rebuild = false) => {
         buildDatePicker();
     }
     buildOptions().then((code) => {
-        const [start, end] = getWeekAsInterval();
+        const [start, end] = getWeekAsInterval($('#date-picker').data('picker').val);
         Schedule.staff.between.get(code, start, end).then((data) => {
             buildTable(data, start);
             if (!rebuild) {
@@ -65,12 +65,11 @@ const buildOptions = async () => new Promise((resolve, reject) => {
     }).catch((e) => reject(e))
 });
 
-const getWeekAsInterval = () => {
-    const val = $('#date-picker').data('oldval');
+const getWeekAsInterval = (val) => {
     const monday = parseISO(val);
     const start = format(monday, dateFormatStrings.ISO);
     const end = format(addWeeks(monday, 1), dateFormatStrings.ISO);
-    return [start, end, val];
+    return [start, end];
 };
 
 const buildTable = (data, start) => {
@@ -110,8 +109,9 @@ const buildParcel = (parcel) => {
 const reloadRows = async () => {
     $('#date-picker, #refresh, #entity-picker').prop('inert', true);
     const code = $('#entity-picker input:checked').val();
-    const [start, end, val] = getWeekAsInterval();
-    setEditLink(val);
+    const picker = $('#date-picker').data('picker');
+    const [start, end] = getWeekAsInterval(picker.val);
+    setEditLink(picker.val !== picker.defaultValue && picker.val);
     return Schedule.staff.between.get(code, start, end).then((data) => {
         buildTable(data, start);
     }).catch(({status}) => {
@@ -125,9 +125,8 @@ const reloadRows = async () => {
 
 const setEditLink = (val) => {
     const edit = $('#edit');
-    const noHash = (differenceInCalendarWeeks(parseISO(val), constructNow(), {weekStartsOn: 1}) <= 0);
     const url = edit.attr('data-href');
-    edit.attr('href', noHash ? url : `${url}#${val}`);
+    edit.attr('href', val ? `${url}#${format(parseISO(val), dateFormatStrings.ISO)}` : url);
 }
 
 const onDateInput = debounce(() => {

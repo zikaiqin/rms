@@ -1,5 +1,5 @@
 import $ from 'jquery';
-import { addYears, constructNow, differenceInCalendarWeeks, format, parseISO } from 'date-fns'
+import { addYears, constructNow, format } from 'date-fns'
 import { debounce } from 'lodash-es';
 import { dateFormatStrings } from '@scripts/common/constants';
 import { Schedule } from '@scripts/common/requests';
@@ -28,8 +28,8 @@ const attachListeners = () => {
 const reloadRows = async () => {
     $('#entity-picker, #date-picker, #refresh').prop('inert', true);
     const sector = $('#entity-picker').val();
-    const date = $('#date-picker').data('current');
-    setEditLink(date);
+    const date = $('#date-picker').val();
+    setEditLink(date !== $('#date-picker').prop('defaultValue') && date);
     return Schedule.sector.one.get(date, sector).then(({header, data}) => {
         buildTable(header, data);
     }).catch(({status}) => {
@@ -41,17 +41,15 @@ const reloadRows = async () => {
 
 const setEditLink = (val) => {
     const edit = $('#edit');
-    const date = parseISO(val);
-    const noHash = (differenceInCalendarWeeks(date, constructNow(), {weekStartsOn: 1}) <= 0);
     const url = edit.attr('data-href');
-    edit.attr('href', noHash ? url : `${url}#${format(date, dateFormatStrings.ISOWeek)}`);
+    edit.attr('href', val ? `${url}#${val}` : url);
 }
 
 const buildDatePicker = () => {
     const now = constructNow();
-    const date = format(now, dateFormatStrings.ISO);
+    const value = format(now, dateFormatStrings.ISO);
     const [min, max] = [-1, 1].map((offset) => format(addYears(now, offset), dateFormatStrings.ISO));
-    $('#date-picker').val(date).attr({min, max}).data('current', date);
+    $('#date-picker').attr({min, max, value});
 }
 
 const onDateChange = (e) => {
@@ -60,7 +58,6 @@ const onDateChange = (e) => {
     if (!valid) {
         el.attr('aria-invalid', true);
     } else {
-        el.data('current', el.val());
         if (el.attr('aria-invalid')) {
             el.attr('aria-invalid', false);
         }
