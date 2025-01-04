@@ -5,13 +5,14 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Planificateur</title>
         <link rel="stylesheet" href="@styles/main.css"/>
+        <link rel="stylesheet" href="@styles/planner.css"/>
     </head>
     <body class="full-height vert-flex">
         <header class="container">
             <nav>
                 <ul>
                     <!-- Page title -->
-                    <li><h1>Planificateur</h1></li>
+                    <li><h1>Planificateur d'horaires</h1></li>
                 </ul>
                 <ul>
                     <!-- Navigation to other pages -->
@@ -34,8 +35,30 @@
             </nav>
         </header>
         <main class="container stretch vert-flex overflow-auto">
-            <!-- Page content here -->
+            <div role="main" class="stretch vert-flex overflow-auto">
+                <table id="planner" class="two-tone stretch"></table>
+            </div>
+            <div class="action-container">
+                <input id="date-picker" type="date" required />
+                <div role="group" class="icon-button-group">
+                    <button
+                        id="reset"
+                        class="icon-button outline secondary material-symbols-outlined"
+                        title="Réinitialiser"
+                        disabled>
+                        replay
+                    </button>
+                    <button
+                        id="save"
+                        class="icon-button outline secondary material-symbols-outlined"
+                        title="Enregistrer"
+                        disabled>
+                        save
+                    </button>
+                </div>
+            </div>
         </main>
         <footer class="container"></footer>
+        <script type="module" src="@scripts/pages/schedule-planner.js"></script>
     </body>
 </html>

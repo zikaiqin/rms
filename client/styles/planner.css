@@ -1,0 +1,20 @@
+col:not(:last-child) {
+    border-right: 0.0625rem solid var(--pico-table-border-color); 
+}
+
+colgroup:not(:last-of-type) {
+    border-right: 0.125rem solid var(--pico-table-border-color);
+}
+
+.action-container {
+    display: flex;
+    max-width: fit-content;
+    margin: 0 auto;
+
+    & > * {
+        margin-bottom: 0 !important;
+        &:not(:last-child) {
+            margin-right: var(--pico-spacing);
+        }
+    }
+}

@@ -86,6 +86,9 @@ const Salary = {
 };
 
 const Schedule = {
+    all: {
+        get: (date) => API.get(`/schedule/${date}`),
+    },
     staff: {
         options: {
             get: () => API.get('/staff', {role: 'Gardien'}),

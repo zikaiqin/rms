@@ -593,29 +593,37 @@ def salary_add():
         return jsonify(success=True)
 
 
-@app.route('/schedule', methods=['GET'])
-def schedule():
-    START, END = (request.args.get(key) for key in ('start', 'end'))
-    if not all((START, END, )):
-        abort(make_response(jsonify(message='Arguments manquants'), 400))
+@app.route('/schedule/<date>', methods=['GET'])
+def schedule(date):
     try:
-        start_date, end_date = (datetime.strptime(arg, '%Y-%m-%d') for arg in (START, END))
+        DATE = datetime.strptime(date, '%Y-%m-%d').date()
     except:
-        abort(make_response(jsonify(message='Dates mal formatées'), 400))
-    if end_date <= start_date:
-        abort(make_response(jsonify(message='La date de début doit être après la date de fin'), 400))
+        abort(make_response(jsonify(message='Date mal formatée'), 400))
 
-    sql = (
-        "SELECT CONVERT(VARCHAR(20), dt_debut, 120) AS dt_debut, code_gardien, num_parcelle "
+    sql_schedule = (
+        "SELECT FORMAT(dt_debut, 'hh:mm') AS time, code_gardien, num_parcelle "
         "FROM Surveillance "
-        "WHERE dt_debut BETWEEN ? AND ? "
-        "ORDER BY dt_debut ASC"
+        "WHERE CONVERT(DATE, dt_debut) = ? "
+        "ORDER BY dt_debut ASC; "
+    )
+    sql_sector = (
+        'SELECT Secteur.nom_secteur, num_parcelle FROM Secteur JOIN Parcelle '
+        'ON Secteur.nom_secteur = Parcelle.nom_secteur'
     )
     with get_connection() as connection:
         cur = connection.cursor()
-        cur.execute(sql, START, END)
+        cur.execute(sql_schedule + sql_sector, DATE)
 
-        return [list(row) for row in cur.fetchall()]
+        schedule = {}
+        for [time, code, parcel] in next(gen := fetch_while_next(cur)):
+            schedule.setdefault(parcel, []).append([time, code])
+
+        res = {}
+        for [sector, parcel] in next(gen):
+            s = res.setdefault(sector, {})
+            s[parcel] = schedule[parcel] if parcel in schedule else []
+
+        return res
 
 
 @app.route('/schedule/sector', methods=['GET'])
