@@ -18,3 +18,51 @@ colgroup:not(:last-of-type) {
         }
     }
 }
+
+option[selected] {
+    color: var(--pico-form-element-placeholder-color);
+    font-style: italic;
+}
+select:has([data-none][selected]):not(.modified) {
+    color: var(--pico-muted-color);
+
+    option:not([data-none]) {
+        color: var(--pico-color);
+    }
+    option[data-none] {
+        color: var(--pico-form-element-placeholder-color);
+    }
+}
+select.modified {
+    color: var(--pico-mod-color);
+    font-style: italic;
+}
+select.deleted {
+    color: var(--pico-del-color);
+}
+select:is(.modified, .deleted) {
+    font-weight: bolder;
+
+    option {
+        color: var(--pico-color);
+        font-weight: normal;
+        font-style: normal;
+    }
+
+    option[selected] {
+        color: var(--pico-form-element-placeholder-color);
+        font-style: italic;
+    }
+}
+
+table, td > select {
+    margin-bottom: 0;
+}
+
+td {
+    padding: calc(var(--pico-spacing) / 2);
+}
+
+div[role=main] {
+    margin-bottom: var(--pico-typography-spacing-vertical);
+}
