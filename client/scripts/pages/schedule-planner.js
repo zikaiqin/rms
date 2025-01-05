@@ -210,8 +210,11 @@ const buildTableBody = (options, data) => {
 
 const buildSelect = (options) => memoize((code) => {
     const select = `<select>\
-        <option value="" data-none ${code ? '' : 'selected'}>---</option>\
-        ${options.map(([c]) => `<option value="${c}" ${c === code ? 'selected title="Valeur initiale"' : ''}>${c}</option>`).join('')}\
+        <option value="" title="Non surveillé" data-none ${code ? '' : 'selected'}>---</option>\
+        ${options.map(([c, fname, lname]) => {
+            const match = c === code;
+            return `<option value="${c}" title="${fname} ${lname}${match ? ' (Valeur initiale)' : ''}" ${match ? 'selected' : ''}>${c}</option>`;
+        }).join('')}\
     </select>`;
     return select;
 });
