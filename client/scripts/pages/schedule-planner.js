@@ -17,8 +17,10 @@ const buildTable = async () => {
     const date = $('#date-picker').val();
     return Promise.all([getOptions(), Schedule.all.get(date)]).then(([options, data]) => {
         const header = buildTableHeader(data);
-        const body = buildTableBody(options, data);
-        table.empty().append(header, body).data('mod-count', 0).on('change', onScheduleChange);
+        const [schedule, body] = buildTableBody(options, data);
+        table.empty().append(header, body).data('default-schedule', schedule);
+        setRowScheduleData();
+        table.on('change', onScheduleChange);
     });
 }
 
@@ -66,38 +68,94 @@ const onDateChange = (e) => {
     }
 }
 
-// TODO: Assert one assignment per hour
-const onScheduleChange = function(e) {
+const onScheduleChange = function (e) {
     const select = $(e.target);
-    const option = select.find(`option[value="${select.val()}"]`);
-    if (option.is('[selected]')) {
-        select.removeClass('modified deleted');
-        $(this).data('mod-count', $(this).data('mod-count') - 1);
-    } else {
-        if (!($(this).hasClass('modified') || $(this).hasClass('deleted'))) {
-            $(this).data('mod-count', $(this).data('mod-count') + 1);
-        }
-        if (option.is('[data-none]')) {
-            select.removeClass('modified');
-            select.addClass('deleted');
-        } else {
-            select.removeClass('deleted');
-            select.addClass('modified');
+    const row = select.closest('tr');
+    const schedule = row.data('schedule');
+    const parcel = select.parent().data('parcel');
+    const newVal = select.val();
+    const oldVal = schedule.parcelMap[parcel];
+    schedule.parcelMap[parcel] = newVal;
+
+    // if previously invalid, remove invalid style and check if rest of row is valid
+    if (oldVal) {
+        const set = schedule.staffMap[oldVal];
+        set.delete(parcel);
+        select.removeAttr('aria-invalid');
+        switch (set.size) {
+            case 0:
+                row.find(`option[value="${oldVal}"]`).removeAttr('class');
+                break;
+            case 1:
+                row.find(`td[data-parcel="${Array.from(set)[0]}"] select`).removeAttr('aria-invalid');
         }
     }
-    const modCount = $(this).data('mod-count');
-    $('#reset, #save').prop('disabled', modCount <= 0);
+
+    // if assigning a staff, check if staff isn't already assigned
+    if (newVal) {
+        if (schedule.staffMap[newVal]) {
+            const set = schedule.staffMap[newVal];
+            let errCells;
+            switch (set.size) {
+                case 0:
+                    set.add(parcel);
+                    row.find(`option[value="${newVal}"]`).addClass('blocked');
+                    break;
+                case 1:
+                    errCells = row.find(`td[data-parcel="${Array.from(set)[0]}"] select`).add(select);
+                default:
+                    (errCells ?? select).attr('aria-invalid', true);
+                    set.add(parcel);
+            }
+        } else {
+            schedule.staffMap[newVal] = new Set([parcel]);
+            row.find(`option[value="${newVal}"]`).addClass('blocked');
+        }
+    }
+
+    const option = select.find(`option[value="${newVal}"]`);
+    if (option.is('[selected]')) {
+        select.removeClass('modified');
+    } else {
+        select.addClass('modified');
+    }
+    const unmodified = $(this).has('.modified').length <= 0;
+    const invalid = $(this).has('[aria-invalid]').length > 0;
+    $('#reset').prop('disabled', unmodified);
+    $('#save').prop('disabled', unmodified || invalid);
 }
 
 const onReset = () => {
-    const modified = $('#planner select:is(.deleted, .modified)');
-    modified.each(function() {
+    const modified = $('#planner select:is(.modified, [aria-invalid])');
+    modified.each(function () {
         const select = $(this);
-        select.val(select.find('[selected]').val());
-        select.removeClass('modified deleted');
+        select.removeAttr('aria-invalid').removeClass('modified').val(select.find('[selected]').val());
     });
-    $('#planner').data('mod-count', 0);
+    $('#planner .blocked').removeAttr('class');
+    setRowScheduleData();
+    console.log($('#planner').data('default-schedule'));
     $('#reset, #save').prop('disabled', true);
+}
+
+const setRowScheduleData = () => {
+    const table = $('#planner');
+    const schedule = table.data('default-schedule');
+    table.find('tbody tr').each(function () {
+        const row = $(this);
+        const time = row.data('hour');
+        const staffMap = Object.fromEntries(Object.entries(schedule[time]).reduce(
+            (acc, [k, v]) => {
+                if (v) {
+                    acc.push([v, new Set([Number(k)])]);
+                    row.find(`option[value="${v}"]`).addClass('blocked');
+                };
+                return acc;
+            },
+            [],
+        ));
+        // clone schedule slice so that default-schedule remains constant
+        row.data('schedule', { parcelMap: {...schedule[time]}, staffMap });
+    });
 }
 
 const buildTableHeader = (data) => {
@@ -117,7 +175,7 @@ const buildTableHeader = (data) => {
 const buildTableBody = (options, data) => {
     let min = 9, max = 16;
     const parcels = Object.values(data).flatMap(o => Object.keys(o));
-    const schedule = Object.fromEntries(parcels.map(p => [p, {}]));
+    const schedule = {};
     Object.values(data).flatMap(
         (sector) => Object.entries(sector)
     ).forEach(([parcel, timeslots]) => {
@@ -125,23 +183,36 @@ const buildTableBody = (options, data) => {
             const hour = Number(time.split(':')[0]);
             min = Math.min(min, hour);
             max = Math.max(max, hour);
-            schedule[parcel][hour] = code;
+            if (!(hour in schedule)) {
+                schedule[hour] = Object.fromEntries(parcels.map(p => [p, '']));
+            }
+            schedule[hour][parcel] = code;
         });
     });
-    const hours = Array.from({length: max + 1 - min}, (_, i) => (i + min) % 24);
-    const select = buildSelect(options)
+    const hours = Array.from({ length: max + 1 - min }, (_, i) => {
+        const hour = (i + min) % 24
+        if (!(hour in schedule)) {
+            schedule[hour] = Object.fromEntries(parcels.map(p => [p, '']));
+        }
+        return hour;
+    });
+    const select = buildSelect(options);
     const rows = hours.map((hour) => {
         const rowHeader = `<th scope="row">${hour.toString().padStart(2, '0')}:00</th>`;
-        const cells = parcels.map(
-            (parcel) => `<td data-parcel="${parcel}">${select(schedule[parcel][hour])}</td>`
-        );
-        return `<tr>${rowHeader}${cells}</tr>`;
+        const cells = parcels.map((parcel) => {
+            const code = schedule[hour][parcel];
+            return `<td data-parcel="${parcel}">${select(code)}</td>`;
+        });
+        return `<tr data-hour="${hour}">${rowHeader}${cells}</tr>`;
     });
-    return `<tbody>${rows}</tbody>`;
+    return [schedule, `<tbody>${rows}</tbody>`];
 };
 
 const buildSelect = (options) => memoize((code) => {
-    const select = `<select><option value="" data-none ${code ? '' : 'selected'}>---</option>${options.map(([c]) => `<option value="${c}" ${c === code ? 'selected' : ''}>${c}</option>`).join('')}</select>`;
+    const select = `<select>\
+        <option value="" data-none ${code ? '' : 'selected'}>---</option>\
+        ${options.map(([c]) => `<option value="${c}" ${c === code ? 'selected title="Valeur initiale"' : ''}>${c}</option>`).join('')}\
+    </select>`;
     return select;
 });
 
