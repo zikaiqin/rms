@@ -1,5 +1,5 @@
 import $ from 'jquery';
-import { addYears, constructNow, differenceInCalendarDays, format, parseISO } from 'date-fns';
+import { addHours, addYears, constructNow, differenceInCalendarDays, format, parseISO } from 'date-fns';
 import { debounce, memoize } from 'lodash-es';
 import { dateFormatStrings } from '@scripts/common/constants';
 import { Schedule } from '@scripts/common/requests';
@@ -11,11 +11,11 @@ $(() => {
     });
 })
 
-const buildTable = async () => {
+const buildTable = async (refreshOptions = false) => {
     $('#reset, #save').prop('disabled', true);
     const table = $('#planner').off('change');
     const date = $('#date-picker').val();
-    return Promise.all([getOptions(), Schedule.all.get(date)]).then(([options, data]) => {
+    return Promise.all([getOptions(refreshOptions), Schedule.planner.get(date)]).then(([options, data]) => {
         const header = buildTableHeader(data);
         const [schedule, body] = buildTableBody(options, data);
         table.empty().append(header, body).data('default-schedule', schedule);
@@ -24,9 +24,9 @@ const buildTable = async () => {
     });
 }
 
-const getOptions = async () => {
-    let options = $('#planner').data('options');
-    if (options) {
+const getOptions = async (purge = false) => {
+    let options;
+    if (!purge && (options = $('#planner').data('options'))) {
         return options;
     } else {
         options = await Schedule.staff.options.get();
@@ -38,6 +38,7 @@ const getOptions = async () => {
 const attachListeners = () => {
     $('#date-picker').on('change', debounce(onDateChange, 200));
     $('#reset').on('click', onReset);
+    $('#save').on('click', onSave);
 }
 
 const buildDatePicker = () => {
@@ -68,7 +69,7 @@ const onDateChange = (e) => {
     }
 }
 
-const onScheduleChange = function (e) {
+const onScheduleChange = function(e) {
     const select = $(e.target);
     const row = select.closest('tr');
     const schedule = row.data('schedule');
@@ -126,21 +127,43 @@ const onScheduleChange = function (e) {
 }
 
 const onReset = () => {
-    const modified = $('#planner select:is(.modified, [aria-invalid])');
-    modified.each(function () {
+    const touched = $('#planner select:is(.modified, [aria-invalid])');
+    touched.each(function() {
         const select = $(this);
         select.removeAttr('aria-invalid').removeClass('modified').val(select.find('[selected]').val());
     });
     $('#planner .blocked').removeAttr('class');
     setRowScheduleData();
-    console.log($('#planner').data('default-schedule'));
     $('#reset, #save').prop('disabled', true);
+}
+
+const onSave = () => {
+    const date = parseISO($('#date-picker').val());
+    const modified = $('#planner tr:has(select.modified)').toArray().flatMap((el) => {
+        const row = $(el);
+        const hour = row.data('hour');
+        const time = format(addHours(date, hour), dateFormatStrings.ISODateTime);
+        return row.find('select.modified').toArray().map((sel) => {
+            const select = $(sel);
+            const code = select.val() || null;
+            const parcel = select.parent().data('parcel');
+            return { code, parcel, time };
+        });
+    });
+    Schedule.planner.post(modified).then(() => {
+        buildTable();
+    }).catch((err) => {
+        const matches = err.responseJSON.message.match(/code|parcelle/);
+        if (matches) {
+            buildTable(matches[0] === 'code');
+        }
+    });
 }
 
 const setRowScheduleData = () => {
     const table = $('#planner');
     const schedule = table.data('default-schedule');
-    table.find('tbody tr').each(function () {
+    table.find('tbody tr').each(function() {
         const row = $(this);
         const time = row.data('hour');
         const staffMap = Object.fromEntries(Object.entries(schedule[time]).reduce(

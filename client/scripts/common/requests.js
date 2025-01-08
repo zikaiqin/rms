@@ -7,7 +7,7 @@ const withAlert = async (jqXHR) => new Promise((resolve, reject) => {
     jqXHR.then((res) => {resolve(res)})
         .catch((err) => {
             const msg = err?.responseJSON?.message;
-            window.alert(msg ?? 'Une erreur s\'est produite');
+            window.alert(msg ?? "Une erreur s'est produite");
             reject(err);
         });
 }); 
@@ -86,8 +86,13 @@ const Salary = {
 };
 
 const Schedule = {
-    all: {
+    planner: {
         get: (date) => API.get(`/schedule/${date}`),
+        post: (data) => API.post({
+            url: '/schedule',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+        }),
     },
     staff: {
         options: {

@@ -3,7 +3,7 @@ from flask import Flask, request, abort, make_response, jsonify
 from flask_cors import CORS
 from contextlib import contextmanager
 from itertools import chain, repeat
-from datetime import datetime
+from datetime import datetime, timedelta
 from math import isnan
 import re
 from database import DataBase
@@ -41,6 +41,12 @@ def is_valid_code(code):
         len(code) == 3 and
         code.isalnum() and
         code.isupper()
+    )
+
+def is_valid_parcel(num):
+    return (
+        isinstance(num, int) and
+        0 < num and num < 100
     )
 
 def fetch_while_next(cursor):
@@ -149,7 +155,7 @@ def staff_delete():
 
         except IntegrityError as err:
             # check if error was a reference constraint violation
-            matches = re.search(r'REFERENCE constraint ".*"', err.args[1])
+            matches = re.search(r'REFERENCE constraint "(.*?)"', err.args[1])
             sql_err = matches.group(0) if matches else ''
 
             # if trying to delete a sector supervisor, send 409; otherwise, re-raise
@@ -327,8 +333,6 @@ def supervisor_edit():
         cur = connection.cursor()
         cur.executemany(sql, [(s['supervisor'], s['sector']) for s in DATA])
 
-        print(cur.rowcount)
-
         return jsonify(success=True)
 
 
@@ -448,8 +452,7 @@ def parcel_edit():
             not isinstance(row, dict) or
             not 'sector' in row or
             not ((sector := row['sector']) is None or (isinstance(sector, str) and sector != '')) or
-            not isinstance(parcel := row.get('parcel'), int) or
-            not (0 < parcel and parcel < 100)
+            not is_valid_parcel(parcel := row.get('parcel', None))
         ):
             abort(make_response(jsonify(message='Arguments manquants ou mal formatés'), 400))
         if parcel in parcels:
@@ -601,7 +604,7 @@ def schedule(date):
         abort(make_response(jsonify(message='Date mal formatée'), 400))
 
     sql_schedule = (
-        "SELECT FORMAT(dt_debut, 'hh:mm') AS time, code_gardien, num_parcelle "
+        "SELECT FORMAT(dt_debut, 'HH:mm') AS time, code_gardien, num_parcelle "
         "FROM Surveillance "
         "WHERE CONVERT(DATE, dt_debut) = ? "
         "ORDER BY dt_debut ASC; "
@@ -622,8 +625,80 @@ def schedule(date):
         for [sector, parcel] in next(gen):
             s = res.setdefault(sector, {})
             s[parcel] = schedule[parcel] if parcel in schedule else []
-
         return res
+
+
+def assert_schedule_keys(schedule: list):
+    for slot in schedule:
+        if not isinstance(slot, dict):
+            abort(make_response(jsonify(message='Arguments mal formatés'), 400))
+        if 'code' not in slot or (
+            (CODE := slot['code']) is not None and
+            not is_valid_code(CODE)
+        ):
+            abort(make_response(jsonify(message='Code mnémotechnique manquant ou mal formaté'), 400))
+        if not is_valid_parcel(PARCEL := slot.get('parcel', None)):
+            abort(make_response(jsonify(message='Numéro de parcelle manquant ou mal formaté'), 400))
+        try:
+            START = datetime.strptime(slot.get('time', None), '%Y-%m-%dT%H:%M')
+        except:
+            abort(make_response(jsonify(message='Dates manquantes ou mal formatées'), 400))
+        yield CODE, PARCEL, START, START + timedelta(hours=1)
+
+# could do separate checks for codes and parcels for better error feedback
+@app.route('/schedule', methods=['POST'])
+def schedule_edit():
+    DATA = request.get_json(silent=True)
+    if not isinstance(DATA, list) or len(DATA) <= 0:
+        abort(make_response(jsonify(message='Arguments manquants ou mal formatés'), 400))
+
+    sanitized = tuple(assert_schedule_keys(DATA))
+    del_list = tuple(tup[1:] for tup in filter(lambda t: t[0] is None, sanitized))
+    ins_list = tuple(filter(lambda t: t[0] is not None, sanitized))
+
+    with get_connection() as connection:
+        cur = connection.cursor()
+        if len(del_list) > 0:
+            sql_del = 'DELETE FROM Surveillance WHERE num_parcelle=? AND dt_debut=? AND dt_fin=?;'
+            cur.executemany(sql_del, del_list)
+        if len(ins_list) > 0:
+            sql_ins = (
+                'MERGE INTO Surveillance AS S '
+                'USING (VALUES {values}) AS Ins(code_gardien, num_parcelle, dt_debut, dt_fin) '
+                'ON S.num_parcelle = Ins.num_parcelle '
+                'AND S.dt_debut = Ins.dt_debut '
+                'AND S.dt_fin = Ins.dt_fin '
+                'WHEN MATCHED THEN '
+                'UPDATE SET S.code_gardien = Ins.code_gardien '
+                'WHEN NOT MATCHED BY TARGET THEN '
+                'INSERT (code_gardien, num_parcelle, dt_debut, dt_fin) '
+                'VALUES (Ins.code_gardien, Ins.num_parcelle, Ins.dt_debut, Ins.dt_fin);'
+            ).format(values=', '.join(repeat('(?, ?, ?, ?)', len(ins_list))))
+            try:
+                cur.execute(sql_ins, tuple(chain.from_iterable(ins_list)))
+            except IntegrityError as err:
+                cur.rollback()
+                print(err.args)
+                if 'PRIMARY KEY' in err.args[1]:
+                    matches = re.search(r'duplicate key value is \((.*?)\)', err.args[1])
+                    err_vals = matches.group(1) if matches else None
+                    err_msg = (
+                        'Le gardien {} est déjà assigné à une autre surveillance entre {} et {}'.format(*err_vals.split(', '))
+                        if err_vals
+                        else "Il y a un conflit d'horaire entre un ou plusieurs gardiens"
+                    )
+                    abort(make_response(jsonify(message=err_msg), 400))
+                elif 'CHECK constraint' in err.args[1]:
+                    abort(make_response(jsonify(message='Les heures spécifiées sont invalides'), 400))
+                elif 'FOREIGN KEY' in err.args[1]:
+                    if 'dbo.Gardien' in err.args[1]:
+                        abort(make_response(jsonify(message='Un ou plusieurs codes mnémotechniques sont invalides'), 400))
+                    elif 'dbo.Parcelle' in err.args[1]:
+                        abort(make_response(jsonify(message='Un ou plusieurs numéros de parcelle sont invalides'), 400))
+                else:
+                    raise err
+
+        return jsonify(success=True)
 
 
 @app.route('/schedule/sector', methods=['GET'])
@@ -639,7 +714,7 @@ def schedule_sector():
     sql_header = 'SELECT num_parcelle FROM Parcelle WHERE nom_secteur=?; '
     sql = (
         "WITH T AS ("
-        "SELECT FORMAT(dt_debut, 'hh:mm') AS time, Parcelle.num_parcelle as num_parcelle, code_gardien "
+        "SELECT FORMAT(dt_debut, 'HH:mm') AS time, Parcelle.num_parcelle as num_parcelle, code_gardien "
         "FROM Surveillance JOIN Parcelle "
         "ON Surveillance.num_parcelle = Parcelle.num_parcelle "
         "WHERE CONVERT(DATE, dt_debut) = ? "
@@ -679,7 +754,7 @@ def schedule_staff():
 
     sql_check = "SELECT COUNT(*) AS count FROM Gardien WHERE code_employe=?; "
     sql = (
-        "SELECT CONVERT(VARCHAR(20), dt_debut, 120) AS dt_debut, Parcelle.num_parcelle as num_parcelle, nom_secteur "
+        "SELECT FORMAT(dt_debut, 'yyyy-MM-dd\"T\"HH:mm') AS time, Parcelle.num_parcelle as num_parcelle, nom_secteur "
         "FROM Surveillance JOIN Parcelle "
         "ON Surveillance.num_parcelle = Parcelle.num_parcelle "
         "WHERE code_gardien=? "

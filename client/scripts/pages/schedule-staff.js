@@ -79,7 +79,7 @@ const buildTable = (data, start) => {
     const schedule = Object.fromEntries(days.map((day) => [day, {}]));
     let min = 9, max = 16;
     data.forEach(([datetime, parcel, sector]) => {
-        const [date, time] = datetime.split(' ');
+        const [date, time] = datetime.split('T');
         const hour = Number(time.split(':')[0]);
         min = Math.min(min, hour);
         max = Math.max(max, hour);
