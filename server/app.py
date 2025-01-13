@@ -1,12 +1,13 @@
 from pyodbc import IntegrityError
 from flask import Flask, request, abort, make_response, jsonify
 from flask_cors import CORS
-from contextlib import contextmanager
 from itertools import chain, repeat
+from functools import partial
 from datetime import datetime, timedelta
 from math import isnan
 import re
-from database import DataBase
+from helpers.database import DataBase, get_connection
+from helpers.util import is_valid_code, is_valid_parcel, fetch_while_next, sql_test_str
 
 DRIVER = 'ODBC Driver 18 for SQL Server'
 HOST_NAME = 'localhost'
@@ -20,52 +21,10 @@ CSTR = (
     'Trusted_Connection=yes;'
 )
 
-DATABASE = DataBase(CSTR)
-
-@contextmanager
-def get_connection():
-    connection = DATABASE.connect()
-    try:
-        yield connection
-    except Exception as e:
-        connection.rollback()
-        raise e
-    else:
-        connection.commit()
-    finally:
-        connection.close()
-
-def is_valid_code(code):
-    return (
-        isinstance(code, str) and
-        len(code) == 3 and
-        code.isalnum() and
-        code.isupper()
-    )
-
-def is_valid_parcel(num):
-    return (
-        isinstance(num, int) and
-        0 < num and num < 100
-    )
-
-def fetch_while_next(cursor):
-    yield cursor.fetchall()
-    while cursor.nextset():
-        yield cursor.fetchall()
-
-def sql_test_str(values_len, table_name, column_name):
-    SQL = (
-        'SELECT Test.val AS invalid '
-        'FROM (VALUES {values}) AS Test(val) '
-        'LEFT JOIN {table} AS T ON Test.val = T.{column} '
-        'WHERE T.{column} IS NULL; '
-    )
-    return SQL.format(values=', '.join(repeat('(?)', values_len)), table=table_name, column=column_name)
+connection = partial(get_connection, DataBase(CSTR))
 
 app = Flask(__name__)
 CORS(app)
-
 
 @app.route('/staff', methods=['GET'])
 def staff():
@@ -81,8 +40,8 @@ def staff():
         'FROM Employe ' +
         ('WHERE fonction=?' if ROLE else '')
     )
-    with get_connection() as connection:
-        cur = connection.cursor()
+    with connection() as conn:
+        cur = conn.cursor()
         if ROLE:
             cur.execute(sql, ROLE)
         else:
@@ -111,8 +70,8 @@ def staff_details():
         abort(make_response(jsonify(message='Code mnémotechnique manquant ou mal formaté'), 400))
 
     sql = 'SELECT * FROM Employe LEFT JOIN Gardien ON code_mnemotechnique=code_employe WHERE code_mnemotechnique=?'
-    with get_connection() as connection:
-        cur = connection.cursor()
+    with connection() as conn:
+        cur = conn.cursor()
         cur.execute(sql, CODE)
 
         # if the query did not return any rows, send 404
@@ -148,9 +107,9 @@ def staff_delete():
         abort(make_response(jsonify(message='Code mnémotechnique manquant ou mal formaté'), 400))
 
     sql = 'DELETE FROM Employe WHERE code_mnemotechnique=?'
-    with get_connection() as connection:
+    with connection() as conn:
         try:
-            cur = connection.cursor()
+            cur = conn.cursor()
             cur.execute(sql, CODE)
 
         except IntegrityError as err:
@@ -210,9 +169,9 @@ def staff_add():
     param_fragment = ', '.join(f'@{key}=?' for key in KEYS)
 
     sql = f'SET NOCOUNT ON; EXEC insertionEmploye {param_fragment};'
-    with get_connection() as connection:
+    with connection() as conn:
         try:
-            cur = connection.cursor()
+            cur = conn.cursor()
             cur.execute(sql, values)
         except IntegrityError as err:
             # check if error was a key violation
@@ -235,8 +194,8 @@ def staff_add():
 
 @app.route('/sector', methods=['GET'])
 def sector():
-    with get_connection() as connection:
-        cur = connection.cursor()
+    with connection() as conn:
+        cur = conn.cursor()
         cur.execute('SELECT nom_secteur FROM Secteur')
 
         return [row[0] for row in cur.fetchall()]
@@ -253,8 +212,8 @@ def sector_details():
     sql_prefs = sql_temp.format(key='code_gardien', table='Preference', cols=', prefere')
     sql = sql_sectors + sql_parcels + sql_prefs
 
-    with get_connection() as connection:
-        cur = connection.cursor()
+    with connection() as conn:
+        cur = conn.cursor()
         cur.execute(sql)
 
         (sectors, parcels, prefs) = fetch_while_next(cur)
@@ -278,8 +237,8 @@ def supervisor():
         "SELECT code_mnemotechnique, prenom, nom, nom_secteur "
         "FROM T LEFT JOIN Secteur ON code_mnemotechnique = code_chef_secteur"
     )
-    with get_connection() as connection:
-        cur = connection.cursor()
+    with connection() as conn:
+        cur = conn.cursor()
         cur.execute(sql)
 
         rows = cur.fetchall()
@@ -317,8 +276,8 @@ def supervisor_edit():
 
     sql_check = sql_test_str(len(supervisors), 'ChefDeSecteur', 'code_employe') + sql_test_str(len(sectors), 'Secteur', 'nom_secteur')
 
-    with get_connection() as connection:
-        cur = connection.cursor()
+    with connection() as conn:
+        cur = conn.cursor()
         cur.execute(sql_check, tuple(chain(supervisors, sectors)))
 
         (invalid_super, invalid_sector) = fetch_while_next(cur)
@@ -330,7 +289,7 @@ def supervisor_edit():
             abort(make_response(jsonify(message=(error_msg + '\n'.join((super_msg, sector_msg)))), 400))
 
         sql = 'UPDATE Secteur SET code_chef_secteur=? WHERE nom_secteur=?'
-        cur = connection.cursor()
+        cur = conn.cursor()
         cur.executemany(sql, [(s['supervisor'], s['sector']) for s in DATA])
 
         return jsonify(success=True)
@@ -349,8 +308,8 @@ def preferences():
         "SELECT code_mnemotechnique, prenom, nom, prefere "
         "FROM T LEFT JOIN S ON code_mnemotechnique = code_gardien"
     )
-    with get_connection() as connection:
-        cur = connection.cursor()
+    with connection() as conn:
+        cur = conn.cursor()
         cur.execute(sql_check + sql, SECTOR, SECTOR)
 
         count = next(gen := fetch_while_next(cur))
@@ -389,8 +348,8 @@ def preferences_edit():
     sql_check_sector = "SELECT COUNT(*) AS count FROM Secteur WHERE nom_secteur=?; "
     sql_check_guards = sql_test_str(len(guards), 'Gardien', 'code_employe')
 
-    with get_connection() as connection:
-        cur = connection.cursor()
+    with connection() as conn:
+        cur = conn.cursor()
         cur.execute(sql_check_sector + sql_check_guards, (SECTOR,) + tuple(guards))
         (sector_count, invalid_guards) = fetch_while_next(cur)
 
@@ -412,7 +371,7 @@ def preferences_edit():
             'END; '
             'COMMIT TRAN;'
         )
-        cur = connection.cursor()
+        cur = conn.cursor()
         cur.executemany(sql, [(p['prefers'], SECTOR, p['code']) * 3 for p in preferences])
 
         return jsonify(success=True)
@@ -424,8 +383,8 @@ def parcel():
         'SELECT Secteur.nom_secteur, num_parcelle FROM Secteur LEFT JOIN Parcelle '
         'ON Secteur.nom_secteur = Parcelle.nom_secteur'
     )
-    with get_connection() as connection:
-        cur = connection.cursor()
+    with connection() as conn:
+        cur = conn.cursor()
         cur.execute(sql)
 
         res = {}
@@ -462,8 +421,8 @@ def parcel_edit():
             if sector is not None:
                 sectors.add(sector)
 
-    with get_connection() as connection:
-        cur = connection.cursor()
+    with connection() as conn:
+        cur = conn.cursor()
 
         if len(sectors) > 0:
             sql_check = sql_test_str(len(sectors), 'Secteur', 'nom_secteur')
@@ -474,7 +433,7 @@ def parcel_edit():
                 error_msg = "Les secteurs suivants n'existent pas:\n" + '\n'.join(('- ' + row[0]) for row in invalid_sectors)
                 abort(make_response(jsonify(message=error_msg), 400))
             else:
-                cur = connection.cursor()
+                cur = conn.cursor()
 
         sql = (
             'BEGIN TRAN; '
@@ -503,8 +462,8 @@ def salary():
         abort(make_response(jsonify(message='Date mal formatée'), 400))
 
     sql = 'SELECT * FROM salairesDuMois(?) ORDER BY code_mnemotechnique'
-    with get_connection() as connection:
-        cur = connection.cursor()
+    with connection() as conn:
+        cur = conn.cursor()
         cur.execute(sql, DATE_STR)
 
         return [list(row) for row in cur.fetchall()]
@@ -529,8 +488,8 @@ def assert_salary_keys():
 @app.route('/salary/edit', methods=['POST'])
 def salary_edit():
     CODE, DATE, SALARY, nbr, datestr = assert_salary_keys()
-    with get_connection() as connection:
-        cur = connection.cursor()
+    with connection() as conn:
+        cur = conn.cursor()
         if (nbr == 0):
             sql = 'DELETE FROM Salaire WHERE code_employe=? AND date=?'
             cur.execute(sql, CODE, str(DATE.date()))
@@ -562,8 +521,8 @@ def salary_options():
         'WHERE DATEPART(year, date) = DATEPART(year, ?) '
         'AND DATEPART(month, date) = DATEPART(month, ?));'
     )
-    with get_connection() as connection:
-        cur = connection.cursor()
+    with connection() as conn:
+        cur = conn.cursor()
         cur.execute(sql, DATE_STR, DATE_STR)
 
         return [list(row) for row in cur.fetchall()]
@@ -583,14 +542,14 @@ def salary_add():
         'COMMIT TRAN;'
     )
     DATE_STR = str(DATE.date())
-    with get_connection() as connection:
-        cur = connection.cursor()
+    with connection() as conn:
+        cur = conn.cursor()
         cur.execute(sql_check, CODE)
 
         if cur.fetchone()[0] <= 0:
             abort(make_response(jsonify(message=f'Aucun employé associé au code "{CODE}"'), 404))
         else:
-            cur = connection.cursor()
+            cur = conn.cursor()
 
         cur.execute(sql, (CODE, DATE_STR) + tuple(chain.from_iterable(repeat((SALARY, CODE, DATE_STR), 2))))
         return jsonify(success=True)
@@ -613,8 +572,8 @@ def schedule(date):
         'SELECT Secteur.nom_secteur, num_parcelle FROM Secteur JOIN Parcelle '
         'ON Secteur.nom_secteur = Parcelle.nom_secteur'
     )
-    with get_connection() as connection:
-        cur = connection.cursor()
+    with connection() as conn:
+        cur = conn.cursor()
         cur.execute(sql_schedule + sql_sector, DATE)
 
         schedule = {}
@@ -656,8 +615,8 @@ def schedule_edit():
     del_list = tuple(tup[1:] for tup in filter(lambda t: t[0] is None, sanitized))
     ins_list = tuple(filter(lambda t: t[0] is not None, sanitized))
 
-    with get_connection() as connection:
-        cur = connection.cursor()
+    with connection() as conn:
+        cur = conn.cursor()
         if len(del_list) > 0:
             sql_del = 'DELETE FROM Surveillance WHERE num_parcelle=? AND dt_debut=? AND dt_fin=?;'
             cur.executemany(sql_del, del_list)
@@ -723,8 +682,8 @@ def schedule_sector():
         "FROM T JOIN Employe "
         "ON T.code_gardien = Employe.code_mnemotechnique"
     )
-    with get_connection() as connection:
-        cur = connection.cursor()
+    with connection() as conn:
+        cur = conn.cursor()
         cur.execute(sql_header + sql, SECTOR, DATE, SECTOR)
 
         header = next(gen := fetch_while_next(cur))
@@ -760,8 +719,8 @@ def schedule_staff():
         "WHERE code_gardien=? "
         "AND dt_debut BETWEEN ? AND ?"
     )
-    with get_connection() as connection:
-        cur = connection.cursor()
+    with connection() as conn:
+        cur = conn.cursor()
         cur.execute(sql_check + sql, CODE, CODE, START, END)
 
         count = next(gen := fetch_while_next(cur))
