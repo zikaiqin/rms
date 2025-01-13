@@ -1,0 +1,20 @@
+{
+    "compilerOptions": {
+        "baseUrl": ".",
+        "module": "ESNext",
+        "moduleResolution": "Bundler",
+        "lib": ["ESNext", "DOM"],
+        "target": "ES2020",
+        "strictNullChecks": true,
+        "strictFunctionTypes": true,
+        "paths": {
+            "@scripts/*": ["./scripts/*"],
+            "@styles/*": ["./styles/*"],
+        }
+    },
+    "exclude": [
+        "dist",
+        "node_modules",
+        "**/node_modules/*"
+    ]
+}
