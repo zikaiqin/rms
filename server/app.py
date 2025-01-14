@@ -29,9 +29,10 @@ CORS(app)
 @app.route('/staff', methods=['GET'])
 def staff():
     """
-    Staff endpoint
+    Params:
+        - role: filter employees by role
 
-    Returns data: a list of partial details of all employees
+    Returns: a list of partial details of all employees
     """
     ROLE = request.args['role'] if 'role' in request.args else None
     sql = (
@@ -50,34 +51,31 @@ def staff():
         return [list(row) for row in cur.fetchall()]
 
 
-@app.route('/staff/details', methods=['GET'])
-def staff_details():
+@app.route('/staff/<code>', methods=['GET'])
+def staff_details(code):
     """
-    Staff details endpoint
+    Path:
+        - code: code of the employee whose information we're requesting
 
-    Query parameters:
-        - code: code of the employee to be doxed
-
-    Returns status code:
+    Status code:
         - 200 if successful
         - 400 if code is malformed or missing
         - 404 if no employee matches the code
 
-    Returns data: a dict with all the attributes of the employee
+    Returns: a dict with all the attributes of the employee
     """
-    # get '?code=...' from query string
-    if not is_valid_code(CODE := request.args.get('code')):
+    if not is_valid_code(code):
         abort(make_response(jsonify(message='Code mnémotechnique manquant ou mal formaté'), 400))
 
     sql = 'SELECT * FROM Employe LEFT JOIN Gardien ON code_mnemotechnique=code_employe WHERE code_mnemotechnique=?'
     with connection() as conn:
         cur = conn.cursor()
-        cur.execute(sql, CODE)
+        cur.execute(sql, code)
 
         # if the query did not return any rows, send 404
         row = cur.fetchone()
         if not row:
-            abort(make_response(jsonify(message=f'Aucun employé associé au code "{CODE}"'), 404))
+            abort(make_response(jsonify(message=f'Aucun employé associé au code "{code}"'), 404))
 
         # names of each column/attribute
         keys = [col[0] for col in cur.description]
@@ -88,29 +86,26 @@ def staff_details():
         return res
 
 
-@app.route('/staff/delete', methods=['POST'])
-def staff_delete():
+@app.route('/staff/<code>', methods=['DELETE'])
+def staff_delete(code):
     """
-    Staff delete endpoint
-
-    Form data properties:
+    Path:
         - code: code of the employee to be deleted
 
-    Returns status code:
+    Status code:
         - 200 if successful
         - 400 if code is malformed or missing
         - 404 if none deleted (code not found)
         - 409 if the employee supervises one or more sectors
     """
-    # get code from form data
-    if not is_valid_code(CODE := request.form.get('code')):
+    if not is_valid_code(code):
         abort(make_response(jsonify(message='Code mnémotechnique manquant ou mal formaté'), 400))
 
     sql = 'DELETE FROM Employe WHERE code_mnemotechnique=?'
     with connection() as conn:
         try:
             cur = conn.cursor()
-            cur.execute(sql, CODE)
+            cur.execute(sql, code)
 
         except IntegrityError as err:
             # check if error was a reference constraint violation
@@ -119,60 +114,59 @@ def staff_delete():
 
             # if trying to delete a sector supervisor, send 409; otherwise, re-raise
             if '"est_chef"' in sql_err:
-                msg = f'L\'employé associé au code "{CODE}" ne peut pas être supprimé, car il supervise un ou plusieurs secteurs'
+                msg = f'L\'employé associé au code "{code}" ne peut pas être supprimé, car il supervise un ou plusieurs secteurs'
                 abort(make_response(jsonify(message=msg), 409))
             raise err
         else:
             # if the query did not change any rows (code belongs to no one), send 404
             if cur.rowcount == 0:
-                abort(make_response(jsonify(message=f'Aucun employé associé au code "{CODE}"'), 404))
+                abort(make_response(jsonify(message=f'Aucun employé associé au code "{code}"'), 404))
 
             return jsonify(success=True)
 
 # TODO: change SIN type to CHAR(5)
 # TODO: limit name, address, birthplace length
-@app.route('/staff/add', methods=['POST'])
+@app.route('/staff', methods=['POST'])
 def staff_add():
     """
-    Staff add endpoint
+    Body: see KEYS
 
-    Form data properties: see KEYS
-
-    Returns status code:
+    Status code:
         - 200 if successful
         - 400 if missing properties or fails unique check
     """
-    # request form data must contain all of these properties
+    # body properties
     KEYS = ('code_mnemotechnique', 'numero_avs', 'prenom', 'nom', 'date_naissance',
             'lieu_naissance', 'adresse', 'fonction', 'service')
-    if request.form.get('fonction') == 'Gardien':
+
+    if not isinstance(DATA := request.get_json(silent=True), dict):
+        abort(make_response(jsonify(message='Arguments mal formatés'), 400))
+
+    if DATA.get('fonction') == 'Gardien':
         KEYS += ('taux_occupation', )
 
-    values = tuple(request.form.get(key) for key in KEYS)
-    missing = tuple(k for (k, v) in zip(KEYS, values) if not v)
-    if len(missing) > 0:
-        error_msg = 'Attributs manquants:\n' + '\n'.join(('- ' + k) for k in missing)
-        abort(make_response(jsonify(message=error_msg), 400))
+    if any(((missing := key) not in DATA) for key in KEYS):
+        abort(make_response(jsonify(message=f'Attribut manquant: {missing}'), 400))
 
-    if not is_valid_code(request.form['code_mnemotechnique']):
+    if not is_valid_code(DATA['code_mnemotechnique']):
         abort(make_response(jsonify(message='Code mnémotechnique mal formaté'), 400))
     try:
-        if 'taux_occupation' in KEYS and isnan(float(request.form['taux_occupation'])):
+        if 'taux_occupation' in KEYS and isnan(float(DATA['taux_occupation'])):
             raise Exception()
     except:
-        abort(make_response(jsonify(message='Date mal formatée'), 400))
+        abort(make_response(jsonify(message="Taux d'occupation mal formaté"), 400))
     try:
-        datetime.strptime(request.form['date_naissance'], '%Y-%m-%d')
+        datetime.strptime(DATA['date_naissance'], '%Y-%m-%d')
     except:
         abort(make_response(jsonify(message='Date mal formatée'), 400))
 
-    param_fragment = ', '.join(f'@{key}=?' for key in KEYS)
+    param_str = ', '.join(f'@{key}=?' for key in KEYS)
 
-    sql = f'SET NOCOUNT ON; EXEC insertionEmploye {param_fragment};'
+    sql = f'SET NOCOUNT ON; EXEC insertionEmploye {param_str};'
     with connection() as conn:
         try:
             cur = conn.cursor()
-            cur.execute(sql, values)
+            cur.execute(sql, tuple(DATA[key] for key in KEYS))
         except IntegrityError as err:
             # check if error was a key violation
             matches = re.search(r'Violation of (PRIMARY|UNIQUE) KEY constraint', err.args[1])
@@ -411,7 +405,7 @@ def parcel_edit():
             not isinstance(row, dict) or
             not 'sector' in row or
             not ((sector := row['sector']) is None or (isinstance(sector, str) and sector != '')) or
-            not is_valid_parcel(parcel := row.get('parcel', None))
+            not is_valid_parcel(parcel := row.get('parcel'))
         ):
             abort(make_response(jsonify(message='Arguments manquants ou mal formatés'), 400))
         if parcel in parcels:
@@ -596,10 +590,10 @@ def assert_schedule_keys(schedule: list):
             not is_valid_code(CODE)
         ):
             abort(make_response(jsonify(message='Code mnémotechnique manquant ou mal formaté'), 400))
-        if not is_valid_parcel(PARCEL := slot.get('parcel', None)):
+        if not is_valid_parcel(PARCEL := slot.get('parcel')):
             abort(make_response(jsonify(message='Numéro de parcelle manquant ou mal formaté'), 400))
         try:
-            START = datetime.strptime(slot.get('time', None), '%Y-%m-%dT%H:%M')
+            START = datetime.strptime(slot.get('time'), '%Y-%m-%dT%H:%M')
         except:
             abort(make_response(jsonify(message='Dates manquantes ou mal formatées'), 400))
         yield CODE, PARCEL, START, START + timedelta(hours=1)
