@@ -2,7 +2,7 @@ import $ from 'jquery';
 import { addHours, addYears, constructNow, differenceInCalendarDays, format, parseISO } from 'date-fns';
 import { debounce, memoize } from 'lodash-es';
 import { dateFormatStrings } from '@scripts/common/constants';
-import { Schedule } from '@scripts/common/requests';
+import { Schedule, Staff } from '@scripts/common/requests';
 
 $(() => {
     buildDatePicker();
@@ -29,7 +29,7 @@ const getOptions = async (purge = false) => {
     if (!purge && (options = $('#planner').data('options'))) {
         return options;
     } else {
-        options = await Schedule.staff.options.get();
+        options = await Staff.listAll('Gardien');
         $('#planner').data('options', options);
         return options;
     }

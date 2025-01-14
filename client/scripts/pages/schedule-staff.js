@@ -2,7 +2,7 @@ import $ from 'jquery';
 import { addDays, addWeeks, addYears, constructNow, format, parseISO } from 'date-fns'
 import { debounce } from 'lodash-es';
 import { dateFormatStrings } from '@scripts/common/constants';
-import { Schedule } from '@scripts/common/requests';
+import { Schedule, Staff } from '@scripts/common/requests';
 import { DatePicker, TagPicker } from '@scripts/common/components';
 
 const pickerType = 'week';
@@ -52,7 +52,7 @@ const buildDatePicker = () => {
 };
 
 const buildOptions = async () => new Promise((resolve, reject) => {
-    Schedule.staff.options.get().then((data) => {
+    Staff.listAll('Gardien').then((data) => {
         resolve(data[0][0]);
         new TagPicker(
             data.map(([code, fname, lname]) => [code, `${fname} ${lname}`]),

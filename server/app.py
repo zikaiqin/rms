@@ -464,9 +464,11 @@ def salary():
 
 
 def assert_salary_keys():
+    if not isinstance(DATA := request.get_json(silent=True), dict):
+        abort(make_response(jsonify(message='Arguments mal formatés'), 400))
+
+    CODE, datestr, SALARY = (DATA.get(key) for key in ('code', 'date', 'salary'))
     try:
-        # get code, salary from form data
-        CODE, datestr, SALARY = (request.form.get(key) for key in ('code', 'date', 'salary'))
         if not is_valid_code(CODE):
             raise Exception('Code mnémotechnique manquant ou mal formaté')
         if not datestr or not (DATE := datetime.strptime(datestr, '%Y-%m')):

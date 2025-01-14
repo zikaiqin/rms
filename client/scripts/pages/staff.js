@@ -80,7 +80,7 @@ const buildOptions = () => {
 }
 
 const reloadRows = () => {
-    Staff.all.get().then((data) => {
+    Staff.listAll().then((data) => {
         if (!data.length) {
             const noData = `<tr><td colspan="6" class="no-data muted"><em>Pas de données</em></td></tr>`
             $('table').addClass('stretch');
@@ -111,7 +111,7 @@ const submitDetails = (e) => {
     const data = new FormData(e.target);
     const payload = {};
     data.forEach((val, key) => { payload[key] = val; })
-    Staff.add.post(payload).then(() => {
+    Staff.add(payload).then(() => {
         reloadRows();
         Modal.get('#edit-modal').close();
     });
@@ -179,7 +179,7 @@ const hideGuardFieldset = () => {
 }
 
 const openDetailsModal = (code) => {
-    Staff.details.get(code).then((data) => {
+    Staff.get(code).then((data) => {
         $('#details-modal h3').append(
             `<span class="tag-cell">\
                 <kbd>${data.code_mnemotechnique}</kbd>\
@@ -196,7 +196,7 @@ const openDeleteModal = () => {
 
 const confirmDelete = () => {
     const code = $('#details-form input[name="code_mnemotechnique"]').val();
-    Staff.delete.post(code).then(() => {
+    Staff.delete(code).then(() => {
         reloadRows();
         Modal.get('#delete-modal').close().then(() => {
             Modal.get('#details-modal').close();

@@ -10,34 +10,33 @@ const withAlert = async (jqXHR) => new Promise((resolve, reject) => {
             window.alert(msg ?? "Une erreur s'est produite");
             reject(err);
         });
-}); 
-
-const API = new Proxy((({get, post}) => ({get, post}))($), {
-    get(target, prop) {
-        return (first, ...rest) => {
-            if (typeof first === 'string') {
-                first = apiURL.concat(first);
-            } else if ('url' in first) {
-                first.url = apiURL.concat(first.url);
-            }
-            return withAlert(target[prop](first, ...rest));
-        };
-    },
 });
 
+const API = {
+    /** @param {string} url @param {string | JQuery.PlainObject | undefined} params */
+    get: (url, params) => withAlert($.get(apiURL.concat(url), params)),
+
+    /** @param {string} url */
+    post: (url, data) => withAlert($.post({ url: apiURL.concat(url), contentType: 'application/json', data: JSON.stringify(data) })),
+
+    /** @param {string} url */
+    put: (url, data) => withAlert($.ajax({ type: 'PUT', url: apiURL.concat(url), contentType: 'application/json', data: JSON.stringify(data) })),
+
+    /** @param {string} url */
+    delete: (url, data) => withAlert($.ajax({ type: 'DELETE', url: apiURL.concat(url), contentType: 'application/json', data: JSON.stringify(data) })),
+};
+
 const Staff = {
-    all: {
-        get: (role) => API.get('/staff', {role}),
-    },
-    details: {
-        get: (code) => API.get('/staff/details', {code}),
-    },
-    delete: {
-        post: (code) => API.post('/staff/delete', {code}),
-    },
-    add: {
-        post: (data) => API.post('/staff/add', data),
-    },
+    /** @param {string} role */
+    listAll: (role) => API.get('/staff', {role}),
+
+    /** @param {string} code */
+    get: (code) => API.get(`/staff/${code}`),
+
+    /** @param {string} code */
+    delete: (code) => API.delete(`/staff/${code}`),
+
+    add: (data) => API.post('/staff', data),
 };
 
 const Sector = {
@@ -46,27 +45,15 @@ const Sector = {
     },
     preference: {
         get: (sector) => API.get('/sector/preference', {sector}),
-        post: (sector, preferences) => API.post({
-            url: '/sector/preference',
-            contentType: 'application/json',
-            data: JSON.stringify({sector, preferences}),
-        }),
+        post: (sector, preferences) => API.post('/sector/preference', {sector, preferences}),
     },
     supervisor: {
         get: () => API.get('/sector/supervisor'),
-        post: (sectors) => API.post({
-            url: '/sector/supervisor',
-            contentType: 'application/json',
-            data: JSON.stringify(sectors),
-        }),
+        post: (sectors) => API.post('/sector/supervisor', {sectors}),
     },
     parcel: {
         get: () => API.get('/parcel'),
-        post: (parcels) => API.post({
-            url: '/parcel',
-            contentType: 'application/json',
-            data: JSON.stringify(parcels),
-        }),
+        post: (parcels) => API.post('/parcel', {parcels}),
     },
 };
 
@@ -88,11 +75,7 @@ const Salary = {
 const Schedule = {
     planner: {
         get: (date) => API.get(`/schedule/${date}`),
-        post: (data) => API.post({
-            url: '/schedule',
-            contentType: 'application/json',
-            data: JSON.stringify(data),
-        }),
+        post: (data) => API.post('/schedule', {data}),
     },
     staff: {
         options: {
@@ -112,4 +95,4 @@ const Schedule = {
     },
 };
 
-export { Staff, Sector, Salary, Schedule };
+export { Sector, Salary, Schedule, Staff };
