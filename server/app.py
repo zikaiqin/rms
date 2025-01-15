@@ -1,6 +1,5 @@
 from pyodbc import IntegrityError
 from flask import Flask, request, abort, make_response, jsonify
-from flask_cors import CORS
 from itertools import chain, repeat
 from functools import partial
 from datetime import datetime, timedelta
@@ -24,7 +23,6 @@ CSTR = (
 connection = partial(get_connection, DataBase(CSTR))
 
 app = Flask(__name__)
-CORS(app)
 
 @app.route('/staff', methods=['GET'])
 def staff():

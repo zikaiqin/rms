@@ -1,7 +1,6 @@
 import $ from 'jquery';
 
-const {protocol, hostname} = window.location;
-const apiURL = `${protocol}//${hostname}${__API_ROOT__}`;
+const apiRoot = '/api';
 
 const withAlert = async (jqXHR) => new Promise((resolve, reject) => {
     jqXHR.then((res) => {resolve(res)})
@@ -14,16 +13,16 @@ const withAlert = async (jqXHR) => new Promise((resolve, reject) => {
 
 const API = {
     /** @param {string} url @param {string | JQuery.PlainObject | undefined} params */
-    get: (url, params) => withAlert($.get(apiURL.concat(url), params)),
+    get: (url, params) => withAlert($.get(apiRoot.concat(url), params)),
 
     /** @param {string} url */
-    post: (url, data) => withAlert($.post({ url: apiURL.concat(url), contentType: 'application/json', data: JSON.stringify(data) })),
+    post: (url, data) => withAlert($.post({ url: apiRoot.concat(url), contentType: 'application/json', data: JSON.stringify(data) })),
 
     /** @param {string} url */
-    put: (url, data) => withAlert($.ajax({ type: 'PUT', url: apiURL.concat(url), contentType: 'application/json', data: JSON.stringify(data) })),
+    put: (url, data) => withAlert($.ajax({ type: 'PUT', url: apiRoot.concat(url), contentType: 'application/json', data: JSON.stringify(data) })),
 
     /** @param {string} url */
-    delete: (url, data) => withAlert($.ajax({ type: 'DELETE', url: apiURL.concat(url), contentType: 'application/json', data: JSON.stringify(data) })),
+    delete: (url, data) => withAlert($.ajax({ type: 'DELETE', url: apiRoot.concat(url), contentType: 'application/json', data: JSON.stringify(data) })),
 };
 
 const Staff = {

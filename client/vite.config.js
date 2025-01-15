@@ -33,9 +33,6 @@ export default defineConfig({
       },
     },
   },
-  define: {
-    __API_ROOT__: process.env.NODE_ENV === 'production' ? "'/api'" : "':5000'",
-  },
   css: (process.env.NODE_ENV === 'production' ? {
     postcss: {
       plugins: [
@@ -53,6 +50,15 @@ export default defineConfig({
   } : undefined),
   appType: 'mpa',
   preview: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
+    },
+  },
+  server: {
     proxy: {
       '/api': {
         target: 'http://localhost:5000',
@@ -108,16 +114,6 @@ export default defineConfig({
             const paths = req.url.split('/');
             const index = paths.findIndex((dir) => (dir in alias));
             req.url = paths.slice(index).with(0, alias[paths[index]]).join('/');
-          }
-          else if (!/^@/.test(req.url.slice(1))) {
-            const filePath = resolve(__dirname, req.url.slice(1));
-            if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
-              req.url = filePath;
-            } else {
-              res.writeHead(404);
-              res.end();
-              return;
-            }
           }
           next();
         });
