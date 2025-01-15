@@ -1,8 +1,9 @@
 /** @type {import('vite').UserConfig} */
 import { defineConfig } from 'vite'
 import postcssUrl from 'postcss-url';
-import { resolve } from 'path'
+import { join, resolve } from 'path'
 import fs from 'fs'
+import fsp from 'fs/promises'
 
 const staticDir = resolve(__dirname);
 const alias = {
@@ -23,9 +24,9 @@ export default defineConfig({
         sector: '/sector.html',
         staff: '/staff.html',
         salary: '/salary.html',
-        'schedule/sector': '/schedule-sector.html',
-        'schedule/staff': '/schedule-staff.html',
-        'schedule/planner': '/schedule-planner.html',
+        'schedule/sector': '/schedule/sector.html',
+        'schedule/staff': '/schedule/staff.html',
+        'schedule/planner': '/schedule/planner.html',
       },
       output: {
         dir: resolve(staticDir, 'dist'),
@@ -51,6 +52,15 @@ export default defineConfig({
     },
   } : undefined),
   appType: 'mpa',
+  preview: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
+    },
+  },
   plugins: [
     {
       name: 'custom-routing',
@@ -59,9 +69,9 @@ export default defineConfig({
           '/sector': '/sector.html',
           '/staff': '/staff.html',
           '/salary': '/salary.html',
-          '/schedule/sector': '/schedule-sector.html',
-          '/schedule/staff': '/schedule-staff.html',
-          '/schedule/planner': '/schedule-planner.html',
+          '/schedule/sector': '/schedule/sector.html',
+          '/schedule/staff': '/schedule/staff.html',
+          '/schedule/planner': '/schedule/planner.html',
         };
         server.middlewares.use((req, res, next) => {
           if (req.url === '/') {
@@ -82,7 +92,7 @@ export default defineConfig({
           '/salary': '/salary',
           '/schedule/sector': '/schedule-sector',
           '/schedule/staff': '/schedule-staff',
-          '/schedule/planner': '/schedule-planner.html',
+          '/schedule/planner': '/schedule-planner',
         };
         server.middlewares.use((req, res, next) => {
           if (req.url === '/') {
@@ -111,6 +121,23 @@ export default defineConfig({
           }
           next();
         });
+      },
+    },
+    {
+      name: 'copy-html-files',
+      apply: 'build',
+      buildStart: () => {
+        const rootDir = join(staticDir, 'pages');
+        const targetDir = join(rootDir, 'schedule');
+        fsp.mkdir(targetDir, { recursive: true }).then(() => {
+          ['sector', 'staff', 'planner'].forEach((target) => {
+            const sourcePath = join(rootDir, `schedule-${target}.html`);
+            fsp.copyFile(sourcePath, join(targetDir, `${target}.html`));
+          });
+        });
+      },
+      buildEnd: () => {
+        fsp.rm(join(staticDir, 'pages/schedule'), { recursive: true });
       },
     },
   ],
