@@ -47,12 +47,12 @@ const Sector = {
         post: (sector, preferences) => API.post('/sector/preference', {sector, preferences}),
     },
     supervisor: {
-        get: () => API.get('/sector/supervisor'),
-        post: (sectors) => API.post('/sector/supervisor', {sectors}),
+        get: () => API.get('/supervisor'),
+        post: (sectors) => API.post('/supervisor', sectors),
     },
     parcel: {
         get: () => API.get('/parcel'),
-        post: (parcels) => API.post('/parcel', {parcels}),
+        post: (parcels) => API.post('/parcel', parcels),
     },
 
     /** @param {string} name @param {string} supervisor */
@@ -77,7 +77,7 @@ const Salary = {
 const Schedule = {
     planner: {
         get: (date) => API.get(`/schedule/${date}`),
-        post: (data) => API.post('/schedule', {data}),
+        post: (data) => API.post('/schedule', data),
     },
     staff: {
         options: {

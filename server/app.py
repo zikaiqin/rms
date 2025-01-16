@@ -260,7 +260,7 @@ def sector_details():
         return jsonify([{'name': key, **val} for key, val in res.items()])
 
 
-@app.route('/sector/supervisor', methods=['GET'])
+@app.route('/supervisor', methods=['GET'])
 def supervisor():
     sql = (
         "WITH T AS (SELECT code_mnemotechnique, prenom, nom FROM Employe WHERE fonction='Chef de secteur') "
@@ -282,7 +282,7 @@ def supervisor():
         return [[code, r['fname'], r['lname'], r['sectors']] for [code, r] in supervisors.items()]
 
 # TODO: get rid of sql_check? (low rowcount -> rollback, catch reference constraint error)
-@app.route('/sector/supervisor', methods=['POST'])
+@app.route('/supervisor', methods=['POST'])
 def supervisor_edit():
     DATA = request.get_json(silent=True)
     if not isinstance(DATA, list) or len(DATA) <= 0:
