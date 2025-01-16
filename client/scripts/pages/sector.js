@@ -1,5 +1,5 @@
 import $ from 'jquery';
-import { Sector } from '@scripts/common/requests';
+import { Sector, Staff } from '@scripts/common/requests';
 import { Modal, TagPicker } from '@scripts/common/components';
 
 const sectionData = {
@@ -50,6 +50,13 @@ $(() => {
             $('#submit-parcel').prop('disabled', true);
         },
     });
+    new Modal('#sector-modal', {
+        onClose: function() {
+            const modal = $(this.getElement());
+            modal.find('input[name="sector-name"]').removeAttr('aria-invalid').val('');
+            $('#submit-sector').prop('disabled', true);
+        },
+    });
     reloadSectors();
     attachListeners();
 });
@@ -63,11 +70,14 @@ const attachListeners = () => {
     $('#submit-preference').on('click', onSubmitPreference);
     $('#submit-supervisor').on('click', onSubmitSupervisor);
     $('#submit-parcel').on('click', onSubmitParcel);
-    $('#add-parcel').on('click', onAddParcel);
+    $('#submit-sector').on('click', onSubmitSector);
+    $('#parcel-modal thead span').on('click', onAddParcel);
+    $('#sector-modal input[name="sector-name"]').on('input', onChangeSectorName);
+    $('#add-sector').on('click', onAddSector);
 }
 
 const reloadSectors = () => {
-    $('main').empty();
+    $('#sectors').empty();
     Sector.all.get().then((data) => {
         const sectors = data.map(({name, supervisor, parcels, likes, dislikes}) => {
             const parcelEl = buildParcels(parcels);
@@ -77,7 +87,7 @@ const reloadSectors = () => {
             const grid = buildGrid(`${superEl}<br>${parcelEl}`, likesEl, dislikesEl);
             return attachEditButtons($(`<article><div class="card-header"><h3>${name}</h3></div><hr>${grid}</article>`), name);
         });
-        $('main').append(sectors);
+        $('#sectors').append(sectors);
     })
 };
 
@@ -178,9 +188,9 @@ const buildParcelTable = (data, currentSector) => {
         ([sector, parcels]) => parcels.map((number) => [number, sector]),
     ).sort(([a], [b]) => a - b).map(([number, sector]) => buildParcelRow(number, sector, Object.keys(sectors)));
     if (rows.length >= magic) {
-        $('#add-parcel').attr('disabled', true);
+        table.find('thead span').attr('disabled', true);
     } else {
-        $('#add-parcel').removeAttr('disabled');
+        table.find('thead span').removeAttr('disabled');
     }
     table.append(rows);
     table.find('span[data-action="delete"]').on('click', onDeleteParcel);
@@ -404,9 +414,9 @@ const onParcelFormChange = () => {
     modal.find('.index span[data-tooltip]').removeAttr('data-tooltip');
     modal.find('span.warning').remove();
     if (modal.find('select').length >= magic) {
-        $('#add-parcel').attr('disabled', true);
+        modal.find('thead span').attr('disabled', true);
     } else {
-        $('#add-parcel').removeAttr('disabled');
+        modal.find('thead span').removeAttr('disabled');
     }
     const editCount = modal.find('tr:is(.inserted, .deleted, .modified)').length;
     if (editCount <= 0) {
@@ -435,13 +445,13 @@ const onParcelFormChange = () => {
             `Secteur ${invalid[0]} n'a pas de parcelles`;
         const symbol =
             `<span class="material-symbols-outlined warning" data-tooltip="${message}" data-placement="bottom">warning</span>`;
-        $('#sector-col .icon-row').append(symbol);
+            modal.find('thead [data-col="sector"] .icon-row').append(symbol);
     }
     if (invalidWarning) {
         const message = "Un ou plusieurs secteurs à ajouter ont un numéro invalide";
         const symbol =
             `<span class="material-symbols-outlined warning" data-tooltip="${message}" data-placement="right">warning</span>`;
-        $('#parcel-col .icon-row').append(symbol);
+        modal.find('thead [data-col="parcel"] .icon-row').append(symbol);
     }
 };
 
@@ -517,3 +527,40 @@ const onSubmitParcel = () => {
         reloadSectors();
     });
 };
+
+const onAddSector = () => {
+    Modal.get('#sector-modal').open(function() {
+        const modal = $(this.getElement());
+        Staff.listAll('Chef de secteur').then((supervisors) => {
+            new TagPicker(
+                supervisors.map(([fst, ...rest]) => [fst, rest.join(' ')]),
+                modal.find('details'),
+                { name: 'supervisor' },
+            );
+        });
+    });
+};
+
+const onSubmitSector = () => {
+    const modal = $('#sector-modal');
+    const name = modal.find('input[name="sector-name"]').val();
+    const supervisor = modal.find('input[checked]').val();
+    Sector.add(name, supervisor).then(() => {
+        Modal.get('#sector-modal').close();
+        reloadSectors();
+    });
+};
+
+const onChangeSectorName = (e) => {
+    const valid = e.target.validity.valid;
+    if (valid) {
+        $('#submit-sector').removeAttr('disabled');
+    } else {
+        $('#submit-sector').attr('disabled', true);
+    }
+    if (!valid && e.target.value) {
+        $(e.target).attr('aria-invalid', true);
+    } else {
+        $(e.target).removeAttr('aria-invalid');
+    }
+}

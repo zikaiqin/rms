@@ -43,13 +43,14 @@ class Modal {
     open = async (cb = this.onOpen) => {
         const html = $(document.documentElement);
         html.addClass('modal-is-open modal-is-opening');
+        let res = undefined;
         const promise = new Promise((resolve) => {
             setTimeout(() => {
                 html.removeClass('modal-is-opening');
-                resolve();
+                resolve(res);
             }, this.transitionTime);
         });
-        cb.call(this);
+        res = cb.call(this);
         Modal.visible.push(this);
         this.getElement().showModal();
         return promise;
@@ -66,8 +67,7 @@ class Modal {
                 if (Modal.visible.length === 0) {
                     $(document.documentElement).removeClass('modal-is-open modal-is-opening modal-is-closing');
                 }
-                cb.call(this);
-                resolve();
+                resolve(cb.call(this));
             }, this.transitionTime);
         });
     }

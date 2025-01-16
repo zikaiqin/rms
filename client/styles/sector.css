@@ -204,3 +204,11 @@ body > header {
 #sector-col {
     padding-left: calc(var(--pico-spacing) + var(--pico-form-element-spacing-horizontal));
 }
+
+div:has(#add-sector) {
+    text-align: center;
+}
+
+label.full-width {
+    width: 100%;
+}

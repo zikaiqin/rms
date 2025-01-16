@@ -38,9 +38,13 @@
         </header>
         <main class="container">
             <!-- Page content here -->
+            <div id="sectors"></div>
+            <div>
+                <button id="add-sector" class="secondary">Nouveau Secteur</button>
+            </div>
         </main>
         <footer class="container"></footer>
-        <div id="modal-container">
+        <div>
             <dialog id="preference-modal">
                 <article>
                     <header>
@@ -131,12 +135,12 @@
                         <table class="form-table striped">
                             <thead>
                                 <tr>
-                                    <th id="parcel-col" scope="col"><div class="icon-row"><span>#</span></div></th>
+                                    <th data-col="parcel" scope="col"><div class="icon-row"><span>#</span></div></th>
                                     <th colspan="2" scope="col">Modifications</th>
-                                    <th id="sector-col" scope="col"><div class="icon-row"><span>Secteur</span></div></th>
+                                    <th data-col="sector" scope="col"><div class="icon-row"><span>Secteur</span></div></th>
                                     <th scope="col">
                                         <div class="icon-button-container">
-                                            <span id="add-parcel" class="icon-button secondary outline material-symbols-outlined" role="button" title="Nouveau">
+                                            <span class="icon-button secondary outline material-symbols-outlined" role="button" title="Nouveau">
                                                 add
                                             </span>
                                         </div>
@@ -152,6 +156,36 @@
                             Annuler
                         </button>
                         <button id="submit-parcel" disabled>
+                            Enregistrer
+                        </button>
+                    </footer>
+                </article>
+            </dialog>
+            <dialog id="sector-modal">
+                <article>
+                    <header>
+                        <button
+                            aria-label="close"
+                            rel="prev"
+                        ></button>
+                        <h3>Ajouter Secteur</h3>
+                    </header>
+                    <form>
+                        <label>
+                            Nom de secteur
+                            <input name="sector-name" type="text" maxlength="50" pattern="[A-Za-z\s]+" required autofocus />
+                            <small>Entrez un nom sans chiffres ou caractères spéciaux</small>
+                        </label>
+                        <label class="full-width">
+                            Chef de secteur
+                            <details></details>
+                        </label>
+                    </form>
+                    <footer>
+                        <button aria-label="close" class="secondary">
+                            Annuler
+                        </button>
+                        <button id="submit-sector" disabled>
                             Enregistrer
                         </button>
                     </footer>

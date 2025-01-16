@@ -193,6 +193,44 @@ def sector():
         return [row[0] for row in cur.fetchall()]
 
 
+@app.route('/sector', methods=['POST'])
+def sector_add():
+    if not isinstance(DATA := request.get_json(silent=True), dict):
+        abort(make_response(jsonify(message='Arguments mal formatés'), 400))
+
+    if not isinstance(name := DATA.get('name'), str) or len(name) > 50 or not re.search('^[A-Za-z\s]+$', name):
+        abort(make_response(jsonify(message='Nom secteur manquant ou mal formaté'), 400))
+
+    if not is_valid_code(code := DATA.get('supervisor')):
+        abort(make_response(jsonify(message='Code superviseur manquant ou mal formaté'), 400))
+    
+    sql_parcels = 'SELECT num_parcelle FROM Parcelle ORDER BY num_parcelle ASC; '
+    sql_insert_sector = 'INSERT INTO Secteur VALUES (?, ?); '
+    sql_insert_parcel = 'INSERT INTO Parcelle VALUES (?, ?); '
+    with connection() as conn:
+        cur = conn.cursor()
+        cur.execute(sql_parcels)
+
+        parcel = 1
+        for p, *_ in cur.fetchall():
+            if p == parcel:
+                parcel += 1
+            else:
+                break
+        try:
+            cur = conn.cursor()
+            cur.execute(sql_insert_sector + sql_insert_parcel, (name, code, parcel, name,))
+        except IntegrityError as err:
+            if '"est_chef"' in err.args[1]:
+                abort(make_response(jsonify(message=f'Le code {code} ne correspond à aucun chef de secteur'), 400))
+            elif 'PRIMARY KEY' in err.args[1]:
+                abort(make_response(jsonify(message=f'Il existe déjà un secteur au nom "{name}"'), 409))
+            else:
+                raise err
+        else:
+            return jsonify(success=True)
+
+
 @app.route('/sector/details', methods=['GET'])
 def sector_details():
     sql_parcels = 'SELECT * FROM Parcelle; '

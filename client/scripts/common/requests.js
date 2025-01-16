@@ -54,6 +54,9 @@ const Sector = {
         get: () => API.get('/parcel'),
         post: (parcels) => API.post('/parcel', {parcels}),
     },
+
+    /** @param {string} name @param {string} supervisor */
+    add: (name, supervisor) => API.post('/sector', {name, supervisor}),
 };
 
 const Salary = {
