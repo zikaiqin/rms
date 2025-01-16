@@ -1,8 +1,6 @@
 /** @type {import('vite').UserConfig} */
 import { defineConfig } from 'vite'
-import postcssUrl from 'postcss-url';
 import { join, resolve } from 'path'
-import fs from 'fs'
 import fsp from 'fs/promises'
 
 const staticDir = resolve(__dirname);
@@ -10,6 +8,7 @@ const alias = {
   '@scripts': resolve(__dirname, 'scripts'),
   '@styles': resolve(__dirname, 'styles'),
 };
+const apiRoot = '/api';
 
 export default defineConfig({
   root: 'pages',
@@ -33,43 +32,29 @@ export default defineConfig({
       },
     },
   },
-  css: (process.env.NODE_ENV === 'production' ? {
-    postcss: {
-      plugins: [
-        postcssUrl({
-          url: (asset) => {
-            // fucking hell this took way too long to figure out
-            if (asset.url.endsWith('material-symbols-outlined.woff2')) {
-              return 'https://cdn.jsdelivr.net/npm/material-symbols@0.2.3/material-symbols-outlined.woff2';
-            }
-            return asset.url;
-          },
-        }),
-      ],
-    },
-  } : undefined),
   appType: 'mpa',
   preview: {
     proxy: {
-      '/api': {
+      [apiRoot]: {
         target: 'http://localhost:5000',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ''),
+        rewrite: (path) => path.replace(new RegExp(`^${apiRoot}`), ''),
       },
     },
   },
   server: {
     proxy: {
-      '/api': {
+      [apiRoot]: {
         target: 'http://localhost:5000',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ''),
+        rewrite: (path) => path.replace(new RegExp(`^${apiRoot}`), ''),
       },
     },
   },
   plugins: [
     {
       name: 'custom-routing',
+      apply: 'serve',
       configurePreviewServer(server) {
         const routes = {
           '/sector': '/sector.html',
@@ -86,7 +71,7 @@ export default defineConfig({
             return;
           }
           if (req.url in routes) {
-            req.url = routes[req.url]
+            req.url = routes[req.url];
           }
           next();
         });
@@ -106,14 +91,26 @@ export default defineConfig({
             res.end();
             return;
           }
-
-          if (req.url in routes) {
-            req.url = routes[req.url]
+          if (req.url.startsWith(apiRoot)) {
+            return next();
           }
-          else if (req.url.split('/').some((dir) => (dir in alias))) {
+          if (req.url in routes) {
+            req.url = routes[req.url];
+            return next();
+          }
+          if (req.url.split('/').some((dir) => (dir in alias))) {
             const paths = req.url.split('/');
             const index = paths.findIndex((dir) => (dir in alias));
             req.url = paths.slice(index).with(0, alias[paths[index]]).join('/');
+            return next();
+          }
+          if (!req.url.slice(1).startsWith('@')) {
+            res.statusCode = 404;
+            res.setHeader('Content-Type', 'text/html');
+            fsp.readFile(join(staticDir, '/public/404.html')).then((buf) => {
+              res.end(buf);
+            });
+            return;
           }
           next();
         });

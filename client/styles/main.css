@@ -1,6 +1,3 @@
-@import url('@picocss/pico/css/pico.css');
-@import url('material-symbols/outlined.css');
-
 :root {
     --pico-mod-color: #d9c26a;
     --pico-mod-kbd-color: #c0ac52;
