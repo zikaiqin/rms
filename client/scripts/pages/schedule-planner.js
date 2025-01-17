@@ -1,10 +1,16 @@
 import $ from 'jquery';
 import { addHours, addYears, constructNow, differenceInCalendarDays, format, parseISO } from 'date-fns';
-import { debounce, memoize } from 'lodash-es';
+import { debounce, memoize, noop } from 'lodash-es';
 import { dateFormatStrings } from '@scripts/common/constants';
 import { Schedule, Staff } from '@scripts/common/requests';
+import { Modal } from '@scripts/common/components';
 
 $(() => {
+    new Modal('#change-modal', {
+        onClose: function() {
+            $('#date-picker').val($('#date-picker').attr('data-prev')).removeAttr('aria-invalid');
+        },
+    });
     buildDatePicker();
     buildTable().then(() => {
         attachListeners();
@@ -39,6 +45,7 @@ const attachListeners = () => {
     $('#date-picker').on('change', debounce(onDateChange, 200));
     $('#reset').on('click', onReset);
     $('#save').on('click', onSave);
+    $('#confirm-change').on('click', onConfirmChange);
 }
 
 const buildDatePicker = () => {
@@ -50,6 +57,7 @@ const buildDatePicker = () => {
         min: format(min, dateFormatStrings.ISO),
         max: format(max, dateFormatStrings.ISO),
         value,
+        'data-prev': value,
     };
     $('#date-picker').attr(values);
 }
@@ -59,14 +67,27 @@ const onDateChange = (e) => {
     const valid = e.target.validity.valid;
     if (!valid) {
         el.attr('aria-invalid', true);
-    } else {
-        if (el.attr('aria-invalid')) {
-            el.attr('aria-invalid', false);
-        }
-        buildTable().finally(() => {
-            el.removeAttr('aria-invalid');
-        });
+        return;
     }
+    if (el.attr('aria-invalid')) {
+        el.attr('aria-invalid', false);
+    }
+    if (!$('#reset').attr('disabled')) {
+        Modal.get('#change-modal').open();
+        return;
+    }
+    onConfirmChange();
+}
+
+const onConfirmChange = () => {
+    const el = $('#date-picker')
+    el.attr('data-prev', el.val());
+    if (Modal.visible.length) {
+        Modal.get('#change-modal').close(noop);
+    }
+    buildTable().finally(() => {
+        el.removeAttr('aria-invalid');
+    });
 }
 
 const onScheduleChange = function(e) {

@@ -61,6 +61,26 @@
             </div>
         </main>
         <footer class="container"></footer>
+        <div id="modal-container">
+            <dialog id="change-modal">
+                <article>
+                    <h3>Horaire modifié</h3>
+                    <p>
+                        Les modifications à l'horaire ne sont pas enregistrées.
+                        <br>
+                        Voulez-vous changer de date sans enregistrer?
+                    </p>
+                    <footer>
+                        <button aria-label="close" class="secondary">
+                            Annuler
+                        </button>
+                        <button id="confirm-change" class="danger">
+                            Changer de date
+                        </button>
+                    </footer>
+                </article>
+            </dialog>
+        </div>
         <script type="module" src="@scripts/pages/schedule-planner.js"></script>
     </body>
 </html>
