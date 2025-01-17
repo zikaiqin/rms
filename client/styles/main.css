@@ -67,7 +67,6 @@
 .icon-button-group .icon-button {
     &:is(a) {
         vertical-align: middle;
-        line-height: calc(4 / 3);
     }
     padding: var(--pico-form-element-spacing-vertical) 0.95rem;
     background-color: var(--pico-form-element-background-color);
