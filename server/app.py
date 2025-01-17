@@ -193,6 +193,60 @@ def sector():
         return [row[0] for row in cur.fetchall()]
 
 
+def parse_parcel_transfer(parcels):
+    for parcel in parcels:
+        if (
+            not isinstance(parcel, dict) or
+            not isinstance((number := parcel.get('parcel')), int) or
+            (number <= 0 or number >= 100) or
+            not isinstance((sector := parcel.get('sector')), str) or
+            len(sector) <= 0
+        ):
+            raise Exception('Arguments mal formatés')
+        yield number, sector
+
+# TODO: check if the transferred parcels are actually in the sector to delete
+@app.route('/sector/<name>', methods=['DELETE'])
+def sector_delete(name):
+    transfer = None
+    if (DATA := request.get_json(silent=True)) is not None:
+        if not isinstance(DATA, list):
+            abort(make_response(jsonify(message='Arguments mal formatés'), 400))
+        try:
+            transfer = tuple(chain.from_iterable(parse_parcel_transfer(DATA)))
+        except Exception as e:
+            abort(make_response(jsonify(message=str(e)), 400))
+
+    sql_delete = 'DELETE FROM Secteur WHERE nom_secteur=?;'
+    with connection() as conn:
+        if transfer:
+            sql_transfer = (
+                'MERGE INTO Parcelle AS P '
+                'USING (VALUES {values}) AS T(num_parcelle, nom_secteur) '
+                'ON P.num_parcelle = T.num_parcelle '
+                'WHEN MATCHED THEN '
+                'UPDATE SET P.nom_secteur = T.nom_secteur;'
+            ).format(values=', '.join(repeat('(?, ?)', len(DATA))))
+            try:
+                cur = conn.cursor()
+                cur.execute(sql_transfer, transfer)
+            except IntegrityError as err:
+                conn.rollback()
+                if 'FOREIGN KEY' in err.args[1]:
+                    abort(make_response(jsonify(message="Le nom d'un ou plusieurs secteurs est incorrect"), 400))
+                else:
+                    raise err
+
+        cur = conn.cursor()
+        cur.execute(sql_delete, name)
+
+        if cur.rowcount == 0:
+            conn.rollback()
+            abort(make_response(jsonify(message=f'Aucun secteur au nom "{name}"'), 404))
+
+    return jsonify(success=True)
+
+
 @app.route('/sector', methods=['POST'])
 def sector_add():
     if not isinstance(DATA := request.get_json(silent=True), dict):
@@ -221,6 +275,7 @@ def sector_add():
             cur = conn.cursor()
             cur.execute(sql_insert_sector + sql_insert_parcel, (name, code, parcel, name,))
         except IntegrityError as err:
+            cur.rollback()
             if '"est_chef"' in err.args[1]:
                 abort(make_response(jsonify(message=f'Le code {code} ne correspond à aucun chef de secteur'), 400))
             elif 'PRIMARY KEY' in err.args[1]:

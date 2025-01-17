@@ -191,6 +191,35 @@
                     </footer>
                 </article>
             </dialog>
+            <dialog id="delete-modal">
+                <article>
+                    <header>
+                        <h3>Supprimer Secteur <span data-slot="sector"></span></h3>
+                    </header>
+                    <p>Veuillez confirmer si les parcelles suivantes seront supprimées ou transférées:</p>
+                    <div class="table-container overflow-auto">
+                        <table class="form-table striped">
+                            <thead>
+                                <tr>
+                                    <th scope="col">#</th>
+                                    <th scope="col">Modifications</th>
+                                    <th scope="col">Secteur</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </div>
+                    <footer>
+                        <button aria-label="close" class="secondary">
+                            Annuler
+                        </button>
+                        <button id="delete-sector" class="danger">
+                            Supprimer
+                        </button>
+                    </footer>
+                </article>
+            </dialog>
         </div>
         <script type="module" src="@scripts/pages/sector.js"></script>
     </body>

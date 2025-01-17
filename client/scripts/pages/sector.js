@@ -57,6 +57,13 @@ $(() => {
             $('#submit-sector').prop('disabled', true);
         },
     });
+    new Modal('#delete-modal', {
+        onClose: function() {
+            const modal = $(this.getElement());
+            modal.find('header span[data-slot="sector"]').empty();
+            modal.find('tbody').empty();
+        },
+    });
     reloadSectors();
     attachListeners();
 });
@@ -64,9 +71,11 @@ $(() => {
 const attachListeners = () => {
     // Enable/disable submit for pref, super modal
     ['preference', 'supervisor'].forEach((name) => {
-        const evName = name === 'preference' ? 'change' : 'picker.change';
-        $(`#${name}-modal table`).on(evName, function() { onModalChange.call(this, name) });
+        const evName = name === 'supervisor' ? 'picker.change' : 'change';
+        $(`#${name}-modal table`).on(evName, function() { onSimpleModalChange.call(this, name) });
     });
+    $('#delete-modal table').on('change', onDeleteModalChange);
+    $('#delete-sector').on('click', onConfirmDelete);
     $('#submit-preference').on('click', onSubmitPreference);
     $('#submit-supervisor').on('click', onSubmitSupervisor);
     $('#submit-parcel').on('click', onSubmitParcel);
@@ -96,6 +105,11 @@ const reloadSectors = () => {
  * @returns {JQuery}
  */
 const attachCardButtons = (jq, name) => {
+    // delete button
+    const delBtn = $('<span role="button" class="icon-button secondary outline material-symbols-outlined" title="Supprimer">delete</span>');
+    delBtn.on('click', () => onClickDeleteSector(name));
+    jq.find('.card-header').append(delBtn);
+
     // edit buttons
     jq.find('.section-header').each(function() {
         const div = $(this);
@@ -203,7 +217,7 @@ const buildParcelTable = (data, currentSector) => {
 const buildParcelRow = (parcel, sector, options) => {
     const select = `<select title="${sector}">${options.map(
         (name) => `<option value="${name}" ${name === sector ? 'selected' : ''}>${name}</option>`,
-    )}</select>`;
+    ).join('')}</select>`;
     const buttons = [['delete'], ['reset', true]].map((args) => buildButton(...args)).join('');
     const row =
         `<tr>\
@@ -395,7 +409,7 @@ const onAddParcel = () => {
 
     const select = $(`<select title="${sector}">${options.map(
         (name) => `<option value="${name}" ${name === sector ? 'selected' : ''}>${name}</option>`,
-    )}</select>`);
+    ).join('')}</select>`);
     select.on('change', onChangeInsertSelect);
 
     const [cancelButton, resetButton] = [['cancel'], ['reset', true]].map((args) => $(buildButton(...args)));
@@ -457,7 +471,7 @@ const onParcelFormChange = () => {
     }
 };
 
-const onModalChange = function(name) {
+const onSimpleModalChange = function(name) {
     if ($(this).find('input[checked]:not(:checked)').length > 0) {
         $(`#submit-${name}`).prop('disabled', false);
     } else {
@@ -546,7 +560,8 @@ const onAddSector = () => {
 const onSubmitSector = () => {
     const modal = $('#sector-modal');
     const name = modal.find('input[name="sector-name"]').val();
-    const supervisor = modal.find('input[checked]').val();
+    const supervisor = modal.find('input:checked').val();
+    console.log(supervisor)
     Sector.add(name, supervisor).then(() => {
         Modal.get('#sector-modal').close();
         reloadSectors();
@@ -566,3 +581,50 @@ const onChangeSectorName = (e) => {
         $(e.target).removeAttr('aria-invalid');
     }
 };
+
+const onClickDeleteSector = (name) => {
+    const modal = $('#delete-modal');
+    modal.find('header span[data-slot="sector"]').text(name);
+    Sector.parcel.get().then((data) => {
+        const select = `<select>${
+            Object.keys(data).map(
+                (sector) => `<option value="${sector}" ${sector === name ? 'selected' : ''}>${sector}</option>`,
+            ).join('')
+        }</select>`;
+        const rows = data[name].map((parcel) => (
+            `<tr class="deleted">\
+                <td data-parcel=${parcel}>${parcel}</td>\
+                <td class="notice">Supprimé</td>\
+                <td>${select}</td>\
+            </tr>`
+        ));
+        modal.find('tbody').append(rows);
+    });
+    Modal.get('#delete-modal').open();
+};
+
+const onDeleteModalChange = (e) => {
+    const select = $(e.target);
+    const row = select.closest('tr');
+    const initial = select.find(`option[value="${select.val()}"]`).is('[selected]')
+    if (initial) {
+        row.removeClass('inserted').addClass('deleted');
+    } else {
+        row.removeClass('deleted').addClass('inserted');
+    }
+    row.find('.notice').text(initial ? 'Supprimé' : 'Transféré vers');
+};
+
+const onConfirmDelete = () => {
+    const sector = $('#delete-modal header [data-slot="sector"]').text().trim();
+    const transfer = $('#delete-modal tbody tr.inserted').toArray().map((el) => {
+        const row = $(el);
+        const parcel = Number(row.find('[data-parcel]').attr('data-parcel'));
+        const sector = row.find('select').val();
+        return {parcel, sector};
+    });
+    Sector.delete(sector, transfer.length ? transfer : undefined).then(() => {
+        reloadSectors();
+    });
+    Modal.get('#delete-modal').close();
+}

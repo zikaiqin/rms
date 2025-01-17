@@ -57,6 +57,9 @@ const Sector = {
 
     /** @param {string} name @param {string} supervisor */
     add: (name, supervisor) => API.post('/sector', {name, supervisor}),
+
+    /** @param {string} name @param {Array<{parcel: number, sector: string}> | undefined} transfer */
+    delete: (name, transfer) => API.delete(`/sector/${name}`, transfer),
 };
 
 const Salary = {

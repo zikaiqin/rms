@@ -129,7 +129,7 @@ body > header {
         font-weight: bolder;
         font-style: italic;
     }
-    select * {
+    select option {
         color: var(--pico-color);
         font-weight: var(--pico-font-weight);
         font-style: normal;
@@ -150,6 +150,11 @@ body > header {
     }
     select {
         text-decoration: line-through;
+        option {
+            text-decoration: none;
+            color: var(--pico-color);
+            font-style: normal;
+        }
     }
     .notice {
         color: var(--pico-del-color);
@@ -162,7 +167,7 @@ body > header {
         font-weight: bolder;
         font-style: italic;
     }
-    select * {
+    select option {
         color: var(--pico-color);
         font-weight: var(--pico-font-weight);
         font-style: normal;
