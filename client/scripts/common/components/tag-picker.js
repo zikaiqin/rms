@@ -69,27 +69,24 @@ class TagPicker {
      * @param {Settings} settings 
      */
     #buildList(tagList, settings) {
-        const index = settings.initial ?? 0;
+        const index = settings.initial;
         const name = settings.name || window.crypto.randomUUID();
         const listItems = tagList.map(([tag, label], idx) => {
             let title = '';
             let checked = '';
             if (idx === index) {
-                if (Number.isInteger(settings.initial)) {
-                    title = 'title="Valeur initiale"';
-                    checked = 'checked data-initial';
-                } else {
-                    checked = 'checked';
-                }
+                title = 'title="Valeur initiale"';
+                checked = 'checked';
             }
-            return `\
-                <li ${title}>\
+            return (
+                `<li ${title}>\
                     <label class="tag-cell">\
                         <input type="radio" name="${name}" value="${tag}" ${checked} hidden />\
                         <kbd>${tag}</kbd>\
                         ${label}\
                     </label>\
-                </li>`;
+                </li>`
+            );
         });
         const list = $(`<ul>${listItems.join('')}</ul>`);
         list.find(`input`).eq(index).prop('checked', true).closest('li').attr('hidden', '');

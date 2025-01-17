@@ -74,7 +74,7 @@ const attachListeners = () => {
     $('#parcel-modal thead span').on('click', onAddParcel);
     $('#sector-modal input[name="sector-name"]').on('input', onChangeSectorName);
     $('#add-sector').on('click', onAddSector);
-}
+};
 
 const reloadSectors = () => {
     $('#sectors').empty();
@@ -85,7 +85,7 @@ const reloadSectors = () => {
             const likesEl = buildLikes('Gardiens qui préfèrent', likes);
             const dislikesEl = buildLikes('Gardiens qui n\'apprécient pas', dislikes);
             const grid = buildGrid(`${superEl}<br>${parcelEl}`, likesEl, dislikesEl);
-            return attachEditButtons($(`<article><div class="card-header"><h3>${name}</h3></div><hr>${grid}</article>`), name);
+            return attachCardButtons($(`<article><div class="card-header"><h3>${name}</h3></div><hr>${grid}</article>`), name);
         });
         $('#sectors').append(sectors);
     })
@@ -95,16 +95,17 @@ const reloadSectors = () => {
  * @param {JQuery} jq
  * @returns {JQuery}
  */
-const attachEditButtons = (jq, name) => {
+const attachCardButtons = (jq, name) => {
+    // edit buttons
     jq.find('.section-header').each(function() {
         const div = $(this);
         const data = div.data('section');
-        const btn = $(
+        const editBtn = $(
             `<span role="button" class="icon-button secondary outline material-symbols-outlined" title="Modifier ${editTitle[data]}">edit</span>`
         );
         switch (data) {
             case sectionData.preferences:
-                btn.on('click', () => {
+                editBtn.on('click', () => {
                     Sector.preference.get(name).then((data) => {
                         buildPrefTable(data, name);
                         Modal.get('#preference-modal').open();
@@ -112,7 +113,7 @@ const attachEditButtons = (jq, name) => {
                 });
                 break;
             case sectionData.supervisor:
-                btn.on('click', () => {
+                editBtn.on('click', () => {
                     Sector.supervisor.get().then((data) => {
                         buildSuperTable(data, name);
                         Modal.get('#supervisor-modal').open();
@@ -120,7 +121,7 @@ const attachEditButtons = (jq, name) => {
                 });
                 break;
             case sectionData.parcels:
-                btn.on('click', () => {
+                editBtn.on('click', () => {
                     Sector.parcel.get().then((data) => {
                         buildParcelTable(data, name);
                         Modal.get('#parcel-modal').open();
@@ -128,7 +129,7 @@ const attachEditButtons = (jq, name) => {
                 });
                 break;
         }
-        div.append(btn);
+        div.append(editBtn);
     });
     return jq;
 };
@@ -139,14 +140,14 @@ const buildPrefTable = (data, sector) => {
     modal.find('h3').append(`<span> &ndash; ${sector}</span>`);
     const rows = buildPrefRows(data);
     modal.find('tbody').append(rows);
-}
+};
 
 const buildPrefRows = (guards) => {
     const options = [null, true, false];
     return guards.map(([code, fname, lname, pref]) => {
         const guardLabel = buildWithTag(code, `${fname} ${lname}`, 'span');
         const inputs = options.reduce((prev, val) => {
-            return prev + `<td><div><input type="radio" name="${code}" value="${val}" ${val === pref ? 'title="Valeur initiale" data-initial checked ' : ''}/></div></td>`;
+            return prev + `<td><div><input type="radio" name="${code}" value="${val}" ${val === pref ? 'title="Valeur initiale" checked' : ''}/></div></td>`;
         }, '');
         return `<tr><td>${guardLabel}</td>${inputs}</tr>`;
     });
@@ -175,7 +176,7 @@ const buildSuperTable = (data, name) => {
         return row;
     });
     table.find('tbody').append(rows);
-}
+};
 
 const buildParcelTable = (data, currentSector) => {
     $('#parcel-modal').data({
@@ -201,7 +202,7 @@ const buildParcelTable = (data, currentSector) => {
 
 const buildParcelRow = (parcel, sector, options) => {
     const select = `<select title="${sector}">${options.map(
-        (name) => `<option value="${name}" ${name === sector ? 'selected data-initial' : ''}>${name}</option>`,
+        (name) => `<option value="${name}" ${name === sector ? 'selected' : ''}>${name}</option>`,
     )}</select>`;
     const buttons = [['delete'], ['reset', true]].map((args) => buildButton(...args)).join('');
     const row =
@@ -213,7 +214,7 @@ const buildParcelRow = (parcel, sector, options) => {
             <td><div class="icon-button-container">${buttons}</div></td>\
         </tr>`;
     return row;
-}
+};
 
 const buildButton = (action, disabled = false) => `<span\
     class="icon-button secondary outline material-symbols-outlined"\
@@ -256,7 +257,7 @@ const onDeleteParcel = function() {
     const row = target.closest('tr');
     row.find('.notice, .indicator').empty();
     const select = row.find('select');
-    const initial = select.find('option[data-initial]').val();
+    const initial = select.find('option[selected]').val();
     select.val(initial).prop('disabled', true);
     row.find('span[data-action="reset"]').removeAttr('disabled');
     row.find('.notice').text('Supprimé');
@@ -270,7 +271,7 @@ const onResetParcel = function() {
     const row = target.closest('tr');
     row.find('.notice, .indicator').empty();
     const select = row.find('select');
-    const initial = select.find('option[data-initial]').val();
+    const initial = select.find('option[selected]').val();
     select.val(initial).prop('disabled', false);
     row.removeAttr('class').find('span[data-action="delete"]').removeAttr('disabled');
     onParcelFormChange();
@@ -282,13 +283,13 @@ const onChangeParcel = function() {
     const row = target.closest('tr');
     row.find('.notice, .indicator').empty();
     const resetButton = row.find('span[data-action="reset"]');
-    if (target.find(':selected').is('[data-initial]')) {
+    if (target.find(':selected').is('[selected]')) {
         resetButton.attr('disabled', true);
         row.removeAttr('class');
     } else {
         resetButton.removeAttr('disabled');
         row.addClass('modified');
-        row.find('.notice').text(target.find('[data-initial]').val());
+        row.find('.notice').text(target.find('[selected]').val());
         row.find('.indicator').append('<span class="material-symbols-outlined">east</span>');
     }
     onParcelFormChange();
@@ -317,7 +318,7 @@ const onResetInsert = function() {
     input.attr('aria-invalid', false);
 
     const select = row.find('select');
-    select.val(select.find('option[data-initial]').val());
+    select.val(select.find('option[selected]').val());
 
     onParcelFormChange();
 };
@@ -328,7 +329,7 @@ const onChangeInsertSelect = function() {
     const row = select.closest('tr');
     const input = row.find('.index input');
     const resetButton = row.find('span[data-action="reset"]');
-    if (select.find(':selected').is('[data-initial]') && input.val() === input.prop('defaultValue')) {
+    if (select.find(':selected').is('[selected]') && input.val() === input.prop('defaultValue')) {
         resetButton.attr('disabled', true);
     } else {
         resetButton.removeAttr('disabled');
@@ -342,7 +343,7 @@ const onChangeInsertInput = function() {
     const row = input.closest('tr');
     const select = row.find('select');
     const resetButton = row.find('span[data-action="reset"]');
-    if (select.find(':selected').is('[data-initial]') && input.val() === input.prop('defaultValue')) {
+    if (select.find(':selected').is('[selected]') && input.val() === input.prop('defaultValue')) {
         resetButton.attr('disabled', true);
     } else {
         resetButton.removeAttr('disabled');
@@ -393,7 +394,7 @@ const onAddParcel = () => {
     input.on('input', onChangeInsertInput);
 
     const select = $(`<select title="${sector}">${options.map(
-        (name) => `<option value="${name}" ${name === sector ? 'selected data-initial' : ''}>${name}</option>`,
+        (name) => `<option value="${name}" ${name === sector ? 'selected' : ''}>${name}</option>`,
     )}</select>`);
     select.on('change', onChangeInsertSelect);
 
@@ -433,7 +434,7 @@ const onParcelFormChange = () => {
     Object.entries(sectors).forEach(([sector, count]) => {
         if (count <= 0) {
             invalid.push(sector);
-            modal.find(`:is(tr, select):not(.inserted, .inserted select):has([data-initial][value="${sector}"])`).attr('aria-invalid', true)
+            modal.find(`:is(tr, select):not(.inserted, .inserted select):has([selected][value="${sector}"])`).attr('aria-invalid', true)
                 .filter('tr').find('.index span').attr('data-tooltip', `Secteur ${sector} n'a pas de parcelles`);
         }
     });
@@ -457,18 +458,18 @@ const onParcelFormChange = () => {
 };
 
 const onModalChange = function(name) {
-    if ($(this).find('input[data-initial]:not(:checked)').length > 0) {
+    if ($(this).find('input[checked]:not(:checked)').length > 0) {
         $(`#submit-${name}`).prop('disabled', false);
     } else {
         $(`#submit-${name}`).prop('disabled', true);
     }
-}
+};
 
 const onSubmitPreference = () => {
     const modal = $('#preference-modal');
     const sector = modal.data('sector');
     const changes = [];
-    modal.find('input:checked:not(input[data-initial])').each(function() {
+    modal.find('input:checked:not([checked])').each(function() {
         const input = $(this);
         const prefers = JSON.parse(input.val());
         const code = input.attr('name');
@@ -481,12 +482,12 @@ const onSubmitPreference = () => {
         Modal.get('#preference-modal').close();
         reloadSectors();
     });
-}
+};
 
 const onSubmitSupervisor = () => {
     const modal = $('#supervisor-modal');
     const changes = [];
-    modal.find('input:checked:not(input[data-initial])').each(function() {
+    modal.find('input:checked:not([checked])').each(function() {
         const input = $(this);
         const supervisor = input.val();
         const sector = input.attr('name');
@@ -564,4 +565,4 @@ const onChangeSectorName = (e) => {
     } else {
         $(e.target).removeAttr('aria-invalid');
     }
-}
+};

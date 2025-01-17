@@ -8,15 +8,19 @@ body > header {
     max-height: none;
 }
 
-.card-header h3 {
-    margin-bottom: 0;
+.card-header {
+    display: flex;
+    justify-content: space-between;
+
+    h3 {
+        margin-bottom: 0;
+    }
 }
 
 .section-header {
     display: flex;
 
     span[role="button"] {
-        margin-top: calc(var(--pico-spacing) * 0.125);
         margin-left: calc(var(--pico-spacing) * 0.25);
     }
 }
@@ -49,12 +53,12 @@ body > header {
     input[type="radio"] {
         margin: 0;
 
-        &:checked:not(&[data-initial]) {
+        &:checked:not(&[checked]) {
             --pico-border-color: var(--pico-mod);
             --pico-primary-focus: color-mix(in hsl, var(--pico-border-color), transparent 37.5%);
         }
 
-        &[data-initial]:not(:checked) {
+        &[checked]:not(:checked) {
             border: var(--pico-border-width) dashed var(--pico-secondary-background);
         }
     }
@@ -82,7 +86,7 @@ body > header {
 #parcel-modal .indicator + td {
     padding-right: calc(var(--pico-spacing) / 2);
 }
-#supervisor-modal tr:has([data-initial]:not(:checked)) {
+#supervisor-modal tr:has([checked]:not(:checked)) {
     th span {
         color: var(--pico-mod-color);
         font-style: italic;
@@ -106,7 +110,7 @@ body > header {
         }
     }
 }
-#supervisor-modal details label:has([data-initial]) {
+#supervisor-modal details label:has(input[checked]) {
     color: var(--pico-form-element-placeholder-color);
     kbd {
         background-color: var(--pico-muted-color);

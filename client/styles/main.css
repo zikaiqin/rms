@@ -5,15 +5,18 @@
     --pico-mod: #f0ca20;
 }
 
-.danger {
-    --pico-border-color: #ad011c;
-    --pico-background-color: #ad011c;
-    --pico-primary-focus: color-mix(in hsl, var(--pico-border-color), transparent 37.5%);
+.danger:not(.outline) {
+    --pico-primary-background: #ad011c;
+    --pico-primary-border: var(--pico-primary-background);
+    --pico-primary-hover-background: #c0011f;
+    --pico-primary-hover-border: var(--pico-primary-hover-background);
+    --pico-primary-focus: rgba(255, 1, 43, 0.375);
 }
 
-.danger:is(:hover,:active,:focus) {
-    --pico-border-color: #c0011f;
-    --pico-background-color: #c0011f;
+.danger.outline {
+    --pico-primary: #ff012b;
+    --pico-primary-hover: #ff797d;
+    --pico-primary-focus: rgba(255, 1, 43, 0.375);
 }
 
 .warning {
