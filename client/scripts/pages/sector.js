@@ -114,7 +114,7 @@ const attachEditButtons = (jq, name) => {
             case sectionData.supervisor:
                 btn.on('click', () => {
                     Sector.supervisor.get().then((data) => {
-                        buildSuperTable(data);
+                        buildSuperTable(data, name);
                         Modal.get('#supervisor-modal').open();
                     });
                 });
@@ -152,7 +152,7 @@ const buildPrefRows = (guards) => {
     });
 };
 
-const buildSuperTable = (data) => {
+const buildSuperTable = (data, name) => {
     const supervisors = [];
     const sectors = [];
     data.forEach(([code, fname, lname, s], idx) => {
@@ -169,6 +169,7 @@ const buildSuperTable = (data) => {
                 initial: idx,
                 title: `Superviseur du secteur ${sector}`,
                 name: sector,
+                autofocus: sector === name,
             },
         );
         return row;

@@ -4,14 +4,14 @@ class TagPicker {
     /**
      * @typedef {[tag: string, label: string][]} TagList 
      * @typedef {JQuery | string} Target
-     * @typedef {{callback?: (tag: string) => void, title?: string, name?: string, initial?: int}} Settings
+     * @typedef {{callback?: (tag: string) => void, title?: string, name?: string, initial?: int, autofocus?: boolean}} Settings
      */
     /**
      * @param {TagList} tagList 
      * @param {Target} target
      * @param {Settings} settings
      */
-    constructor(tagList, target, settings = {}) {
+    constructor(tagList, target, settings) {
         if (new Set(tagList.map(([tag]) => tag)).size < tagList.length) {
             throw new SyntaxError('All tags must be unique');
         }
@@ -46,8 +46,8 @@ class TagPicker {
         const select = this.#buildSelect(tagList, settings);
         const list = this.#buildList(tagList, settings);
         const [tag] = tagList[settings.initial ?? 0];
-        const {title} = settings;
-        const display = $(`<summary class="tag-cell" ${title ? `title="${title}"` : ''}><kbd>${tag}</kbd></summary>`);
+        const {title, autofocus} = settings;
+        const display = $(`<summary class="tag-cell" ${title ? `title="${title}"` : ''} ${autofocus ? 'autofocus' : ''}><kbd>${tag}</kbd></summary>`);
         display.append(select);
         jq.append(display, list);
     }

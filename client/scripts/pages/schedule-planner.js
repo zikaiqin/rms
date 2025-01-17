@@ -78,6 +78,14 @@ const onScheduleChange = function(e) {
     const oldVal = schedule.parcelMap[parcel];
     schedule.parcelMap[parcel] = newVal;
 
+    // set select title
+    if (newVal) {
+        const name = select.find(`option[value="${newVal}"]`).attr('title').replace(/\s+\(Valeur initiale\)$/, '');
+        select.attr('title', name);
+    } else {
+        select.removeAttr('title');
+    }
+
     // if previously invalid, remove invalid style and check if rest of row is valid
     if (oldVal) {
         const set = schedule.staffMap[oldVal];
@@ -232,7 +240,8 @@ const buildTableBody = (options, data) => {
 };
 
 const buildSelect = (options) => memoize((code) => {
-    const select = `<select>\
+    const title = code && options.find(([c]) => c === code).slice(1).join(' ');
+    const select = `<select ${title ? `title="${title}"` : ''}>\
         <option value="" title="Non surveillé" data-none ${code ? '' : 'selected'}>---</option>\
         ${options.map(([c, fname, lname]) => {
             const match = c === code;
