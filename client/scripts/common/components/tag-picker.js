@@ -69,15 +69,11 @@ class TagPicker {
      * @param {Settings} settings 
      */
     #buildList(tagList, settings) {
-        const index = settings.initial;
+        const index = settings.initial ?? 0;
         const name = settings.name || window.crypto.randomUUID();
         const listItems = tagList.map(([tag, label], idx) => {
-            let title = '';
-            let checked = '';
-            if (idx === index) {
-                title = 'title="Valeur initiale"';
-                checked = 'checked';
-            }
+            const checked = idx === index ? 'checked' : '';
+            const title = (settings.initial && idx === index) ? 'title="Valeur initiale"' : '';
             return (
                 `<li ${title}>\
                     <label class="tag-cell">\
