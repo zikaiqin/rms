@@ -1,8 +1,8 @@
 import $ from 'jquery';
 import { addDays, addWeeks, addYears, constructNow, format, parseISO } from 'date-fns'
-import { debounce } from 'lodash-es';
+import { debounce, memoize } from 'lodash-es';
 import { dateFormatStrings } from '@scripts/common/constants';
-import { Schedule, Staff } from '@scripts/common/requests';
+import { Schedule, Sector, Staff } from '@scripts/common/requests';
 import { DatePicker, TagPicker } from '@scripts/common/components';
 
 const pickerType = 'week';
@@ -22,10 +22,10 @@ const buildPage = (rebuild = false) => {
     if (!rebuild) {
         buildDatePicker();
     }
-    buildOptions().then((code) => {
+    Promise.all([buildOptions(), getParcelMap()]).then(([code, parcelMap]) => {
         const [start, end] = getWeekAsInterval($('#date-picker').data('picker').val);
-        Schedule.staff.between.get(code, start, end).then((data) => {
-            buildTable(data, start);
+        Schedule.listForStaffBetween(code, start, end).then(async (data) => {
+            await buildTable(data, parcelMap, start);
             if (!rebuild) {
                 attachListeners();
             }
@@ -33,11 +33,19 @@ const buildPage = (rebuild = false) => {
     });
 };
 
+const getParcelMap = memoize(async () => {
+    return Sector.parcel.get().then((data) => {
+        return Object.fromEntries(
+            Object.entries(data).flatMap(([k, v]) => v.map(w => [w, k])),
+        );
+    });
+});
+
 const attachListeners = () => {
     $('#refresh').on('click', reloadRows);
     $('#entity-picker').on('picker.change', reloadRows);
     $('#date-picker').on('picker.input', onDateInput).on('picker.change', onDateChange);
-}
+};
 
 const buildDatePicker = () => {
     const now = constructNow();
@@ -72,19 +80,23 @@ const getWeekAsInterval = (val) => {
     return [start, end];
 };
 
-const buildTable = (data, start) => {
+const buildTable = async (data, parcelMap, start) => {
     const days = Array.from({length: 7}, (_, i) => {
         return format(addDays(parseISO(start), i), dateFormatStrings.ISO);
     });
     const schedule = Object.fromEntries(days.map((day) => [day, {}]));
     let min = 9, max = 16;
-    data.forEach(([datetime, parcel, sector]) => {
-        const [date, time] = datetime.split('T');
+    for (const {dtStart, parcelNbr} of data) {
+        const [date, time] = dtStart.split('T');
         const hour = Number(time.split(':')[0]);
         min = Math.min(min, hour);
         max = Math.max(max, hour);
-        schedule[date][hour] = [parcel, sector];
-    });
+        if (!(parcelNbr in parcelMap)) {
+            getParcelMap.cache.clear();
+            parcelMap = await getParcelMap();
+        }
+        schedule[date][hour] = [parcelNbr, parcelMap[parcelNbr]];
+    }
     const hours = Array.from({length: max + 1 - min}, (_, i) => (i + min) % 24);
     const rows = hours.map((hour) => {
         const rowHeader = `<th scope="row">${hour.toString().padStart(2, '0')}:00</th>`;
@@ -104,7 +116,7 @@ const buildParcel = (parcel) => {
     }
     const [parcelNum, sector] = parcel
     return `<kbd>${parcelNum.toString().padStart(3, '0')}</kbd>${sector}`
-}
+};
 
 const reloadRows = async () => {
     $('#date-picker, #refresh, #entity-picker').prop('inert', true);
@@ -112,8 +124,8 @@ const reloadRows = async () => {
     const picker = $('#date-picker').data('picker');
     const [start, end] = getWeekAsInterval(picker.val);
     setEditLink(picker.val !== picker.defaultValue && picker.val);
-    return Schedule.staff.between.get(code, start, end).then((data) => {
-        buildTable(data, start);
+    return Promise.all([Schedule.listForStaffBetween(code, start, end), getParcelMap()]).then(async ([data, parcelMap]) => {
+        await buildTable(data, parcelMap, start);
     }).catch(({status}) => {
         if (status === 404) {
             buildPage(true);
@@ -127,7 +139,7 @@ const setEditLink = (val) => {
     const edit = $('#edit');
     const url = edit.attr('data-href');
     edit.attr('href', val ? `${url}#${format(parseISO(val), dateFormatStrings.ISO)}` : url);
-}
+};
 
 const onDateInput = debounce(() => {
     onDateChange.cancel();

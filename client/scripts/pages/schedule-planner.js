@@ -2,7 +2,7 @@ import $ from 'jquery';
 import { addHours, addYears, constructNow, differenceInCalendarDays, format, parseISO } from 'date-fns';
 import { debounce, memoize, noop } from 'lodash-es';
 import { dateFormatStrings } from '@scripts/common/constants';
-import { Schedule, Staff } from '@scripts/common/requests';
+import { Schedule, Sector, Staff } from '@scripts/common/requests';
 import { Modal } from '@scripts/common/components';
 
 $(() => {
@@ -15,38 +15,36 @@ $(() => {
     buildTable().then(() => {
         attachListeners();
     });
-})
+});
 
-const buildTable = async (refreshOptions = false) => {
+const buildTable = async (options = { refreshOptions: false, refreshSectors: false }) => {
     $('#reset, #save').prop('disabled', true);
     const table = $('#planner').off('change');
     const date = $('#date-picker').val();
-    return Promise.all([getOptions(refreshOptions), Schedule.planner.get(date)]).then(([options, data]) => {
-        const header = buildTableHeader(data);
-        const [schedule, body] = buildTableBody(options, data);
+    if (options.refreshOptions) {
+        getStaff.cache.clear();
+    }
+    if (options.refreshSectors) {
+        getSectors.cache.clear();
+    }
+    return Promise.all([getStaff(), getSectors(), Schedule.listOnDate(date)]).then(([staff, sectors, data]) => {
+        const header = buildTableHeader(sectors);
+        const [schedule, body] = buildTableBody(staff, sectors, data);
         table.empty().append(header, body).data('default-schedule', schedule);
         setRowScheduleData();
         table.on('change', onScheduleChange);
     });
-}
-
-const getOptions = async (purge = false) => {
-    let options;
-    if (!purge && (options = $('#planner').data('options'))) {
-        return options;
-    } else {
-        options = await Staff.listAll('Gardien');
-        $('#planner').data('options', options);
-        return options;
-    }
 };
+
+const getSectors = memoize(Sector.parcel.get);
+const getStaff = memoize(() => Staff.listAll('Gardien'));
 
 const attachListeners = () => {
     $('#date-picker').on('change', debounce(onDateChange, 200));
     $('#reset').on('click', onReset);
     $('#save').on('click', onSave);
     $('#confirm-change').on('click', onConfirmChange);
-}
+};
 
 const buildDatePicker = () => {
     const now = constructNow();
@@ -60,7 +58,7 @@ const buildDatePicker = () => {
         'data-prev': value,
     };
     $('#date-picker').attr(values);
-}
+};
 
 const onDateChange = (e) => {
     const el = $(e.target);
@@ -77,7 +75,7 @@ const onDateChange = (e) => {
         return;
     }
     onConfirmChange();
-}
+};
 
 const onConfirmChange = () => {
     const el = $('#date-picker')
@@ -88,7 +86,7 @@ const onConfirmChange = () => {
     buildTable().finally(() => {
         el.removeAttr('aria-invalid');
     });
-}
+};
 
 const onScheduleChange = function(e) {
     const select = $(e.target);
@@ -153,7 +151,7 @@ const onScheduleChange = function(e) {
     const invalid = $(this).has('[aria-invalid]').length > 0;
     $('#reset').prop('disabled', unmodified);
     $('#save').prop('disabled', unmodified || invalid);
-}
+};
 
 const onReset = () => {
     const touched = $('#planner select:is(.modified, [aria-invalid])');
@@ -164,7 +162,7 @@ const onReset = () => {
     $('#planner .blocked').removeAttr('class');
     setRowScheduleData();
     $('#reset, #save').prop('disabled', true);
-}
+};
 
 const onSave = () => {
     const date = parseISO($('#date-picker').val());
@@ -176,18 +174,19 @@ const onSave = () => {
             const select = $(sel);
             const code = select.val() || null;
             const parcel = select.parent().data('parcel');
-            return { code, parcel, time };
+            return { staffCode: code, parcelNbr: parcel, dtStart: time };
         });
     });
-    Schedule.planner.post(modified).then(() => {
+    Schedule.edit(modified).then(() => {
         buildTable();
     }).catch((err) => {
         const matches = err.responseJSON.message.match(/code|parcelle/);
         if (matches) {
-            buildTable(matches[0] === 'code');
+            const options = { [matches[0] === 'code' ? 'refreshOptions' : 'refreshSectors']: true }
+            buildTable(options);
         }
     });
-}
+};
 
 const setRowScheduleData = () => {
     const table = $('#planner');
@@ -208,38 +207,32 @@ const setRowScheduleData = () => {
         // clone schedule slice so that default-schedule remains constant
         row.data('schedule', { parcelMap: {...schedule[time]}, staffMap });
     });
-}
+};
 
 const buildTableHeader = (data) => {
     const sectors = ['<th scope="row" rowspan="2" class="spacer-cell">'];
     const parcels = [];
     const columns = ['<colgroup><col /></colgroup>'];
-    Object.entries(data).forEach(([s, rest]) => {
-        const p = Object.keys(rest);
-        const length = p.length;
-        columns.push(`<colgroup>${'<col />'.repeat(length)}</colgroup>`);
-        sectors.push(`<th scope="col" colspan="${length}">${s}</th>`);
-        parcels.push(...p.map((num) => `<th scope="col">#${num}</th>`));
+    Object.entries(data).forEach(([sector, ps]) => {
+        columns.push(`<colgroup>${'<col />'.repeat(ps.length)}</colgroup>`);
+        sectors.push(`<th scope="col" colspan="${ps.length}">${sector}</th>`);
+        parcels.push(...ps.map((num) => `<th scope="col">#${num}</th>`));
     });
     return `${columns.join('')}<thead><tr>${sectors.join('')}</tr><tr>${parcels.join('')}</tr></thead>`;
 };
 
-const buildTableBody = (options, data) => {
+const buildTableBody = (staff, sectors, data) => {
     let min = 9, max = 16;
-    const parcels = Object.values(data).flatMap(o => Object.keys(o));
+    const parcels = Object.values(sectors).flat();
     const schedule = {};
-    Object.values(data).flatMap(
-        (sector) => Object.entries(sector)
-    ).forEach(([parcel, timeslots]) => {
-        timeslots.forEach(([time, code]) => {
-            const hour = Number(time.split(':')[0]);
-            min = Math.min(min, hour);
-            max = Math.max(max, hour);
-            if (!(hour in schedule)) {
-                schedule[hour] = Object.fromEntries(parcels.map(p => [p, '']));
-            }
-            schedule[hour][parcel] = code;
-        });
+    data.forEach(({dtStart, parcelNbr, staffCode}) => {
+        const hour = parseISO(dtStart).getHours();
+        min = Math.min(min, hour);
+        max = Math.max(max, hour);
+        if (!(hour in schedule)) {
+            schedule[hour] = Object.fromEntries(parcels.map(p => [p, '']));
+        }
+        schedule[hour][parcelNbr] = staffCode;
     });
     const hours = Array.from({ length: max + 1 - min }, (_, i) => {
         const hour = (i + min) % 24
@@ -248,7 +241,7 @@ const buildTableBody = (options, data) => {
         }
         return hour;
     });
-    const select = buildSelect(options);
+    const select = buildSelect(staff);
     const rows = hours.map((hour) => {
         const rowHeader = `<th scope="row">${hour.toString().padStart(2, '0')}:00</th>`;
         const cells = parcels.map((parcel) => {

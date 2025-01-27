@@ -1,4 +1,6 @@
+import { addDays, format, parseISO } from 'date-fns';
 import $ from 'jquery';
+import { dateFormatStrings } from './constants';
 
 const apiRoot = '/api';
 
@@ -78,26 +80,24 @@ const Salary = {
 };
 
 const Schedule = {
-    planner: {
-        get: (date) => API.get(`/schedule/${date}`),
-        post: (data) => API.post('/schedule', data),
-    },
-    staff: {
-        options: {
-            get: () => API.get('/staff', {role: 'Gardien'}),
-        },
-        between: {
-            get: (code, start, end) => API.get('/schedule/staff', {code, start, end}),
-        },
-    },
-    sector: {
-        options: {
-            get: () => API.get('/sector'),
-        },
-        one: {
-            get: (date, sector) => API.get('/schedule/sector', {date, sector}),
-        },
-    },
+    /** @param {Array<{dtStart: string, parcelNbr: number, staffCode: string}>} data */
+    edit: (data) => API.post('/schedule', data),
+
+    /** @param {string} date */
+    listOnDate: (date) => API.get('/schedule', {
+        start: date,
+        end: format(addDays(parseISO(date), 1), dateFormatStrings.ISO),
+    }),
+
+    /** @param {string} code @param {string} start @param {string} end */
+    listForStaffBetween: (code, start, end) => API.get('/schedule' , {start, end, staffCode: code}),
+
+    /** @param {string} name @param {string} date */
+    listForSectorOnDate: (name, date) => API.get('/schedule', {
+        start: date,
+        end: format(addDays(parseISO(date), 1), dateFormatStrings.ISO),
+        sectorName: name,
+    }),
 };
 
 export { Sector, Salary, Schedule, Staff };
