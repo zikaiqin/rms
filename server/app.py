@@ -1,3 +1,5 @@
+from os import environ
+from dotenv import load_dotenv
 from pyodbc import IntegrityError
 from flask import Flask, request, abort, make_response, jsonify
 from itertools import chain, repeat
@@ -8,17 +10,8 @@ import re
 from helpers.database import DataBase, get_connection
 from helpers.util import is_valid_code, is_valid_parcel, fetch_while_next, sql_test_str
 
-DRIVER = 'ODBC Driver 18 for SQL Server'
-HOST_NAME = 'localhost'
-DB_NAME = 'ProjetSession'
-CSTR = (
-    f'Driver={DRIVER};'
-    f'Server={HOST_NAME};'
-    f'Database={DB_NAME};'
-    'Encrypt=yes;'
-    'TrustServerCertificate=yes;'
-    'Trusted_Connection=yes;'
-)
+load_dotenv()
+CSTR = environ['SQL_CONNECTION']
 
 connection = partial(get_connection, DataBase(CSTR))
 
@@ -255,7 +248,7 @@ def sector_add():
     if not isinstance(DATA := request.get_json(silent=True), dict):
         abort(make_response(jsonify(message='Arguments mal formatés'), 400))
 
-    if not isinstance(name := DATA.get('name'), str) or len(name) > 50 or not re.search('^[A-Za-z\s]+$', name):
+    if not isinstance(name := DATA.get('name'), str) or len(name) > 50 or not re.search(r'^[A-Za-z\s]+$', name):
         abort(make_response(jsonify(message='Nom secteur manquant ou mal formaté'), 400))
 
     if not is_valid_code(code := DATA.get('supervisor')):
