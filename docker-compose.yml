@@ -1,0 +1,23 @@
+services:
+  frontend:
+    image: rms-frontend
+    build:
+      context: ./client
+    ports:
+      - "80:80"
+    networks:
+      - frontend
+      - backend
+  
+  backend:
+    image: rms-backend
+    build:
+      context: ./server
+    env_file:
+      - "prod.env"
+    networks:
+      - backend
+
+networks: 
+  frontend:
+  backend:

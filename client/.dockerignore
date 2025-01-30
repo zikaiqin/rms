@@ -1,0 +1,11 @@
+node_modules
+dist
+
+jsconfig.json
+
+.gitignore
+.dockerignore
+
+Dockerfile
+
+*.md
