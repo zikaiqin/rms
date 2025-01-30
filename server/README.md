@@ -1,6 +1,6 @@
 # RMS &ndash; Back-End
 
-RMS uses Python and Flask for its back-end. See the following sections for instructions on how to run this project locally.
+RMS uses Python and Flask for its back-end. Continue reading to find out how you can run this project in development mode.
 
 
 
@@ -8,40 +8,49 @@ RMS uses Python and Flask for its back-end. See the following sections for instr
 
 ### Python
 
-To run this project locally, you must [install Python 3.12](https://www.python.org/downloads/).
+[Python 3.13](https://www.python.org/downloads/) is required to run the project locally. Make sure it is installed on your machine.
 
 ### Packages
 
-The following Python packages are also required for this project:
+This project also requires a few packages.
+It is recommended that you [create a virtual environment](https://packaging.python.org/en/latest/guides/installing-using-pip-and-virtual-environments/) and install them there.
+Once your virtual environment is active, run the following command in the terminal:
 
-- [pyodbc](https://pypi.org/project/pyodbc/)
-- [Flask](https://pypi.org/project/Flask/)
-- [Flask-Cors](https://pypi.org/project/Flask-Cors/)
-
-To install them, run the following command in the terminal:
 ```
 pip install -r requirements.txt
 ```
 
 
 
-## Starting the server
+## Development server
 
-To start the server, open a terminal in this directory and run the following command:
+To start the development server, open a terminal in this directory and run the following command:
+
 ```
 flask run --debug
 ```
-The server will start listening on `localhost:5000`.
-The optional `--debug` flag allows Flask to automatically reload when changes to the code are detected.
 
-All routes are documented in the `ROUTES.md` file.
+The `--debug` flag is optional and allows Flask to automatically reload when changes to the code are detected.
+
+You can access Flask directly at the following address:
+
+```
+http://localhost:5000
+```
+
+Note that if the [front-end development server](../client/README.md#development-server) is running, you can also access the back-end at the following address:
+
+```
+<front-end root address>/api
+```
+
+API endpoints are documented in the [`ROUTES.md`](./ROUTES.md) file.
 
 
 
-## Debugging the server
+## Debugging
 
-There are many ways of [debugging a Flask application](https://flask.palletsprojects.com/en/3.0.x/debugging/).
-Some popular IDEs for instance include built-in tools for that very purpose.
+Some IDEs have built-in tools for [debugging a Flask application](https://flask.palletsprojects.com/en/3.0.x/debugging/).
 
 Check out the guides for debugging Flask using
 [PyCharm](https://www.jetbrains.com/help/pycharm/run-debug-configuration-flask-server.html)
