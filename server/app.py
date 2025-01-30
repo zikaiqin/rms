@@ -11,7 +11,7 @@ from helpers.database import DataBase, get_connection
 from helpers.util import is_valid_code, is_valid_parcel, fetch_while_next, sql_test_str
 
 load_dotenv()
-CSTR = environ['SQL_CONNECTION']
+CSTR = environ['DB_CONNECTION']
 
 connection = partial(get_connection, DataBase(CSTR))
 
