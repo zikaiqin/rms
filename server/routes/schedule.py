@@ -124,7 +124,7 @@ def schedule_get():
             abort(make_response(jsonify(message='Date mal formatée'), 400))
         if len(dates) > 1 and dates[1] <= dates[0]:
             abort(make_response(jsonify(message='La date de début doit être après la date de fin'), 400))
-    if 'staff' in request.args and not is_valid_code(STAFF):
+    if STAFF and not is_valid_code(STAFF):
         abort(make_response(jsonify(message='Code gardien mal formaté'), 400))
 
     sql_select = 'SELECT FORMAT(dt_debut, \'yyyy-MM-dd"T"HH:mm\') AS dtStart, Surveillance.num_parcelle AS parcelNbr, code_gardien AS staffCode'
