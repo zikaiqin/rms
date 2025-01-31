@@ -1,16 +1,19 @@
 import $ from 'jquery';
 import { debounce } from 'lodash-es';
+import { dateFormatStrings } from '@scripts/common/constants';
 import { Salary } from '@scripts/common/requests';
 import { isInputTypeSupported, spamOnHold } from '@scripts/common/util';
+import { addYears, constructNow, format } from 'date-fns';
 
 $(() => {
-    setupSelect();
+    buildDatePicker();
     $('#add-new').on('click', onClickAdd);
 });
 
-const setupSelect = () => {
-    const max = (new Date()).toISOString().match(/^\d{4}-\d{2}/)[0];
-    const min = (([year, month]) => `${year - 1}-${month}`)(max.split('-'));
+const buildDatePicker = () => {
+    const now = constructNow();
+    const max = format(now, dateFormatStrings.ISOMonth);
+    const min = format(addYears(now, -1), dateFormatStrings.ISOMonth);
     const el = $('#date-picker');
     if (isInputTypeSupported('month', 'nonce')) {
         el.attr({min, max});
@@ -64,7 +67,7 @@ const onChangeMonth = (min, max) => (e) => {
             el.attr('aria-invalid', false);
         }
         el.data('prev', val);
-        Salary.all.get(val).then((data) => {
+        Salary.fetchAll(val).then((data) => {
             fillRows(data);
         }).finally(() => {
             el.removeAttr('aria-invalid');
@@ -134,8 +137,8 @@ const onClickEdit = (e) => {
         }
         const code = parentCell.siblings().eq(0).text();
         const date = $('#date-picker').val();
-        Salary.edit.post(code, date, newVal).finally(() => {
-            Salary.all.get(date).then((data) => {
+        Salary.editOne(date, code, newVal).finally(() => {
+            Salary.fetchAll(date).then((data) => {
                 fillRows(data);
             });
         });
@@ -152,7 +155,7 @@ const onClickEdit = (e) => {
 const onClickAdd = () => {
     const date = $('#date-picker').val();
     $('table span').attr('disabled', true);
-    Salary.options.get(date).then((data) => {
+    Salary.options(date).then((data) => {
         const row = $('<tr></tr>');
         const codeMap = Object.fromEntries(data.map(([code, ...rest]) => [code, [...rest]]));
         const options = data.map(([code, ..._]) => `<option>${code}</option>`);
@@ -194,8 +197,8 @@ const onClickAdd = () => {
             }
             const code = select.find(':selected').text();
             const date = $('#date-picker').val();
-            Salary.add.post(code, date, val).finally(() => {
-                Salary.all.get(date).then((data) => {
+            Salary.addOne(date, code, val).finally(() => {
+                Salary.fetchAll(date).then((data) => {
                     fillRows(data);
                 });
             });

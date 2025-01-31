@@ -65,18 +65,17 @@ const Sector = {
 };
 
 const Salary = {
-    all: {
-        get: (date) => API.get('/salary', {date}),
-    },
-    edit: {
-        post: (code, date, salary) => API.post('/salary/edit', {code, date, salary}),
-    },
-    options: {
-        get: (date) => API.get('/salary/options', {date}),
-    },
-    add: {
-        post: (code, date, salary) => API.post('/salary/add', {code, date, salary}),
-    },
+    /** @param {string} code @param {string} date @param {number} salary */
+    addOne: (date, code, salary) => API.post(`/salary/${date}`, {code, salary}),
+
+    /** @param {string} code @param {string} date @param {number} salary */
+    editOne: (date, code, salary) => API.put(`/salary/${date}`, {code, salary}),
+
+    /** @param {string} date */
+    fetchAll: (date) => API.get(`/salary/${date}`),
+
+    /** @param {string} date */
+    options: (date) => API.get(`/salary/${date}/options`),
 };
 
 const Schedule = {
